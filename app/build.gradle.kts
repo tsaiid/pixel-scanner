@@ -69,9 +69,6 @@ dependencies {
     // Coil
     implementation(libs.coil.compose)
 
-    // OpenCV
-    implementation(libs.opencv)
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

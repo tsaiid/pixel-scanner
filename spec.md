@@ -9,7 +9,7 @@
 * **Architecture:** MVVM (Model-View-ViewModel)
 * **UI Framework:** Jetpack Compose (Material 3)
 * **Primary API:** Google ML Kit Document Scanner API
-* **Image Processing:** OpenCV Android SDK (用於自定義去陰影演算法)
+* **Image Processing:** Google ML Kit Document Scanner API (內建自動增強與去陰影)
 
 ## 3. 核心功能規格 (Functional Requirements)
 
@@ -25,7 +25,7 @@ ML Kit 雖然內建濾鏡，但為了達成「去陰影」與「還原」的精�
 
 * **演算法: 簡單亮度平衡 (Simple Lightness Equalization)**
     * **原理:** 估算圖像的背景亮度平面（Background Illumination Estimation），將原圖亮度除以背景亮度以均勻化光照。
-    * **實作:** 使用 OpenCV 進行高斯模糊 (Gaussian Blur) 提取低頻背景，再進行除法正規化 (Division Normalization)。
+    * **實作:** 使用 ML Kit Document Scanner 提供的多頁面掃描與濾鏡功能。
     * **觸發:** 當使用者點擊「自動修圖」或「去陰影」按鈕時執行。
 * **還原機制 (Revert):**
     * 保留 ML Kit 回傳的原始裁切圖檔 (Original Cropped)。

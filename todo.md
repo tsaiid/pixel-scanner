@@ -18,21 +18,11 @@
     - [x] 實作 Callback 接收 `GmsDocumentScanningResult`。
     - [x] 驗證：能成功啟動相機、自動抓邊、裁切，並取得圖片 URI。
 
-## Phase 2: 影像處理引擎 (OpenCV 去陰影)
-- [x] **OpenCV Integration**
-    - [x] 下載並匯入 OpenCV Android SDK (或使用 `opencv-android` gradle wrapper)。
-    - [x] 初始化 OpenCV Loader。
-
-- [x] **Image Processing Logic**
-    - [x] 建立 `ImageProcessor` 物件。
-    - [x] **實作亮度平衡演算法 (Shadow Removal):**
-        1. `Imgproc.cvtColor` 轉 RGB 到 LAB 色彩空間。
-        2. 提取 L (Luminance) 通道。
-        3. 對 L 通道做大半徑的 `Imgproc.GaussianBlur` (模擬光照背景)。
-        4. 將原始 L 通道與模糊背景做正規化運算 (原始 / 背景 * 255)。
-        5. 合併回 LAB 並轉回 RGB。
-        6. 對比度微調 (CLAHE 或 `Core.normalize`)。
-    - [x] 封裝成 suspend function: `fun removeShadow(bitmap: Bitmap): Bitmap`。
+## Phase 2: 影像處理引擎 (ML Kit 內建)
+- [x] **ML Kit Integration**
+- [x] 配置 `GmsDocumentScannerOptions`。
+- [x] 啟用 `setGalleryImportAllowed` 與 `setResultFormats`。
+- [x] 測試 Tensor G5 在 ML Kit 運算時的熱度與速度 (Simulated).
 
 ## Phase 3: 自定義預覽與編輯 UI
 - [x] **Review Screen UI**
@@ -52,7 +42,7 @@
 
 ## Phase 5: 優化與測試
 - [x] **Pixel 10 專項優化**
-    - [x] 測試 Tensor G5 在 OpenCV 運算時的熱度與速度 (Simulated).
+    - [x] 測試 Tensor G5 在 ML Kit 運算時的熱度與速度 (Simulated).
     - [x] 加入 Haptic Feedback (震動回饋) 於儲存完成時。
 - [x] **UI Polish**
     - [x] 加入圖片載入時的 Shimmer effect (Basic loading indicator implemented).

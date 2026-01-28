@@ -55,7 +55,7 @@ fun ReviewScreen(
                 HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
                     val page = scannedPages[pageIndex]
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        val bitmapToShow = if (page.isProcessed) page.processedBitmap else page.originalBitmap
+                        val bitmapToShow = page.originalBitmap
                         
                         if (bitmapToShow != null) {
                             Image(
@@ -67,30 +67,10 @@ fun ReviewScreen(
                         } else {
                             Text("Error loading image", color = Color.Red)
                         }
-
-                        if (page.isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                        }
                     }
                 }
             } else {
                 Text("No images to review", color = Color.White, modifier = Modifier.align(Alignment.Center))
-            }
-        }
-
-        Column(
-            modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Remove Shadows")
-                Spacer(modifier = Modifier.padding(8.dp))
-                Switch(
-                    checked = scannedPages.getOrNull(pagerState.currentPage)?.isProcessed == true,
-                    onCheckedChange = { 
-                        viewModel.toggleProcessing(pagerState.currentPage)
-                    }
-                )
             }
         }
     }

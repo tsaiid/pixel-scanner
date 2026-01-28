@@ -12,7 +12,7 @@
 
 1. 功能拆解：將需求細分為「相機取景」、「邊緣檢測演算法」、「影像處理 pipeline (裁切/去陰影/色彩增強)」與「儲存交互」四大模組。
 2. 開發清單：制定從 MVP (最小可行性產品) 到完整功能的階段性開發路徑。
-3. 技術規格初稿：建議適合 Pixel 架構的技術堆疊 (如 CameraX, ML Kit, OpenCV, TensorFlow Lite)。
+3. 技術規格初稿：建議適合 Pixel 架構的技術堆疊 (如 CameraX, ML Kit, TensorFlow Lite)。
 
 ## 約束條件
 

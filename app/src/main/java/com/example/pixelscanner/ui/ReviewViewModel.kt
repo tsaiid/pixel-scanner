@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.pixelscanner.image.ImageProcessor
 import com.example.pixelscanner.storage.StorageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,18 +17,13 @@ import kotlinx.coroutines.withContext
 
 data class ScannedPage(
     val originalUri: Uri,
-    val originalBitmap: Bitmap? = null,
-    val processedBitmap: Bitmap? = null,
-    val isProcessed: Boolean = false,
-    val isLoading: Boolean = false
+    val originalBitmap: Bitmap? = null
 )
 
 class ReviewViewModel : ViewModel() {
 
     private val _scannedPages = MutableStateFlow<List<ScannedPage>>(emptyList())
     val scannedPages: StateFlow<List<ScannedPage>> = _scannedPages.asStateFlow()
-
-    private val imageProcessor = ImageProcessor()
 
     fun setScannedUris(uris: List<Uri>, context: Context) {
         viewModelScope.launch {
@@ -48,7 +42,7 @@ class ReviewViewModel : ViewModel() {
             val timestamp = System.currentTimeMillis()
             
             pages.forEachIndexed { index, page ->
-                val bitmapToSave = if (page.isProcessed) page.processedBitmap else page.originalBitmap
+                val bitmapToSave = page.originalBitmap
                 
                 if (bitmapToSave != null) {
                     val filename = "PixelScanner_${timestamp}_$index.jpg"
@@ -58,48 +52,6 @@ class ReviewViewModel : ViewModel() {
             
             withContext(Dispatchers.Main) {
                 onComplete()
-            }
-        }
-    }
-
-    fun toggleProcessing(index: Int) {
-        val pages = _scannedPages.value.toMutableList()
-        val page = pages[index]
-
-        if (page.isProcessed) {
-            pages[index] = page.copy(isProcessed = false)
-            _scannedPages.value = pages
-        } else {
-            if (page.processedBitmap != null) {
-                pages[index] = page.copy(isProcessed = true)
-                _scannedPages.value = pages
-            } else {
-                pages[index] = page.copy(isLoading = true)
-                _scannedPages.value = pages
-                
-                viewModelScope.launch {
-                    val original = page.originalBitmap
-                    if (original != null) {
-                        val processed = imageProcessor.removeShadow(original)
-                        _scannedPages.update { currentPages ->
-                            val newPages = currentPages.toMutableList()
-                            if (index < newPages.size && newPages[index].originalUri == page.originalUri) {
-                                newPages[index] = newPages[index].copy(
-                                    processedBitmap = processed,
-                                    isProcessed = true,
-                                    isLoading = false
-                                )
-                            }
-                            newPages
-                        }
-                    } else {
-                         _scannedPages.update { currentPages ->
-                            val newPages = currentPages.toMutableList()
-                            newPages[index] = newPages[index].copy(isLoading = false)
-                            newPages
-                        }
-                    }
-                }
             }
         }
     }
