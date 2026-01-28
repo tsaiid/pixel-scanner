@@ -11,7 +11,7 @@ class PixelScannerApp : Application() {
     }
 
     private fun initOpenCV() {
-        if (OpenCVLoader.initDebug()) {
+        if (OpenCVLoader.initLocal()) {
             Log.d("PixelScanner", "OpenCV initialized successfully")
         } else {
             Log.e("PixelScanner", "OpenCV initialization failed")
