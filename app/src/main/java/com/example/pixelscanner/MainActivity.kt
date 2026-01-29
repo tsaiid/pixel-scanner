@@ -15,8 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,18 +29,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pixelscanner.scanner.ScannerManager
+import com.example.pixelscanner.ui.ExportFormat
 import com.example.pixelscanner.ui.ReviewScreen
 import com.example.pixelscanner.ui.ReviewViewModel
+import com.example.pixelscanner.ui.StartScreen
+import com.example.pixelscanner.ui.theme.PixelScannerTheme
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            PixelScannerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -75,25 +75,26 @@ fun AppNavigation() {
             ScannerScreen(
                 shouldAutoStart = autoStartScanner,
                 onScanResult = { uris ->
-                    autoStartScanner = false
                     reviewViewModel.setScannedUris(uris, context)
                     currentScreen = Screen.REVIEW
                 },
                 onScanCancelled = {
-                    autoStartScanner = false
+                    if (autoStartScanner) {
+                        autoStartScanner = false
+                    }
                 }
             )
         }
         Screen.REVIEW -> {
             ReviewScreen(
                 viewModel = reviewViewModel,
-                onSave = { 
+                onSave = {
                     val format = reviewViewModel.exportFormat.value
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     reviewViewModel.saveAll(context) {
-                        val message = if (format == com.example.pixelscanner.ui.ExportFormat.PDF) 
-                            "Saved as PDF to Documents" 
-                        else 
+                        val message = if (format == ExportFormat.PDF)
+                            "Saved as PDF to Documents"
+                        else
                             "Saved to Gallery"
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
@@ -115,7 +116,6 @@ fun ScannerScreen(
 ) {
     val context = LocalContext.current
     val scannerManager = remember { ScannerManager(context) }
-    var statusMessage by remember { mutableStateOf("Ready to Scan") }
 
     val scannerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -127,17 +127,15 @@ fun ScannerScreen(
                 if (uris.isNotEmpty()) {
                     onScanResult(uris)
                 } else {
-                    statusMessage = "No pages scanned"
                     onScanCancelled()
                 }
             }
         } else {
-            statusMessage = "Scan cancelled or failed"
             onScanCancelled()
         }
     }
 
-    val launchScanner = {
+    fun launchScanner() {
         try {
             val activity = context.findActivity()
             if (activity != null) {
@@ -148,7 +146,6 @@ fun ScannerScreen(
                         )
                     }
                     .addOnFailureListener { e ->
-                        statusMessage = "Error: ${e.message}"
                         e.printStackTrace()
                         Toast.makeText(context, "Error starting scanner: ${e.message}", Toast.LENGTH_LONG).show()
                         onScanCancelled()
@@ -159,7 +156,6 @@ fun ScannerScreen(
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            statusMessage = "Crash detected: ${e.message}"
             Toast.makeText(context, "Crash: ${e.message}", Toast.LENGTH_LONG).show()
             onScanCancelled()
         }
@@ -171,19 +167,17 @@ fun ScannerScreen(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        if (shouldAutoStart) {
+    if (shouldAutoStart) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(text = "Resuming Scanner...", style = MaterialTheme.typography.headlineSmall)
-        } else {
-            Text(text = statusMessage, style = MaterialTheme.typography.headlineSmall)
-
-            Button(onClick = { launchScanner() }) {
-                Text("Start Scanning")
-            }
         }
+    } else {
+        StartScreen(
+            onStartScanClicked = { launchScanner() }
+        )
     }
 }

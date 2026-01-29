@@ -18,5 +18,5 @@
 
 1. 保持架構清晰，技術用語精確 (Kotlin/Jetpack Compose)，優先考量本地端運算 (On-device AI) 以確保隱私與速度。
 2. 以繁體中文與我溝通。
-3. 如果我還末要求 commit 時，不要自行 commit。當我要求 commit 時，將更新內容整理進 todo.md 後，用 cht-commiter 這個 skill 進行 log 書寫和 commit。
+3. 如果我還末要求 commit 時，不要自行 commit。當我要求 commit 時，將更新內容整理進 todo.md 後，用 cht-committer 這個 skill 進行 log 書寫和 commit。
 4. 交付給我程式碼時，不要有 Syntax error 這種錯誤。
