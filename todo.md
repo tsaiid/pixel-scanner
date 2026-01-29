@@ -38,7 +38,8 @@
     - [x] 實作 `StorageManager`。
     - [x] 處理 Android 10+ Scoped Storage 邏輯 (`ContentResolver`, `MediaStore`)。
     - [x] 實作 `saveImageToGallery(bitmap)`。
-    - [x] 實作 `savePdf(uri)` (若 ML Kit 已產生 PDF，直接 copy 到公開目錄；若需包含去陰影效果，則需使用 `PdfDocument` 重新繪製)。
+    - [x] 實作 `savePdf(uri)`。
+    - [x] **新增：支援選擇 JPEG 或 PDF 輸出格式並在預覽頁面切換。**
 
 ## Phase 5: 優化與測試
 - [x] **Pixel 10 專項優化**

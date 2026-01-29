@@ -20,10 +20,21 @@ data class ScannedPage(
     val originalBitmap: Bitmap? = null
 )
 
+enum class ExportFormat {
+    IMAGE, PDF
+}
+
 class ReviewViewModel : ViewModel() {
 
     private val _scannedPages = MutableStateFlow<List<ScannedPage>>(emptyList())
     val scannedPages: StateFlow<List<ScannedPage>> = _scannedPages.asStateFlow()
+
+    private val _exportFormat = MutableStateFlow(ExportFormat.IMAGE)
+    val exportFormat: StateFlow<ExportFormat> = _exportFormat.asStateFlow()
+
+    fun setExportFormat(format: ExportFormat) {
+        _exportFormat.value = format
+    }
 
     fun setScannedUris(uris: List<Uri>, context: Context) {
         viewModelScope.launch {
@@ -39,14 +50,22 @@ class ReviewViewModel : ViewModel() {
         viewModelScope.launch {
             val storageManager = StorageManager(context)
             val pages = _scannedPages.value
+            val format = _exportFormat.value
             val timestamp = System.currentTimeMillis()
             
-            pages.forEachIndexed { index, page ->
-                val bitmapToSave = page.originalBitmap
-                
-                if (bitmapToSave != null) {
-                    val filename = "PixelScanner_${timestamp}_$index.jpg"
-                    storageManager.saveBitmapToGallery(bitmapToSave, filename)
+            if (format == ExportFormat.PDF) {
+                val bitmaps = pages.mapNotNull { it.originalBitmap }
+                if (bitmaps.isNotEmpty()) {
+                    storageManager.saveBitmapsToPdf(bitmaps, "PixelScanner_$timestamp.pdf")
+                }
+            } else {
+                pages.forEachIndexed { index, page ->
+                    val bitmapToSave = page.originalBitmap
+                    
+                    if (bitmapToSave != null) {
+                        val filename = "PixelScanner_${timestamp}_$index.jpg"
+                        storageManager.saveBitmapToGallery(bitmapToSave, filename)
+                    }
                 }
             }
             

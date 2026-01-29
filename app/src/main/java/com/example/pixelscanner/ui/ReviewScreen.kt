@@ -7,16 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,6 +35,7 @@ fun ReviewScreen(
     onBack: () -> Unit
 ) {
     val scannedPages by viewModel.scannedPages.collectAsState()
+    val exportFormat by viewModel.exportFormat.collectAsState()
     val pagerState = rememberPagerState(pageCount = { scannedPages.size })
 
     Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -48,6 +47,24 @@ fun ReviewScreen(
             Button(onClick = onBack) { Text("Back") }
             Text("Review (${pagerState.currentPage + 1}/${scannedPages.size})", color = Color.White)
             Button(onClick = onSave) { Text("Save All") }
+        }
+
+        TabRow(
+            selectedTabIndex = if (exportFormat == ExportFormat.IMAGE) 0 else 1,
+            containerColor = Color.Transparent,
+            contentColor = Color.White,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Tab(
+                selected = exportFormat == ExportFormat.IMAGE,
+                onClick = { viewModel.setExportFormat(ExportFormat.IMAGE) },
+                text = { Text("JPEG") }
+            )
+            Tab(
+                selected = exportFormat == ExportFormat.PDF,
+                onClick = { viewModel.setExportFormat(ExportFormat.PDF) },
+                text = { Text("PDF") }
+            )
         }
 
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
