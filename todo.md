@@ -39,13 +39,11 @@
     - [x] **新增：支援選擇 JPEG 或 PDF 輸出格式並在預覽頁面切換。**
 
 ## Phase 5: 優化與測試 (Current Focus)
-- [x] **Memory Optimization (High Priority)**
-    - [x] Refactor `ReviewViewModel`: Remove `Bitmap` storage, hold `Uri` only.
-    - [x] Update `ReviewScreen`: Use Coil `AsyncImage` for display.
-    - [x] Optimize `StorageManager`: Implement Stream Copy for JPEGs and Just-in-Time decoding for PDF generation.
 - [x] **UX Polish**
     - [x] Add "Delete Page" functionality in Review Screen.
     - [x] Improve Review Screen UI (Toolbar, Layout).
+    - [x] **Add README.md for project documentation.**
+- [x] **Memory Optimization (High Priority)**
 
 ## Phase 6: 進階影像處理 (Complete)
 - [x] **Image Processing Pipeline**
