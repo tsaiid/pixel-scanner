@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.compose.BackHandler
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -34,6 +35,8 @@ fun ReviewScreen(
     onSave: () -> Unit,
     onBack: () -> Unit
 ) {
+    BackHandler(onBack = onBack)
+
     val scannedPages by viewModel.scannedPages.collectAsState()
     val exportFormat by viewModel.exportFormat.collectAsState()
     val pagerState = rememberPagerState(pageCount = { scannedPages.size })
@@ -44,7 +47,7 @@ fun ReviewScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = onBack) { Text("Back") }
+            Button(onClick = onBack) { Text("Rescan") }
             Text("Review (${pagerState.currentPage + 1}/${scannedPages.size})", color = Color.White)
             Button(onClick = onSave) { Text("Save All") }
         }

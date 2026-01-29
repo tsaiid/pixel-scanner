@@ -48,3 +48,6 @@
 - [x] **UI Polish**
     - [x] 加入圖片載入時的 Shimmer effect (Basic loading indicator implemented).
     - [x] 加入處理前後的對比動畫 (Crossfade) (Using basic switching).
+- [x] **Navigation & UX**
+    - [x] 處理 Review 頁面的系統返回手勢 (BackHandler)，防止直接退出 App。
+    - [x] 實作「Rescan (放棄並重啟)」邏輯，處理 ML Kit Session 無法回復的限制。

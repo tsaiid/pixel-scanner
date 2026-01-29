@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +65,7 @@ enum class Screen { HOME, REVIEW }
 @Composable
 fun AppNavigation() {
     var currentScreen by remember { mutableStateOf(Screen.HOME) }
+    var autoStartScanner by remember { mutableStateOf(false) }
     val reviewViewModel: ReviewViewModel = viewModel()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -71,9 +73,14 @@ fun AppNavigation() {
     when (currentScreen) {
         Screen.HOME -> {
             ScannerScreen(
+                shouldAutoStart = autoStartScanner,
                 onScanResult = { uris ->
+                    autoStartScanner = false
                     reviewViewModel.setScannedUris(uris, context)
                     currentScreen = Screen.REVIEW
+                },
+                onScanCancelled = {
+                    autoStartScanner = false
                 }
             )
         }
@@ -92,6 +99,7 @@ fun AppNavigation() {
                     }
                 },
                 onBack = {
+                    autoStartScanner = true
                     currentScreen = Screen.HOME
                 }
             )
@@ -100,7 +108,11 @@ fun AppNavigation() {
 }
 
 @Composable
-fun ScannerScreen(onScanResult: (List<Uri>) -> Unit) {
+fun ScannerScreen(
+    shouldAutoStart: Boolean = false,
+    onScanResult: (List<Uri>) -> Unit,
+    onScanCancelled: () -> Unit = {}
+) {
     val context = LocalContext.current
     val scannerManager = remember { ScannerManager(context) }
     var statusMessage by remember { mutableStateOf("Ready to Scan") }
@@ -116,10 +128,46 @@ fun ScannerScreen(onScanResult: (List<Uri>) -> Unit) {
                     onScanResult(uris)
                 } else {
                     statusMessage = "No pages scanned"
+                    onScanCancelled()
                 }
             }
         } else {
             statusMessage = "Scan cancelled or failed"
+            onScanCancelled()
+        }
+    }
+
+    val launchScanner = {
+        try {
+            val activity = context.findActivity()
+            if (activity != null) {
+                scannerManager.getScanner().getStartScanIntent(activity)
+                    .addOnSuccessListener { intentSender ->
+                        scannerLauncher.launch(
+                            IntentSenderRequest.Builder(intentSender).build()
+                        )
+                    }
+                    .addOnFailureListener { e ->
+                        statusMessage = "Error: ${e.message}"
+                        e.printStackTrace()
+                        Toast.makeText(context, "Error starting scanner: ${e.message}", Toast.LENGTH_LONG).show()
+                        onScanCancelled()
+                    }
+            } else {
+                Toast.makeText(context, "Activity not found", Toast.LENGTH_SHORT).show()
+                onScanCancelled()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            statusMessage = "Crash detected: ${e.message}"
+            Toast.makeText(context, "Crash: ${e.message}", Toast.LENGTH_LONG).show()
+            onScanCancelled()
+        }
+    }
+
+    LaunchedEffect(shouldAutoStart) {
+        if (shouldAutoStart) {
+            launchScanner()
         }
     }
 
@@ -128,33 +176,14 @@ fun ScannerScreen(onScanResult: (List<Uri>) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(text = statusMessage, style = MaterialTheme.typography.headlineSmall)
+        if (shouldAutoStart) {
+            Text(text = "Resuming Scanner...", style = MaterialTheme.typography.headlineSmall)
+        } else {
+            Text(text = statusMessage, style = MaterialTheme.typography.headlineSmall)
 
-        Button(onClick = {
-            try {
-                val activity = context.findActivity()
-                if (activity != null) {
-                    scannerManager.getScanner().getStartScanIntent(activity)
-                        .addOnSuccessListener { intentSender ->
-                            scannerLauncher.launch(
-                                IntentSenderRequest.Builder(intentSender).build()
-                            )
-                        }
-                        .addOnFailureListener { e ->
-                            statusMessage = "Error: ${e.message}"
-                            e.printStackTrace()
-                            Toast.makeText(context, "Error starting scanner: ${e.message}", Toast.LENGTH_LONG).show()
-                        }
-                } else {
-                    Toast.makeText(context, "Activity not found", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                statusMessage = "Crash detected: ${e.message}"
-                Toast.makeText(context, "Crash: ${e.message}", Toast.LENGTH_LONG).show()
+            Button(onClick = { launchScanner() }) {
+                Text("Start Scanning")
             }
-        }) {
-            Text("Start Scanning")
         }
     }
 }
