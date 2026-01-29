@@ -12,9 +12,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import com.example.pixelscanner.image.ImageProcessor
+
 data class ScannedPage(
-    val originalUri: Uri
-)
+    val originalUri: Uri,
+    val enhancedUri: Uri? = null,
+    val isEnhanced: Boolean = false
+) {
+    fun getDisplayUri(): Uri {
+        return if (isEnhanced && enhancedUri != null) enhancedUri else originalUri
+    }
+}
 
 enum class ExportFormat {
     IMAGE, PDF
@@ -24,6 +32,9 @@ class ReviewViewModel : ViewModel() {
 
     private val _scannedPages = MutableStateFlow<List<ScannedPage>>(emptyList())
     val scannedPages: StateFlow<List<ScannedPage>> = _scannedPages.asStateFlow()
+    
+    private val _isProcessing = MutableStateFlow(false)
+    val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
 
     private val _exportFormat = MutableStateFlow(ExportFormat.IMAGE)
     val exportFormat: StateFlow<ExportFormat> = _exportFormat.asStateFlow()
@@ -35,6 +46,40 @@ class ReviewViewModel : ViewModel() {
     fun setScannedUris(uris: List<Uri>, context: Context) {
         // Simply map URIs to ScannedPage, no heavy loading here
         _scannedPages.value = uris.map { ScannedPage(originalUri = it) }
+    }
+    
+    fun toggleEnhancement(index: Int, context: Context) {
+        val currentList = _scannedPages.value.toMutableList()
+        if (index !in currentList.indices) return
+        
+        val page = currentList[index]
+        
+        viewModelScope.launch {
+            if (page.isEnhanced) {
+                // Revert to original
+                currentList[index] = page.copy(isEnhanced = false)
+                _scannedPages.value = currentList
+            } else {
+                // Switch to enhanced
+                if (page.enhancedUri != null) {
+                    // Already processed, just switch
+                    currentList[index] = page.copy(isEnhanced = true)
+                    _scannedPages.value = currentList
+                } else {
+                    // Need to process
+                    _isProcessing.value = true
+                    try {
+                        val enhanced = ImageProcessor.enhanceImage(context, page.originalUri)
+                        currentList[index] = page.copy(enhancedUri = enhanced, isEnhanced = true)
+                        _scannedPages.value = currentList
+                    } catch (e: Exception) {
+                        e.printStackTrace() // Handle error appropriately
+                    } finally {
+                        _isProcessing.value = false
+                    }
+                }
+            }
+        }
     }
     
     fun deletePage(index: Int) {
@@ -60,15 +105,17 @@ class ReviewViewModel : ViewModel() {
             val format = _exportFormat.value
             val timestamp = System.currentTimeMillis()
             
+            // Determine which URIs to save (Original vs Enhanced)
+            val urisToSave = pages.map { it.getDisplayUri() }
+            
             if (format == ExportFormat.PDF) {
-                val uris = pages.map { it.originalUri }
-                if (uris.isNotEmpty()) {
-                    storageManager.saveUrisToPdf(uris, "PixelScanner_$timestamp.pdf")
+                if (urisToSave.isNotEmpty()) {
+                    storageManager.saveUrisToPdf(urisToSave, "PixelScanner_$timestamp.pdf")
                 }
             } else {
-                pages.forEachIndexed { index, page ->
+                urisToSave.forEachIndexed { index, uri ->
                     val filename = "PixelScanner_${timestamp}_$index.jpg"
-                    storageManager.saveUriToGallery(page.originalUri, filename)
+                    storageManager.saveUriToGallery(uri, filename)
                 }
             }
             

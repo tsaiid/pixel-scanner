@@ -7,17 +7,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -36,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -50,8 +57,10 @@ fun ReviewScreen(
 ) {
     BackHandler(onBack = onBack)
 
+    val context = LocalContext.current
     val scannedPages by viewModel.scannedPages.collectAsState()
     val exportFormat by viewModel.exportFormat.collectAsState()
+    val isProcessing by viewModel.isProcessing.collectAsState()
     val pagerState = rememberPagerState(pageCount = { scannedPages.size })
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -73,35 +82,90 @@ fun ReviewScreen(
                 .padding(innerPadding)
                 .background(Color.Black)
         ) {
-                        // Top Toolbar
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+            // 1. Navigation Row (Rescan & Save All)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Button(
+                    onClick = onBack,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.DarkGray,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Text("Rescan")
+                }
+
+                if (scannedPages.isNotEmpty()) {
+                    Button(
+                        onClick = onSave,
+                        modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
-                        Button(
-                            onClick = onBack,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.DarkGray,
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text("Rescan")
-                        }
-                        
-                        if (scannedPages.isNotEmpty()) {                    Text(
-                        "Review (${pagerState.currentPage + 1}/${scannedPages.size})",
-                        color = Color.White
+                        Text("Save All")
+                    }
+                }
+            }
+
+            if (scannedPages.isNotEmpty()) {
+                // 2, 3, 4. Centered Info & Actions
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Review",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium
                     )
-                    
-                    Row {
+                    Text(
+                        text = "(${pagerState.currentPage + 1}/${scannedPages.size})",
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        // Magic Wand (Enhance)
                         IconButton(
-                            onClick = { 
+                            onClick = {
+                                viewModel.toggleEnhancement(pagerState.currentPage, context)
+                            },
+                            enabled = !isProcessing
+                        ) {
+                            if (isProcessing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .size(24.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "Enhance",
+                                    tint = if (scannedPages.getOrNull(pagerState.currentPage)?.isEnhanced == true) Color.Yellow else Color.White
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(32.dp))
+
+                        // Delete
+                        IconButton(
+                            onClick = {
                                 val pageToDelete = scannedPages.getOrNull(pagerState.currentPage)
                                 val indexToDelete = pagerState.currentPage
                                 if (pageToDelete != null) {
                                     viewModel.deletePage(indexToDelete)
-                                    
+
                                     scope.launch {
                                         val result = snackbarHostState.showSnackbar(
                                             message = "Page deleted",
@@ -120,10 +184,6 @@ fun ReviewScreen(
                                 contentDescription = "Delete Page",
                                 tint = Color.Red
                             )
-                        }
-                        
-                        Button(onClick = onSave) {
-                            Text("Save All")
                         }
                     }
                 }
@@ -155,7 +215,7 @@ fun ReviewScreen(
                             val page = scannedPages[pageIndex]
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 AsyncImage(
-                                    model = page.originalUri,
+                                    model = page.getDisplayUri(),
                                     contentDescription = "Scanned Page $pageIndex",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Fit

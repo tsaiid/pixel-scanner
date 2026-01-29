@@ -47,8 +47,8 @@
     - [x] Add "Delete Page" functionality in Review Screen.
     - [x] Improve Review Screen UI (Toolbar, Layout).
 
-## Phase 6: 進階影像處理 (Deferred)
-- [ ] **Image Processing Pipeline**
-    - [ ] Implement `ImageProcessor` class.
-    - [ ] Implement Lightness Equalization algorithm.
-    - [ ] Connect "Enhanced Mode" toggle in Review Screen.
+## Phase 6: 進階影像處理 (Complete)
+- [x] **Image Processing Pipeline**
+    - [x] Implement `ImageProcessor` class (Simple Lightness Equalization).
+    - [x] Implement Lightness Equalization algorithm (Background Estimation & Division).
+    - [x] Connect "Enhanced Mode" toggle in Review Screen.
