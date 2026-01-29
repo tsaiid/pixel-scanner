@@ -1,8 +1,6 @@
 package com.example.pixelscanner.ui
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,13 +9,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class ScannedPage(
-    val originalUri: Uri,
-    val originalBitmap: Bitmap? = null
+    val originalUri: Uri
 )
 
 enum class ExportFormat {
@@ -37,12 +33,23 @@ class ReviewViewModel : ViewModel() {
     }
 
     fun setScannedUris(uris: List<Uri>, context: Context) {
-        viewModelScope.launch {
-            val pages = uris.map { uri ->
-                val bitmap = loadBitmapFromUri(context, uri)
-                ScannedPage(originalUri = uri, originalBitmap = bitmap)
-            }
-            _scannedPages.value = pages
+        // Simply map URIs to ScannedPage, no heavy loading here
+        _scannedPages.value = uris.map { ScannedPage(originalUri = it) }
+    }
+    
+    fun deletePage(index: Int) {
+        val currentList = _scannedPages.value.toMutableList()
+        if (index in currentList.indices) {
+            currentList.removeAt(index)
+            _scannedPages.value = currentList
+        }
+    }
+
+    fun restorePage(index: Int, page: ScannedPage) {
+        val currentList = _scannedPages.value.toMutableList()
+        if (index >= 0 && index <= currentList.size) {
+            currentList.add(index, page)
+            _scannedPages.value = currentList
         }
     }
     
@@ -54,35 +61,20 @@ class ReviewViewModel : ViewModel() {
             val timestamp = System.currentTimeMillis()
             
             if (format == ExportFormat.PDF) {
-                val bitmaps = pages.mapNotNull { it.originalBitmap }
-                if (bitmaps.isNotEmpty()) {
-                    storageManager.saveBitmapsToPdf(bitmaps, "PixelScanner_$timestamp.pdf")
+                val uris = pages.map { it.originalUri }
+                if (uris.isNotEmpty()) {
+                    storageManager.saveUrisToPdf(uris, "PixelScanner_$timestamp.pdf")
                 }
             } else {
                 pages.forEachIndexed { index, page ->
-                    val bitmapToSave = page.originalBitmap
-                    
-                    if (bitmapToSave != null) {
-                        val filename = "PixelScanner_${timestamp}_$index.jpg"
-                        storageManager.saveBitmapToGallery(bitmapToSave, filename)
-                    }
+                    val filename = "PixelScanner_${timestamp}_$index.jpg"
+                    storageManager.saveUriToGallery(page.originalUri, filename)
                 }
             }
             
             withContext(Dispatchers.Main) {
                 onComplete()
             }
-        }
-    }
-
-    private suspend fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? = withContext(Dispatchers.IO) {
-        try {
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                BitmapFactory.decodeStream(inputStream)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 }

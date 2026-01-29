@@ -3,6 +3,7 @@ package com.example.pixelscanner.storage
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Build
@@ -13,7 +14,7 @@ import kotlinx.coroutines.withContext
 
 class StorageManager(private val context: Context) {
 
-    suspend fun saveBitmapToGallery(bitmap: Bitmap, fileName: String): Uri? = withContext(Dispatchers.IO) {
+    suspend fun saveUriToGallery(sourceUri: Uri, fileName: String): Uri? = withContext(Dispatchers.IO) {
         val resolver = context.contentResolver
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
@@ -24,39 +25,58 @@ class StorageManager(private val context: Context) {
             }
         }
 
-        val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+        val destinationUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
-        imageUri?.let { uri ->
+        destinationUri?.let { destUri ->
             try {
-                resolver.openOutputStream(uri)?.use { outputStream ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+                resolver.openInputStream(sourceUri)?.use { inputStream ->
+                    resolver.openOutputStream(destUri)?.use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
                 }
                 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     contentValues.clear()
                     contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                    resolver.update(uri, contentValues, null, null)
+                    resolver.update(destUri, contentValues, null, null)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                resolver.delete(uri, null, null)
+                resolver.delete(destUri, null, null)
                 return@withContext null
             }
         }
-        return@withContext imageUri
+        return@withContext destinationUri
     }
 
-    suspend fun saveBitmapsToPdf(bitmaps: List<Bitmap>, fileName: String): Uri? = withContext(Dispatchers.IO) {
+    suspend fun saveUrisToPdf(sourceUris: List<Uri>, fileName: String): Uri? = withContext(Dispatchers.IO) {
         val pdfDocument = PdfDocument()
+        val resolver = context.contentResolver
         
-        bitmaps.forEachIndexed { index, bitmap ->
-            val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
-            val page = pdfDocument.startPage(pageInfo)
-            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-            pdfDocument.finishPage(page)
+        try {
+            sourceUris.forEachIndexed { index, uri ->
+                // Decode bitmap strictly for this page and recycle immediately after drawing if possible
+                // Note: BitmapFactory.decodeStream might return null if uri is invalid
+                val inputStream = resolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+
+                if (bitmap != null) {
+                    val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
+                    val page = pdfDocument.startPage(pageInfo)
+                    page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                    pdfDocument.finishPage(page)
+                    
+                    // Explicitly recycle bitmap to free native memory
+                    bitmap.recycle()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            pdfDocument.close()
+            return@withContext null
         }
 
-        val resolver = context.contentResolver
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")

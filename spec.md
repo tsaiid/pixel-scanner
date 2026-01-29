@@ -42,10 +42,16 @@ ML Kit 雖然內建濾鏡，但為了達成「去陰影」與「還原」的精�
     * 在 ML Kit 介面中確認裁切範圍。
     * 點擊「完成」。
 3.  **App Review Screen (自定義預覽頁):**
-    * 顯示剛剛掃描的圖片清單 (Grid/Carousel)。
-    * **單圖編輯模式:** 點擊圖片放大，下方顯示 Toggle Switch：「原圖」vs「去陰影增強」。
+    * 顯示剛剛掃描的圖片清單 (Grid/Carousel)，使用非同步載入 (Coil) 避免記憶體溢出。
+    * **編輯/管理:** 
+        * 刪除單頁 (Delete Page)。
+        * 單圖編輯模式 (待實作): 點擊圖片放大，下方顯示 Toggle Switch：「原圖」vs「去陰影增強」。
     * **批次動作:** 底部按鈕「全部儲存到相簿」、「分享 PDF」。
 
 ## 5. 技術限制與邊界條件 (Constraints)
 * **隱私:** 所有運算必須在裝置端 (On-device) 完成，禁止上傳圖片至雲端伺服器處理。
 * **效能:** 去陰影演算法處理單張 12MP 圖片的時間需控制在 1秒內 (利用 Pixel Tensor G5 效能)。
+* **記憶體管理:** 
+    * 嚴禁在 ViewModel 中持有全尺寸 Bitmap 列表。
+    * 預覽圖需透過 Coil 等 Image Loader 非同步載入。
+    * 儲存時採 Just-in-Time 載入或 Stream Copy，避免 OOM。

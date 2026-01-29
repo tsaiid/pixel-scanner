@@ -24,16 +24,13 @@
 - [x] 啟用 `setGalleryImportAllowed` 與 `setResultFormats`。
 - [x] 測試 Tensor G5 在 ML Kit 運算時的熱度與速度 (Simulated).
 
-## Phase 3: 自定義預覽與編輯 UI
+## Phase 3: 自定義預覽與編輯 UI (MVP)
 - [x] **Review Screen UI**
     - [x] 建立 `ReviewViewModel` 暫存 ML Kit 回傳的 URI 列表。
     - [x] 實作水平捲動的圖片預覽區 (HorizontalPager)。
     - [x] 實作「去陰影」開關 (Switch/Button)。
-    - [x] 邏輯連接：
-        - Toggle ON: 呼叫 `ImageProcessor` 產生新圖並顯示 (使用 Cache 避免重複運算)。
-        - Toggle OFF: 顯示原始 URI 圖片。
 
-## Phase 4: 儲存與輸出
+## Phase 4: 儲存與輸出 (MVP)
 - [x] **File Management**
     - [x] 實作 `StorageManager`。
     - [x] 處理 Android 10+ Scoped Storage 邏輯 (`ContentResolver`, `MediaStore`)。
@@ -41,13 +38,17 @@
     - [x] 實作 `savePdf(uri)`。
     - [x] **新增：支援選擇 JPEG 或 PDF 輸出格式並在預覽頁面切換。**
 
-## Phase 5: 優化與測試
-- [x] **Pixel 10 專項優化**
-    - [x] 測試 Tensor G5 在 ML Kit 運算時的熱度與速度 (Simulated).
-    - [x] 加入 Haptic Feedback (震動回饋) 於儲存完成時。
-- [x] **UI Polish**
-    - [x] 加入圖片載入時的 Shimmer effect (Basic loading indicator implemented).
-    - [x] 加入處理前後的對比動畫 (Crossfade) (Using basic switching).
-- [x] **Navigation & UX**
-    - [x] 處理 Review 頁面的系統返回手勢 (BackHandler)，防止直接退出 App。
-    - [x] 實作「Rescan (放棄並重啟)」邏輯，處理 ML Kit Session 無法回復的限制。
+## Phase 5: 優化與測試 (Current Focus)
+- [x] **Memory Optimization (High Priority)**
+    - [x] Refactor `ReviewViewModel`: Remove `Bitmap` storage, hold `Uri` only.
+    - [x] Update `ReviewScreen`: Use Coil `AsyncImage` for display.
+    - [x] Optimize `StorageManager`: Implement Stream Copy for JPEGs and Just-in-Time decoding for PDF generation.
+- [x] **UX Polish**
+    - [x] Add "Delete Page" functionality in Review Screen.
+    - [x] Improve Review Screen UI (Toolbar, Layout).
+
+## Phase 6: 進階影像處理 (Deferred)
+- [ ] **Image Processing Pipeline**
+    - [ ] Implement `ImageProcessor` class.
+    - [ ] Implement Lightness Equalization algorithm.
+    - [ ] Connect "Enhanced Mode" toggle in Review Screen.
