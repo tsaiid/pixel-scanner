@@ -151,7 +151,7 @@
   - 建議使用 Navigation Compose 或至少明確封裝 screen contract。
   - 驗收標準：導航狀態可保存，返回行為一致。
   - [x] 定義 screen route 或等效 contract。
-    - 目前已用 `AppScreen` sealed contract 收斂 `Home` / `Review` 切換，尚未導入 Navigation Compose。
+    - 目前已用 `AppScreen` route contract 收斂 `Home` / `Review` 切換，尚未導入 Navigation Compose。
   - [ ] 決定 scanner return result 如何接回 app flow。
   - [ ] 定義 home -> scanner -> review -> export complete 的導航圖。
   - [ ] 驗證返回鍵行為與 deep restore 行為。
