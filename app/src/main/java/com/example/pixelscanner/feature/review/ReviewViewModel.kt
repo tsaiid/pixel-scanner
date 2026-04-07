@@ -2,7 +2,7 @@ package com.example.pixelscanner.feature.review
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
@@ -17,6 +17,7 @@ import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
+import com.example.pixelscanner.feature.review.ui.ExportUiState
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
@@ -35,12 +36,22 @@ class ReviewViewModel(
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
 
-    private val _uiState = MutableStateFlow(ReviewUiState())
+    private val _uiState = MutableStateFlow(
+        ReviewUiState(
+            currentPage = savedStateHandle.get<Int>(KEY_CURRENT_PAGE) ?: 0,
+            export = ExportUiState(
+                format = savedStateHandle.get<String>(KEY_EXPORT_FORMAT)
+                    ?.let(ExportFormat::valueOf)
+                    ?: ExportFormat.IMAGE,
+            ),
+        )
+    )
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
 
     private val _effects = MutableSharedFlow<ReviewUiEffect>()
@@ -67,6 +78,7 @@ class ReviewViewModel(
     }
 
     private fun setExportFormat(format: ExportFormat) {
+        savedStateHandle[KEY_EXPORT_FORMAT] = format.name
         updateUiState { currentState ->
             currentState.copy(export = currentState.export.copy(format = format))
         }
@@ -75,7 +87,9 @@ class ReviewViewModel(
     private fun setCurrentPage(pageIndex: Int) {
         updateUiState { currentState ->
             val lastIndex = (currentState.pages.size - 1).coerceAtLeast(0)
-            currentState.copy(currentPage = pageIndex.coerceIn(0, lastIndex))
+            val coercedPage = pageIndex.coerceIn(0, lastIndex)
+            savedStateHandle[KEY_CURRENT_PAGE] = coercedPage
+            currentState.copy(currentPage = coercedPage)
         }
     }
 
@@ -170,15 +184,19 @@ class ReviewViewModel(
         updateUiState { currentState ->
             val activePages = session.activePages().map { it.toUiModel() }
             val lastIndex = (activePages.size - 1).coerceAtLeast(0)
+            val currentPage = currentState.currentPage.coerceIn(0, lastIndex)
+            savedStateHandle[KEY_CURRENT_PAGE] = currentPage
             currentState.copy(
                 pages = activePages,
-                currentPage = currentState.currentPage.coerceIn(0, lastIndex),
+                currentPage = currentPage,
             )
         }
     }
 
     private fun clearSessionState() {
         _scanSession.value = null
+        savedStateHandle[KEY_CURRENT_PAGE] = 0
+        savedStateHandle[KEY_EXPORT_FORMAT] = ExportFormat.IMAGE.name
         _uiState.value = ReviewUiState()
     }
 
@@ -195,6 +213,9 @@ private fun ScannedPage.toUiModel(): ReviewPageUiModel {
     )
 }
 
+private const val KEY_CURRENT_PAGE = "review_current_page"
+private const val KEY_EXPORT_FORMAT = "review_export_format"
+
 class ReviewViewModelFactory(
     private val createSessionFromScanResultUseCase: CreateSessionFromScanResultUseCase,
     private val toggleEnhancementUseCase: ToggleEnhancementUseCase,
@@ -202,9 +223,14 @@ class ReviewViewModelFactory(
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
-) : ViewModelProvider.Factory {
+    owner: androidx.savedstate.SavedStateRegistryOwner,
+) : androidx.lifecycle.AbstractSavedStateViewModelFactory(owner, null) {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(
+        key: String,
+        modelClass: Class<T>,
+        handle: SavedStateHandle,
+    ): T {
         require(modelClass.isAssignableFrom(ReviewViewModel::class.java)) {
             "Unsupported ViewModel class: ${modelClass.name}"
         }
@@ -215,6 +241,7 @@ class ReviewViewModelFactory(
             restorePageUseCase = restorePageUseCase,
             exportSessionUseCase = exportSessionUseCase,
             discardSessionUseCase = discardSessionUseCase,
+            savedStateHandle = handle,
         ) as T
     }
 }

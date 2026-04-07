@@ -156,7 +156,8 @@
   - 驗收標準：旋轉螢幕與 process recreation 時不會意外丟失流程狀態。
   - [~] 盤點目前依賴 `remember` 的流程狀態。
     - app-level current screen 與 home auto-start flag 已改成 saveable state；home intro animation 也已改為 saveable；其餘畫面內流程狀態仍待盤點。
-  - [ ] 將必要狀態移至 ViewModel / SavedStateHandle。
+  - [~] 將必要狀態移至 ViewModel / SavedStateHandle。
+    - review 的 current page 與 export format 已接入 SavedStateHandle；其餘需要保存的狀態仍待盤點。
   - [ ] 驗證 configuration change。
   - [ ] 驗證 process death restore 策略。
 

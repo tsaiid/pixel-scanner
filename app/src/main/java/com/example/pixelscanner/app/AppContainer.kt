@@ -7,6 +7,7 @@ import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ReviewViewModelFactory
+import androidx.savedstate.SavedStateRegistryOwner
 
 class AppContainer {
     val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
@@ -16,12 +17,15 @@ class AppContainer {
     val restorePageUseCase = RestorePageUseCase()
     val exportSessionUseCase = ExportSessionUseCase()
 
-    val reviewViewModelFactory = ReviewViewModelFactory(
-        createSessionFromScanResultUseCase = createSessionFromScanResultUseCase,
-        toggleEnhancementUseCase = toggleEnhancementUseCase,
-        deletePageUseCase = deletePageUseCase,
-        discardSessionUseCase = discardSessionUseCase,
-        restorePageUseCase = restorePageUseCase,
-        exportSessionUseCase = exportSessionUseCase,
-    )
+    fun createReviewViewModelFactory(owner: SavedStateRegistryOwner): ReviewViewModelFactory {
+        return ReviewViewModelFactory(
+            createSessionFromScanResultUseCase = createSessionFromScanResultUseCase,
+            toggleEnhancementUseCase = toggleEnhancementUseCase,
+            deletePageUseCase = deletePageUseCase,
+            discardSessionUseCase = discardSessionUseCase,
+            restorePageUseCase = restorePageUseCase,
+            exportSessionUseCase = exportSessionUseCase,
+            owner = owner,
+        )
+    }
 }

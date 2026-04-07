@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.PixelScannerApp
 import com.example.pixelscanner.feature.home.ui.HomeUiState
@@ -24,7 +25,10 @@ fun AppNavigation() {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val appContainer = (context.applicationContext as PixelScannerApp).appContainer
-    val reviewViewModel: ReviewViewModel = viewModel(factory = appContainer.reviewViewModelFactory)
+    val reviewViewModelFactory = appContainer.createReviewViewModelFactory(
+        owner = context as SavedStateRegistryOwner,
+    )
+    val reviewViewModel: ReviewViewModel = viewModel(factory = reviewViewModelFactory)
     val homeUiState = HomeUiState(shouldAutoStartScanner = shouldAutoStartScanner)
 
     when (currentScreen) {
