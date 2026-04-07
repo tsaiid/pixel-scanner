@@ -2,6 +2,7 @@ package com.example.pixelscanner.feature.review
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
@@ -26,12 +27,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
-class ReviewViewModel : ViewModel() {
-    private val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
-    private val toggleEnhancementUseCase = ToggleEnhancementUseCase()
-    private val deletePageUseCase = DeletePageUseCase()
-    private val restorePageUseCase = RestorePageUseCase()
-    private val exportSessionUseCase = ExportSessionUseCase()
+class ReviewViewModel(
+    private val createSessionFromScanResultUseCase: CreateSessionFromScanResultUseCase,
+    private val toggleEnhancementUseCase: ToggleEnhancementUseCase,
+    private val deletePageUseCase: DeletePageUseCase,
+    private val restorePageUseCase: RestorePageUseCase,
+    private val exportSessionUseCase: ExportSessionUseCase,
+) : ViewModel() {
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
@@ -174,4 +176,26 @@ private fun ScannedPage.toUiModel(): ReviewPageUiModel {
         displayUri = displayUri(),
         isEnhanced = isEnhanced(),
     )
+}
+
+class ReviewViewModelFactory(
+    private val createSessionFromScanResultUseCase: CreateSessionFromScanResultUseCase,
+    private val toggleEnhancementUseCase: ToggleEnhancementUseCase,
+    private val deletePageUseCase: DeletePageUseCase,
+    private val restorePageUseCase: RestorePageUseCase,
+    private val exportSessionUseCase: ExportSessionUseCase,
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        require(modelClass.isAssignableFrom(ReviewViewModel::class.java)) {
+            "Unsupported ViewModel class: ${modelClass.name}"
+        }
+        return ReviewViewModel(
+            createSessionFromScanResultUseCase = createSessionFromScanResultUseCase,
+            toggleEnhancementUseCase = toggleEnhancementUseCase,
+            deletePageUseCase = deletePageUseCase,
+            restorePageUseCase = restorePageUseCase,
+            exportSessionUseCase = exportSessionUseCase,
+        ) as T
+    }
 }

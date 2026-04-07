@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.PixelScannerApp
 import com.example.pixelscanner.feature.home.ui.HomeUiState
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewScreen
@@ -25,9 +26,10 @@ private enum class Screen {
 fun AppNavigation() {
     var currentScreen by remember { mutableStateOf(Screen.HOME) }
     var homeUiState by remember { mutableStateOf(HomeUiState()) }
-    val reviewViewModel: ReviewViewModel = viewModel()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val appContainer = (context.applicationContext as PixelScannerApp).appContainer
+    val reviewViewModel: ReviewViewModel = viewModel(factory = appContainer.reviewViewModelFactory)
 
     when (currentScreen) {
         Screen.HOME -> {

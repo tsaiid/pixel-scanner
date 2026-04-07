@@ -138,10 +138,11 @@
 - [ ] 導入依賴注入方案。
   - 建議可選：先用簡單 constructor injection，必要時再導入 Hilt。
   - 驗收標準：ViewModel 與 use case 可被測試替換，不需在測試中直接建立 Android `Context`。
-  - [ ] 先決定是否維持純手動 DI。
-  - [ ] 若手動 DI，建立 app container。
+  - [x] 先決定是否維持純手動 DI。
+  - [x] 若手動 DI，建立 app container。
   - [ ] 若 Hilt，規劃 migration 範圍。
-  - [ ] 將 ViewModel 依賴改由注入提供。
+  - [x] 將 ViewModel 依賴改由注入提供。
+    - 目前 `AppContainer` 提供 review flow 的 use case 與 `ReviewViewModelFactory`，`ReviewViewModel` 不再自行 new use case。
 - [ ] 正式導入 Navigation。
   - 建議使用 Navigation Compose 或至少明確封裝 screen contract。
   - 驗收標準：導航狀態可保存，返回行為一致。
