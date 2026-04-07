@@ -21,12 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.feature.home.ui.StartScreen
+import com.example.pixelscanner.feature.home.ui.HomeUiState
 import com.example.pixelscanner.feature.scanner.ScannerManager
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
 @Composable
 fun ScannerScreen(
-    shouldAutoStart: Boolean = false,
+    homeUiState: HomeUiState = HomeUiState(),
     onScanResult: (ScanResultPayload) -> Unit,
     onScanCancelled: () -> Unit = {},
 ) {
@@ -86,13 +87,13 @@ fun ScannerScreen(
         }
     }
 
-    LaunchedEffect(shouldAutoStart) {
-        if (shouldAutoStart) {
+    LaunchedEffect(homeUiState.shouldAutoStartScanner) {
+        if (homeUiState.shouldAutoStartScanner) {
             launchScanner()
         }
     }
 
-    if (shouldAutoStart) {
+    if (homeUiState.shouldAutoStartScanner) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,

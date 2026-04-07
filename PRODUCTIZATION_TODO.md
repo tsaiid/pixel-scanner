@@ -117,10 +117,11 @@
   - [ ] 將 `ContentResolver` 相關程式集中到 data layer。
   - [ ] 將 temp file、session file、stale cleanup 集中到 repository。
   - [ ] 為 repository 設計測試替身。
-- [~] 建立單向資料流的 UI state 結構。
+  - [~] 建立單向資料流的 UI state 結構。
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
-  - [ ] 為首頁定義 `HomeUiState`。
+  - [x] 為首頁定義 `HomeUiState`。
   - [x] 為 review 定義 `ReviewUiState`。
+  - [~] 首頁狀態已集中成 `HomeUiState`，目前先涵蓋 scanner 自動重啟旗標。
   - [~] review 畫面已改為單一 `uiState` 驅動畫面。
     - 目前 `ReviewUiState` 已收斂 pages、export format、processing flag，畫面不再直接消費 `ScannedPage` domain list。
     - review 畫面互動已透過 `ReviewUiEvent` 送入 ViewModel；刪除 undo、匯出成功、匯出失敗已透過 `ReviewUiEffect` 發送。

@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.feature.home.ui.HomeUiState
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewScreen
 import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
@@ -23,7 +24,7 @@ private enum class Screen {
 @Composable
 fun AppNavigation() {
     var currentScreen by remember { mutableStateOf(Screen.HOME) }
-    var autoStartScanner by remember { mutableStateOf(false) }
+    var homeUiState by remember { mutableStateOf(HomeUiState()) }
     val reviewViewModel: ReviewViewModel = viewModel()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -31,15 +32,13 @@ fun AppNavigation() {
     when (currentScreen) {
         Screen.HOME -> {
             ScannerScreen(
-                shouldAutoStart = autoStartScanner,
+                homeUiState = homeUiState,
                 onScanResult = { scanResult ->
                     reviewViewModel.setScanResult(scanResult)
                     currentScreen = Screen.REVIEW
                 },
                 onScanCancelled = {
-                    if (autoStartScanner) {
-                        autoStartScanner = false
-                    }
+                    homeUiState = homeUiState.copy(shouldAutoStartScanner = false)
                 }
             )
         }
@@ -57,7 +56,7 @@ fun AppNavigation() {
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 },
                 onBack = {
-                    autoStartScanner = true
+                    homeUiState = homeUiState.copy(shouldAutoStartScanner = true)
                     currentScreen = Screen.HOME
                 }
             )
