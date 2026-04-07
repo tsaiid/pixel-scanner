@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +38,7 @@ fun StartScreen(
     onStartScanClicked: () -> Unit
 ) {
     val brandPurple = Color(0xFF541765) // Updated to match icon background #541765
-    var startAnimation by remember { mutableStateOf(false) }
+    var startAnimation by rememberSaveable { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0.8f,
         animationSpec = spring(
