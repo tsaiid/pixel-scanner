@@ -15,6 +15,7 @@ import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,8 +35,16 @@ class ReviewViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ReviewUiState())
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
 
-    fun setExportFormat(format: ExportFormat) {
-        _uiState.value = _uiState.value.copy(exportFormat = format)
+    fun onEvent(event: ReviewUiEvent) {
+        when (event) {
+            is ReviewUiEvent.ChangeExportFormat -> setExportFormat(event.format)
+            is ReviewUiEvent.ToggleEnhancement -> toggleEnhancement(
+                index = event.pageIndex,
+                context = event.context,
+            )
+            is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
+            is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
+        }
     }
 
     fun setScanResult(scanResult: ScanResultPayload) {
@@ -43,7 +52,11 @@ class ReviewViewModel : ViewModel() {
         applySessionUpdate(session)
     }
 
-    fun toggleEnhancement(index: Int, context: Context) {
+    private fun setExportFormat(format: ExportFormat) {
+        _uiState.value = _uiState.value.copy(exportFormat = format)
+    }
+
+    private fun toggleEnhancement(index: Int, context: Context) {
         val session = _scanSession.value ?: return
         val page = session.activePages().getOrNull(index) ?: return
 
@@ -67,13 +80,13 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    fun deletePage(index: Int) {
+    private fun deletePage(index: Int) {
         val session = _scanSession.value ?: return
         val result = deletePageUseCase(session, index) ?: return
         applySessionUpdate(result.updatedSession)
     }
 
-    fun restorePage(pageId: String) {
+    private fun restorePage(pageId: String) {
         val session = _scanSession.value ?: return
         val page = session.pages.firstOrNull { it.id == pageId } ?: return
         applySessionUpdate(restorePageUseCase(session, page))

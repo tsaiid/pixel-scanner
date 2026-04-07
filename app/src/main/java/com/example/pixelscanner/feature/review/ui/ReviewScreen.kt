@@ -48,6 +48,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.feature.review.ReviewViewModel
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RestorePage
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -135,7 +139,12 @@ fun ReviewScreen(
                         // Magic Wand (Enhance)
                         IconButton(
                             onClick = {
-                                viewModel.toggleEnhancement(pagerState.currentPage, context)
+                                viewModel.onEvent(
+                                    ToggleEnhancement(
+                                        pageIndex = pagerState.currentPage,
+                                        context = context,
+                                    )
+                                )
                             },
                             enabled = !uiState.isProcessing
                         ) {
@@ -164,7 +173,7 @@ fun ReviewScreen(
                                 val pageToDelete = uiState.pages.getOrNull(pagerState.currentPage)
                                 val indexToDelete = pagerState.currentPage
                                 if (pageToDelete != null) {
-                                    viewModel.deletePage(indexToDelete)
+                                    viewModel.onEvent(DeletePage(indexToDelete))
 
                                     scope.launch {
                                         val result = snackbarHostState.showSnackbar(
@@ -173,7 +182,7 @@ fun ReviewScreen(
                                             duration = SnackbarDuration.Short
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {
-                                            viewModel.restorePage(pageToDelete.id)
+                                            viewModel.onEvent(RestorePage(pageToDelete.id))
                                         }
                                     }
                                 }
@@ -197,12 +206,12 @@ fun ReviewScreen(
             ) {
                 Tab(
                     selected = uiState.exportFormat == ExportFormat.IMAGE,
-                    onClick = { viewModel.setExportFormat(ExportFormat.IMAGE) },
+                    onClick = { viewModel.onEvent(ChangeExportFormat(ExportFormat.IMAGE)) },
                     text = { Text("JPEG") }
                 )
                 Tab(
                     selected = uiState.exportFormat == ExportFormat.PDF,
-                    onClick = { viewModel.setExportFormat(ExportFormat.PDF) },
+                    onClick = { viewModel.onEvent(ChangeExportFormat(ExportFormat.PDF)) },
                     text = { Text("PDF") }
                 )
             }

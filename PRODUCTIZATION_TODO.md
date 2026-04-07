@@ -121,10 +121,12 @@
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
   - [ ] 為首頁定義 `HomeUiState`。
   - [x] 為 review 定義 `ReviewUiState`。
-  - [~] review 畫面已改為單一 `uiState` 驅動畫面；`UiEvent` / `UiEffect` 尚未拆出。
+  - [~] review 畫面已改為單一 `uiState` 驅動畫面；`UiEffect` 尚未拆出。
     - 目前 `ReviewUiState` 已收斂 pages、export format、processing flag，畫面不再直接消費 `ScannedPage` domain list。
+    - review 畫面互動已透過 `ReviewUiEvent` 送入 ViewModel，save/export completion effect 尚待抽離。
+    - 已事件化的互動包含 export format 切換、頁面增強、刪除與復原。
   - [ ] 為 export 定義 `ExportUiState` 或等效 effect/state。
-  - [ ] 定義 `ReviewUiEvent`。
+  - [x] 定義 `ReviewUiEvent`。
   - [ ] 定義 `ReviewUiEffect`。
   - [ ] 整理 loading、error、selection、pager、batch progress 的責任邊界。
 - [ ] 導入依賴注入方案。
