@@ -1,4 +1,4 @@
-package com.example.pixelscanner.ui
+package com.example.pixelscanner.feature.review
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

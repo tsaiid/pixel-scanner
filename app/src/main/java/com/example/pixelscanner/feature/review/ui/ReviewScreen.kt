@@ -1,4 +1,4 @@
-package com.example.pixelscanner.ui
+package com.example.pixelscanner.feature.review.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.feature.review.ReviewViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)

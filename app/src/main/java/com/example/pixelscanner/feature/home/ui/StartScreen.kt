@@ -1,4 +1,4 @@
-package com.example.pixelscanner.ui
+package com.example.pixelscanner.feature.home.ui
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState

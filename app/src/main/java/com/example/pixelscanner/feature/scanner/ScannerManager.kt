@@ -1,4 +1,4 @@
-package com.example.pixelscanner.scanner
+package com.example.pixelscanner.feature.scanner
 
 import android.content.Context
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
