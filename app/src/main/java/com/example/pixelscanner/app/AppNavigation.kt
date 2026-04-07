@@ -17,14 +17,9 @@ import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewScreen
 import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
 
-private enum class Screen {
-    HOME,
-    REVIEW,
-}
-
 @Composable
 fun AppNavigation() {
-    var currentScreen by remember { mutableStateOf(Screen.HOME) }
+    var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Home) }
     var homeUiState by remember { mutableStateOf(HomeUiState()) }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -32,12 +27,12 @@ fun AppNavigation() {
     val reviewViewModel: ReviewViewModel = viewModel(factory = appContainer.reviewViewModelFactory)
 
     when (currentScreen) {
-        Screen.HOME -> {
+        AppScreen.Home -> {
             ScannerScreen(
                 homeUiState = homeUiState,
                 onScanResult = { scanResult ->
                     reviewViewModel.setScanResult(scanResult)
-                    currentScreen = Screen.REVIEW
+                    currentScreen = AppScreen.Review
                 },
                 onScanCancelled = {
                     homeUiState = homeUiState.copy(shouldAutoStartScanner = false)
@@ -45,7 +40,7 @@ fun AppNavigation() {
             )
         }
 
-        Screen.REVIEW -> {
+        AppScreen.Review -> {
             ReviewScreen(
                 viewModel = reviewViewModel,
                 onExportSuccess = { format ->
@@ -59,7 +54,7 @@ fun AppNavigation() {
                 },
                 onBack = {
                     homeUiState = homeUiState.copy(shouldAutoStartScanner = true)
-                    currentScreen = Screen.HOME
+                    currentScreen = AppScreen.Home
                 }
             )
         }
