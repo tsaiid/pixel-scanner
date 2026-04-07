@@ -86,7 +86,7 @@
   - [ ] 設計目錄結構與命名規則。
   - [x] 抽出 `core-model` 或等效 model package。
   - [x] 抽出 `core-image` 或等效 image domain/data package。
-  - [ ] 抽出 `core-storage` 或等效 export/storage package。
+  - [x] 抽出 `core-storage` 或等效 export/storage package。
   - [ ] 將 scanner、review、export UI 各自集中到 feature 區域。
 - [~] 定義核心 domain model。
   - 建議實體：`ScanSession`, `ScannedPage`, `PageVariant`, `ExportRequest`, `ExportResult`, `ProcessingState`, `SessionDirtyFlags`。
@@ -105,7 +105,7 @@
   - [x] 抽出 session 初始化 use case。
   - [x] 抽出增強流程 use case。
   - [ ] 抽出刪除 / 復原 use case。
-  - [~] 抽出 export use case。
+  - [x] 抽出 export use case。
   - [ ] 抽出 discard / resume / scan-more use case。
 - [ ] 引入 repository 邊界。
   - 建議 repositories：`ScanSessionRepository`, `ImageProcessingRepository`, `ExportRepository`, `TempFileRepository`, `StorageRepository`。

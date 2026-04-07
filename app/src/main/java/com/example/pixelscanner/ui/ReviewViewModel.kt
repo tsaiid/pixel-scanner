@@ -11,18 +11,17 @@ import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.core.model.SessionDirtyFlags
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
+import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
-import com.example.pixelscanner.storage.StorageManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ReviewViewModel : ViewModel() {
     private val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
     private val toggleEnhancementUseCase = ToggleEnhancementUseCase()
+    private val exportSessionUseCase = ExportSessionUseCase()
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
@@ -98,39 +97,20 @@ class ReviewViewModel : ViewModel() {
     fun saveAll(context: Context, onComplete: () -> Unit) {
         viewModelScope.launch {
             val session = _scanSession.value ?: return@launch
-            val storageManager = StorageManager(context)
             val request = ExportRequest(
                 sessionId = session.id,
                 format = _exportFormat.value,
             )
-            val timestamp = System.currentTimeMillis()
-
-            // Determine which URIs to save (Original vs Enhanced)
-            val urisToSave = session.activePages().map { it.displayUri() }
-
-            val result = if (request.format == ExportFormat.PDF) {
-                if (urisToSave.isNotEmpty()) {
-                    ExportResult.Success(
-                        storageManager.saveUrisToPdf(urisToSave, "PixelScanner_$timestamp.pdf")
-                    )
-                } else {
-                    ExportResult.Failure("No pages to export")
-                }
-            } else {
-                urisToSave.forEachIndexed { index, uri ->
-                    val filename = "PixelScanner_${timestamp}_$index.jpg"
-                    storageManager.saveUriToGallery(uri, filename)
-                }
-                ExportResult.Success(null)
-            }
+            val result = exportSessionUseCase(
+                session = session,
+                request = request,
+                context = context,
+            )
 
             if (result is ExportResult.Failure) {
                 return@launch
             }
-
-            withContext(Dispatchers.Main) {
-                onComplete()
-            }
+            onComplete()
         }
     }
 

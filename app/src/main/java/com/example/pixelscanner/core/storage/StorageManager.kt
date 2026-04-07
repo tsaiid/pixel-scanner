@@ -1,8 +1,7 @@
-package com.example.pixelscanner.storage
+package com.example.pixelscanner.core.storage
 
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
@@ -34,7 +33,7 @@ class StorageManager(private val context: Context) {
                         inputStream.copyTo(outputStream)
                     }
                 }
-                
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     contentValues.clear()
                     contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
@@ -46,17 +45,16 @@ class StorageManager(private val context: Context) {
                 return@withContext null
             }
         }
+
         return@withContext destinationUri
     }
 
     suspend fun saveUrisToPdf(sourceUris: List<Uri>, fileName: String): Uri? = withContext(Dispatchers.IO) {
         val pdfDocument = PdfDocument()
         val resolver = context.contentResolver
-        
+
         try {
             sourceUris.forEachIndexed { index, uri ->
-                // Decode bitmap strictly for this page and recycle immediately after drawing if possible
-                // Note: BitmapFactory.decodeStream might return null if uri is invalid
                 val inputStream = resolver.openInputStream(uri)
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream?.close()
@@ -66,8 +64,6 @@ class StorageManager(private val context: Context) {
                     val page = pdfDocument.startPage(pageInfo)
                     page.canvas.drawBitmap(bitmap, 0f, 0f, null)
                     pdfDocument.finishPage(page)
-                    
-                    // Explicitly recycle bitmap to free native memory
                     bitmap.recycle()
                 }
             }
@@ -86,7 +82,6 @@ class StorageManager(private val context: Context) {
             }
         }
 
-        // For PDF, we use MediaStore.Files or MediaStore.Downloads/Documents
         val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
         } else {
@@ -101,7 +96,7 @@ class StorageManager(private val context: Context) {
                     pdfDocument.writeTo(outputStream)
                 }
                 pdfDocument.close()
-                
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     contentValues.clear()
                     contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
@@ -114,7 +109,7 @@ class StorageManager(private val context: Context) {
                 return@withContext null
             }
         } ?: pdfDocument.close()
-        
+
         return@withContext pdfUri
     }
 }
