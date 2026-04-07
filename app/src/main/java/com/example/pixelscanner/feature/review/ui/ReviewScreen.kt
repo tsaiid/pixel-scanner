@@ -52,6 +52,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportForm
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RestorePage
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestCloseReview
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.SaveAll
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -63,7 +64,9 @@ fun ReviewScreen(
     onExportSuccess: (ExportFormat) -> Unit,
     onBack: () -> Unit
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler {
+        viewModel.onEvent(RequestCloseReview)
+    }
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
@@ -81,12 +84,13 @@ fun ReviewScreen(
     }
 
     LaunchedEffect(viewModel, snackbarHostState) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format)
-                is ReviewUiEffect.ShowDeletedPageUndo -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = "Page deleted",
+            viewModel.effects.collect { effect ->
+                when (effect) {
+                    is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format)
+                    is ReviewUiEffect.NavigateBackToScanner -> onBack()
+                    is ReviewUiEffect.ShowDeletedPageUndo -> {
+                        val result = snackbarHostState.showSnackbar(
+                            message = "Page deleted",
                         actionLabel = "Undo",
                         duration = SnackbarDuration.Short
                     )
@@ -136,7 +140,7 @@ fun ReviewScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Button(
-                    onClick = onBack,
+                    onClick = { viewModel.onEvent(RequestCloseReview) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.DarkGray,
                         contentColor = Color.White

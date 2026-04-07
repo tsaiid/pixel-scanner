@@ -12,6 +12,7 @@ import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
+import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
@@ -33,6 +34,7 @@ class ReviewViewModel(
     private val deletePageUseCase: DeletePageUseCase,
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
+    private val discardSessionUseCase: DiscardSessionUseCase,
 ) : ViewModel() {
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
@@ -54,6 +56,7 @@ class ReviewViewModel(
             )
             is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
+            is ReviewUiEvent.RequestCloseReview -> discardAndReturnToScanner()
             is ReviewUiEvent.SaveAll -> saveAll(event.context)
         }
     }
@@ -115,6 +118,15 @@ class ReviewViewModel(
         applySessionUpdate(restorePageUseCase(session, page))
     }
 
+    private fun discardAndReturnToScanner() {
+        val session = _scanSession.value ?: return
+        viewModelScope.launch {
+            discardSessionUseCase(session)
+            clearSessionState()
+            _effects.emit(ReviewUiEffect.NavigateBackToScanner)
+        }
+    }
+
     private fun saveAll(context: Context) {
         viewModelScope.launch {
             val session = _scanSession.value ?: return@launch
@@ -165,6 +177,11 @@ class ReviewViewModel(
         }
     }
 
+    private fun clearSessionState() {
+        _scanSession.value = null
+        _uiState.value = ReviewUiState()
+    }
+
     private fun updateUiState(transform: (ReviewUiState) -> ReviewUiState) {
         _uiState.value = transform(_uiState.value)
     }
@@ -184,6 +201,7 @@ class ReviewViewModelFactory(
     private val deletePageUseCase: DeletePageUseCase,
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
+    private val discardSessionUseCase: DiscardSessionUseCase,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -196,6 +214,7 @@ class ReviewViewModelFactory(
             deletePageUseCase = deletePageUseCase,
             restorePageUseCase = restorePageUseCase,
             exportSessionUseCase = exportSessionUseCase,
+            discardSessionUseCase = discardSessionUseCase,
         ) as T
     }
 }
