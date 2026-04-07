@@ -78,33 +78,33 @@
 
 ## Phase 1: Architecture Refactor
 
-- [ ] 導入明確的 feature/module 分層。
+- [~] 導入明確的 feature/module 分層。
   - 建議目標：`scanner`, `review`, `export`, `core-ui`, `core-storage`, `core-image`, `core-model`。
   - 驗收標準：UI、domain、data 職責清楚，主要流程不再集中於單一 ViewModel。
   - [ ] 定義第一階段是否先保留單 module、只做 package 分層。
   - [ ] 設計目錄結構與命名規則。
-  - [ ] 抽出 `core-model` 或等效 model package。
+  - [x] 抽出 `core-model` 或等效 model package。
   - [ ] 抽出 `core-image` 或等效 image domain/data package。
   - [ ] 抽出 `core-storage` 或等效 export/storage package。
   - [ ] 將 scanner、review、export UI 各自集中到 feature 區域。
-- [ ] 定義核心 domain model。
+- [~] 定義核心 domain model。
   - 建議實體：`ScanSession`, `ScannedPage`, `PageVariant`, `ExportRequest`, `ExportResult`, `ProcessingState`, `SessionDirtyFlags`。
   - 驗收標準：UI 層不再直接依賴裸 `Uri` 列表做主要業務判斷。
-  - [ ] 設計 `ScanSession` 欄位。
-  - [ ] 設計 `ScannedPage` 欄位。
-  - [ ] 設計 `PageVariant` 結構，區分 `original`, `previewEnhanced`, `exportEnhanced`。
-  - [ ] 設計 `ExportRequest` 與 `ExportResult`。
+  - [x] 設計 `ScanSession` 欄位。
+  - [x] 設計 `ScannedPage` 欄位。
+  - [x] 設計 `PageVariant` 結構，區分 `original`, `previewEnhanced`, `exportEnhanced`。
+  - [x] 設計 `ExportRequest` 與 `ExportResult`。
   - [ ] 設計頁級 `ProcessingState`。
-  - [ ] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
-  - [ ] 定義 domain model 與 UI model 的映射方式。
-- [ ] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
+  - [x] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
+  - [~] 定義 domain model 與 UI model 的映射方式。
+- [~] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
   - 建議 use cases：`CreateSessionFromScanResultUseCase`, `LoadScanSessionUseCase`, `ToggleEnhancementUseCase`, `DeletePageUseCase`, `RestorePageUseCase`, `ExportSessionUseCase`, `DiscardSessionUseCase`, `ResumeSessionUseCase`。
   - 驗收標準：ViewModel 僅負責 state reduction、event handling、effect emission。
   - [ ] 盤點 `ReviewViewModel` 現有責任。
-  - [ ] 抽出 session 初始化 use case。
+  - [x] 抽出 session 初始化 use case。
   - [ ] 抽出增強流程 use case。
   - [ ] 抽出刪除 / 復原 use case。
-  - [ ] 抽出 export use case。
+  - [~] 抽出 export use case。
   - [ ] 抽出 discard / resume / scan-more use case。
 - [ ] 引入 repository 邊界。
   - 建議 repositories：`ScanSessionRepository`, `ImageProcessingRepository`, `ExportRepository`, `TempFileRepository`, `StorageRepository`。
@@ -114,10 +114,10 @@
   - [ ] 將 `ContentResolver` 相關程式集中到 data layer。
   - [ ] 將 temp file、session file、stale cleanup 集中到 repository。
   - [ ] 為 repository 設計測試替身。
-- [ ] 建立單向資料流的 UI state 結構。
+- [~] 建立單向資料流的 UI state 結構。
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
   - [ ] 為首頁定義 `HomeUiState`。
-  - [ ] 為 review 定義 `ReviewUiState`。
+  - [~] 為 review 定義 `ReviewUiState`。
   - [ ] 為 export 定義 `ExportUiState` 或等效 effect/state。
   - [ ] 定義 `ReviewUiEvent`。
   - [ ] 定義 `ReviewUiEffect`。
@@ -145,10 +145,10 @@
 
 ## Phase 2: Scan Session And Data Lifecycle
 
-- [ ] 擴充掃描結果模型，保留 ML Kit 回傳的 JPEG pages 與原始 PDF URI。
+- [~] 擴充掃描結果模型，保留 ML Kit 回傳的 JPEG pages 與原始 PDF URI。
   - 驗收標準：後續匯出時可根據是否修改過內容決定是否重用原始 PDF。
   - [ ] 研究 ML Kit result 中需要持久化的欄位。
-  - [ ] 擴充 session model 接住 page URIs 與 pdf URI。
+  - [x] 擴充 session model 接住 page URIs 與 pdf URI。
   - [ ] 定義 `session dirty` 的判斷規則。
   - [ ] 驗證未修改 session 可直接重用 PDF。
 - [ ] 導入掃描結果 eager ingestion。
@@ -623,21 +623,21 @@
 
 ## Immediate Next Slice
 
-- [ ] 定義 `ScanSession`、`ScannedPage`、`ExportRequest`、`ExportResult`、`SessionDirtyFlags` 資料模型。
-- [ ] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
-- [ ] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
+- [x] 定義 `ScanSession`、`ScannedPage`、`ExportRequest`、`ExportResult`、`SessionDirtyFlags` 資料模型。
+- [~] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
+- [~] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
 - [ ] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
 - [ ] 設計 review 畫面新資訊架構草案。
 - [ ] 建立效能基線量測方式與測試樣本。
 
 ## Sprint-Ready Candidate Tasks
 
-- [ ] 建立 domain model 初稿並補對應 mapper。
-- [ ] 建立 `CreateSessionFromScanResultUseCase`，先做 eager ingestion 最小版。
+- [x] 建立 domain model 初稿並補對應 mapper。
+- [~] 建立 `CreateSessionFromScanResultUseCase`，先做 eager ingestion 最小版。
 - [ ] 將現有 `ReviewViewModel` 拆出 `ToggleEnhancementUseCase`。
 - [ ] 將現有 `saveAll` 拆出 `ExportSessionUseCase`。
-- [ ] 擴充 scanner result，保留原始 PDF URI。
-- [ ] 為 export 建立 success / failure result model。
+- [x] 擴充 scanner result，保留原始 PDF URI。
+- [x] 為 export 建立 success / failure result model。
 - [ ] 定義 `session dirty` 規則。
 - [ ] 設計 review 新版 wireframe 與互動流程。
 - [ ] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。

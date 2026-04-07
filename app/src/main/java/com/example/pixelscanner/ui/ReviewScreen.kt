@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.pixelscanner.core.model.ExportFormat
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -151,7 +152,7 @@ fun ReviewScreen(
                                 Icon(
                                     imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = "Enhance",
-                                    tint = if (scannedPages.getOrNull(pagerState.currentPage)?.isEnhanced == true) Color.Yellow else Color.White
+                                    tint = if (scannedPages.getOrNull(pagerState.currentPage)?.isEnhanced() == true) Color.Yellow else Color.White
                                 )
                             }
                         }
@@ -215,7 +216,7 @@ fun ReviewScreen(
                             val page = scannedPages[pageIndex]
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 AsyncImage(
-                                    model = page.getDisplayUri(),
+                                    model = page.displayUri(),
                                     contentDescription = "Scanned Page $pageIndex",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Fit

@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.ContextWrapper
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -30,8 +29,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.scanner.ScannerManager
-import com.example.pixelscanner.ui.ExportFormat
 import com.example.pixelscanner.ui.ReviewScreen
 import com.example.pixelscanner.ui.ReviewViewModel
 import com.example.pixelscanner.ui.StartScreen
@@ -74,8 +74,8 @@ fun AppNavigation() {
         Screen.HOME -> {
             ScannerScreen(
                 shouldAutoStart = autoStartScanner,
-                onScanResult = { uris ->
-                    reviewViewModel.setScannedUris(uris, context)
+                onScanResult = { scanResult ->
+                    reviewViewModel.setScanResult(scanResult)
                     currentScreen = Screen.REVIEW
                 },
                 onScanCancelled = {
@@ -111,7 +111,7 @@ fun AppNavigation() {
 @Composable
 fun ScannerScreen(
     shouldAutoStart: Boolean = false,
-    onScanResult: (List<Uri>) -> Unit,
+    onScanResult: (ScanResultPayload) -> Unit,
     onScanCancelled: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -125,7 +125,12 @@ fun ScannerScreen(
             gmsResult?.let {
                 val uris = it.pages?.map { page -> page.imageUri } ?: emptyList()
                 if (uris.isNotEmpty()) {
-                    onScanResult(uris)
+                    onScanResult(
+                        ScanResultPayload(
+                            pageUris = uris,
+                            pdfUri = it.pdf?.uri,
+                        )
+                    )
                 } else {
                     onScanCancelled()
                 }
