@@ -15,11 +15,15 @@ import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
+import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class ReviewViewModel : ViewModel() {
@@ -35,6 +39,9 @@ class ReviewViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ReviewUiState())
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
 
+    private val _effects = MutableSharedFlow<ReviewUiEffect>()
+    val effects: SharedFlow<ReviewUiEffect> = _effects.asSharedFlow()
+
     fun onEvent(event: ReviewUiEvent) {
         when (event) {
             is ReviewUiEvent.ChangeExportFormat -> setExportFormat(event.format)
@@ -44,6 +51,7 @@ class ReviewViewModel : ViewModel() {
             )
             is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
+            is ReviewUiEvent.SaveAll -> saveAll(event.context)
         }
     }
 
@@ -84,6 +92,9 @@ class ReviewViewModel : ViewModel() {
         val session = _scanSession.value ?: return
         val result = deletePageUseCase(session, index) ?: return
         applySessionUpdate(result.updatedSession)
+        viewModelScope.launch {
+            _effects.emit(ReviewUiEffect.ShowDeletedPageUndo(result.deletedPage.id))
+        }
     }
 
     private fun restorePage(pageId: String) {
@@ -92,7 +103,7 @@ class ReviewViewModel : ViewModel() {
         applySessionUpdate(restorePageUseCase(session, page))
     }
 
-    fun saveAll(context: Context, onComplete: () -> Unit) {
+    private fun saveAll(context: Context) {
         viewModelScope.launch {
             val session = _scanSession.value ?: return@launch
             val request = ExportRequest(
@@ -105,10 +116,19 @@ class ReviewViewModel : ViewModel() {
                 context = context,
             )
 
-            if (result is ExportResult.Failure) {
-                return@launch
+            when (result) {
+                is ExportResult.Success -> {
+                    _effects.emit(ReviewUiEffect.ExportSucceeded(request.format))
+                }
+
+                is ExportResult.Failure -> {
+                    _effects.emit(
+                        ReviewUiEffect.ShowMessage(
+                            result.errorMessage ?: "Export failed"
+                        )
+                    )
+                }
             }
-            onComplete()
         }
     }
 

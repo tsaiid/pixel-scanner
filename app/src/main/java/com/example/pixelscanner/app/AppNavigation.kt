@@ -47,17 +47,14 @@ fun AppNavigation() {
         Screen.REVIEW -> {
             ReviewScreen(
                 viewModel = reviewViewModel,
-                onSave = {
-                    val format = reviewViewModel.uiState.value.exportFormat
+                onExportSuccess = { format ->
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    reviewViewModel.saveAll(context) {
-                        val message = if (format == ExportFormat.PDF) {
-                            "Saved as PDF to Documents"
-                        } else {
-                            "Saved to Gallery"
-                        }
-                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    val message = if (format == ExportFormat.PDF) {
+                        "Saved as PDF to Documents"
+                    } else {
+                        "Saved to Gallery"
                     }
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 },
                 onBack = {
                     autoStartScanner = true

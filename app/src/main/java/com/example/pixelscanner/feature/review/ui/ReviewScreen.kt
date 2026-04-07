@@ -37,7 +37,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,14 +50,14 @@ import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RestorePage
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.SaveAll
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ReviewScreen(
     viewModel: ReviewViewModel = viewModel(),
-    onSave: () -> Unit,
+    onExportSuccess: (ExportFormat) -> Unit,
     onBack: () -> Unit
 ) {
     BackHandler(onBack = onBack)
@@ -67,12 +66,36 @@ fun ReviewScreen(
     val uiState by viewModel.uiState.collectAsState()
     val pagerState = rememberPagerState(pageCount = { uiState.pages.size })
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     // If all pages are deleted, go back automatically
     LaunchedEffect(uiState.pages.size) {
         if (!uiState.hasPages) {
             onBack()
+        }
+    }
+
+    LaunchedEffect(viewModel, snackbarHostState) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format)
+                is ReviewUiEffect.ShowDeletedPageUndo -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Page deleted",
+                        actionLabel = "Undo",
+                        duration = SnackbarDuration.Short
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        viewModel.onEvent(RestorePage(effect.pageId))
+                    }
+                }
+
+                is ReviewUiEffect.ShowMessage -> {
+                    snackbarHostState.showSnackbar(
+                        message = effect.message,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
         }
     }
 
@@ -105,7 +128,7 @@ fun ReviewScreen(
 
                 if (uiState.hasPages) {
                     Button(
-                        onClick = onSave,
+                        onClick = { viewModel.onEvent(SaveAll(context)) },
                         modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
                         Text("Save All")
@@ -174,17 +197,6 @@ fun ReviewScreen(
                                 val indexToDelete = pagerState.currentPage
                                 if (pageToDelete != null) {
                                     viewModel.onEvent(DeletePage(indexToDelete))
-
-                                    scope.launch {
-                                        val result = snackbarHostState.showSnackbar(
-                                            message = "Page deleted",
-                                            actionLabel = "Undo",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            viewModel.onEvent(RestorePage(pageToDelete.id))
-                                        }
-                                    }
                                 }
                             }
                         ) {
