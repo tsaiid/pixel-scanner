@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,9 +50,11 @@ import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RestorePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.SaveAll
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -64,7 +67,10 @@ fun ReviewScreen(
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val pagerState = rememberPagerState(pageCount = { uiState.pages.size })
+    val pagerState = rememberPagerState(
+        initialPage = uiState.currentPage,
+        pageCount = { uiState.pages.size }
+    )
     val snackbarHostState = remember { SnackbarHostState() }
 
     // If all pages are deleted, go back automatically
@@ -96,6 +102,20 @@ fun ReviewScreen(
                     )
                 }
             }
+        }
+    }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .collect { pageIndex ->
+                viewModel.onEvent(PageChanged(pageIndex))
+            }
+    }
+
+    LaunchedEffect(uiState.currentPage, uiState.pages.size) {
+        if (uiState.hasPages && pagerState.currentPage != uiState.currentPage) {
+            pagerState.scrollToPage(uiState.currentPage)
         }
     }
 
@@ -148,7 +168,7 @@ fun ReviewScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "(${pagerState.currentPage + 1}/${uiState.pages.size})",
+                        text = "(${uiState.currentPage + 1}/${uiState.pages.size})",
                         color = Color.LightGray,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 4.dp)
@@ -164,7 +184,7 @@ fun ReviewScreen(
                             onClick = {
                                 viewModel.onEvent(
                                     ToggleEnhancement(
-                                        pageIndex = pagerState.currentPage,
+                                        pageIndex = uiState.currentPage,
                                         context = context,
                                     )
                                 )
@@ -183,7 +203,7 @@ fun ReviewScreen(
                                 Icon(
                                     imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = "Enhance",
-                                    tint = if (uiState.pages.getOrNull(pagerState.currentPage)?.isEnhanced == true) Color.Yellow else Color.White
+                                    tint = if (uiState.selectedPage?.isEnhanced == true) Color.Yellow else Color.White
                                 )
                             }
                         }
@@ -193,8 +213,8 @@ fun ReviewScreen(
                         // Delete
                         IconButton(
                             onClick = {
-                                val pageToDelete = uiState.pages.getOrNull(pagerState.currentPage)
-                                val indexToDelete = pagerState.currentPage
+                                val pageToDelete = uiState.selectedPage
+                                val indexToDelete = uiState.currentPage
                                 if (pageToDelete != null) {
                                     viewModel.onEvent(DeletePage(indexToDelete))
                                 }

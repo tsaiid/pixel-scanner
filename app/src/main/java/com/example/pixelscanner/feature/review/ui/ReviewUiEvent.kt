@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.pixelscanner.core.model.ExportFormat
 
 sealed interface ReviewUiEvent {
+    data class PageChanged(val pageIndex: Int) : ReviewUiEvent
     data class ChangeExportFormat(val format: ExportFormat) : ReviewUiEvent
     data class ToggleEnhancement(val pageIndex: Int, val context: Context) : ReviewUiEvent
     data class DeletePage(val pageIndex: Int) : ReviewUiEvent

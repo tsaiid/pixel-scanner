@@ -44,6 +44,7 @@ class ReviewViewModel : ViewModel() {
 
     fun onEvent(event: ReviewUiEvent) {
         when (event) {
+            is ReviewUiEvent.PageChanged -> setCurrentPage(event.pageIndex)
             is ReviewUiEvent.ChangeExportFormat -> setExportFormat(event.format)
             is ReviewUiEvent.ToggleEnhancement -> toggleEnhancement(
                 index = event.pageIndex,
@@ -62,6 +63,13 @@ class ReviewViewModel : ViewModel() {
 
     private fun setExportFormat(format: ExportFormat) {
         _uiState.value = _uiState.value.copy(exportFormat = format)
+    }
+
+    private fun setCurrentPage(pageIndex: Int) {
+        updateUiState { currentState ->
+            val lastIndex = (currentState.pages.size - 1).coerceAtLeast(0)
+            currentState.copy(currentPage = pageIndex.coerceIn(0, lastIndex))
+        }
     }
 
     private fun toggleEnhancement(index: Int, context: Context) {
@@ -135,8 +143,11 @@ class ReviewViewModel : ViewModel() {
     private fun applySessionUpdate(session: ScanSession) {
         _scanSession.value = session
         updateUiState { currentState ->
+            val activePages = session.activePages().map { it.toUiModel() }
+            val lastIndex = (activePages.size - 1).coerceAtLeast(0)
             currentState.copy(
-                pages = session.activePages().map { it.toUiModel() },
+                pages = activePages,
+                currentPage = currentState.currentPage.coerceIn(0, lastIndex),
             )
         }
     }
