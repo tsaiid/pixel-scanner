@@ -67,7 +67,8 @@ class ReviewViewModel(
             )
             is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
-            is ReviewUiEvent.RequestCloseReview -> discardAndReturnToScanner()
+            is ReviewUiEvent.RequestRescan -> discardAndReturnToScanner()
+            is ReviewUiEvent.RequestDiscardSession -> discardAndReturnToHome()
             is ReviewUiEvent.SaveAll -> saveAll(event.context)
         }
     }
@@ -145,6 +146,15 @@ class ReviewViewModel(
             discardSessionUseCase(session)
             clearSessionState()
             _effects.emit(ReviewUiEffect.NavigateBackToScanner)
+        }
+    }
+
+    private fun discardAndReturnToHome() {
+        val session = _scanSession.value ?: return
+        viewModelScope.launch {
+            discardSessionUseCase(session)
+            clearSessionState()
+            _effects.emit(ReviewUiEffect.NavigateBackToHome)
         }
     }
 

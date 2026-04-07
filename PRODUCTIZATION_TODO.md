@@ -196,12 +196,16 @@
   - [ ] 定義恢復提示 UI。
   - [ ] 實作 restore session flow。
   - [ ] 驗證部分檔案遺失時的 fallback。
-- [ ] 明確區分 `Rescan`、`Scan More`、`Discard Session` 三種動作。
+- [~] 明確區分 `Rescan`、`Scan More`、`Discard Session` 三種動作。
   - 驗收標準：使用者操作語意與實際行為一致，不再用模糊返回行為代替。
-  - [ ] 定義三種動作的產品語意。
+  - [~] 定義三種動作的產品語意。
+    - `Rescan` 會捨棄目前 review session 並回到 scanner flow。
+    - `Discard Session` 會捨棄目前 review session 並回到 home/start screen，不會自動重啟 scanner。
+    - `Scan More` 仍待定義與實作。
   - [ ] 定義各自是否保留當前頁面。
   - [ ] 定義按鈕文案與確認對話框。
-  - [ ] 驗證返回鍵是否對應其中一種動作。
+  - [~] 驗證返回鍵是否對應其中一種動作。
+    - system back 已對應 `Discard Session`，而非 `Rescan`。
 
 ## Phase 3: Image Processing Pipeline
 

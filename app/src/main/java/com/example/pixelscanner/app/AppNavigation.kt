@@ -57,8 +57,12 @@ fun AppNavigation() {
                     }
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 },
-                onBack = {
+                onRescan = {
                     shouldAutoStartScanner = true
+                    currentScreen = AppScreen.Home
+                },
+                onDiscardSession = {
+                    shouldAutoStartScanner = false
                     currentScreen = AppScreen.Home
                 }
             )

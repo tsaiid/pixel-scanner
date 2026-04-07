@@ -29,6 +29,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -51,8 +52,9 @@ import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestDiscardSession
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestRescan
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RestorePage
-import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestCloseReview
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.SaveAll
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -62,10 +64,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 fun ReviewScreen(
     viewModel: ReviewViewModel = viewModel(),
     onExportSuccess: (ExportFormat) -> Unit,
-    onBack: () -> Unit
+    onRescan: () -> Unit,
+    onDiscardSession: () -> Unit,
 ) {
     BackHandler {
-        viewModel.onEvent(RequestCloseReview)
+        viewModel.onEvent(RequestDiscardSession)
     }
 
     val context = LocalContext.current
@@ -77,13 +80,14 @@ fun ReviewScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel, snackbarHostState) {
-            viewModel.effects.collect { effect ->
-                when (effect) {
-                    is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format)
-                    is ReviewUiEffect.NavigateBackToScanner -> onBack()
-                    is ReviewUiEffect.ShowDeletedPageUndo -> {
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Page deleted",
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format)
+                is ReviewUiEffect.NavigateBackToScanner -> onRescan()
+                is ReviewUiEffect.NavigateBackToHome -> onDiscardSession()
+                is ReviewUiEffect.ShowDeletedPageUndo -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Page deleted",
                         actionLabel = "Undo",
                         duration = SnackbarDuration.Short
                     )
@@ -132,15 +136,23 @@ fun ReviewScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Button(
-                    onClick = { viewModel.onEvent(RequestCloseReview) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.DarkGray,
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier.align(Alignment.CenterStart)
+                Row(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Rescan")
+                    Button(
+                        onClick = { viewModel.onEvent(RequestRescan) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.DarkGray,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Rescan")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(onClick = { viewModel.onEvent(RequestDiscardSession) }) {
+                        Text("Discard")
+                    }
                 }
 
                 if (uiState.hasPages) {

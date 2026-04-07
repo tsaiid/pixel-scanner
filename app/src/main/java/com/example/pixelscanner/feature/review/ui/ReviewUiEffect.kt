@@ -7,4 +7,5 @@ sealed interface ReviewUiEffect {
     data class ShowMessage(val message: String) : ReviewUiEffect
     data class ExportSucceeded(val format: ExportFormat) : ReviewUiEffect
     data object NavigateBackToScanner : ReviewUiEffect
+    data object NavigateBackToHome : ReviewUiEffect
 }
