@@ -110,11 +110,13 @@
   - [x] 抽出 export use case。
   - [~] 抽出 discard / resume / scan-more use case。
     - discard/rescan back flow 已改由 ReviewViewModel 事件與 effect 驅動；resume / scan-more 仍待補齊。
-- [ ] 引入 repository 邊界。
+- [~] 引入 repository 邊界。
   - 建議 repositories：`ScanSessionRepository`, `ImageProcessingRepository`, `ExportRepository`, `TempFileRepository`, `StorageRepository`。
   - 驗收標準：Android framework 依賴集中在 data layer。
-  - [ ] 定義 repository interface。
-  - [ ] 提供 Android / file-system 實作。
+  - [~] 定義 repository interface。
+    - `ImageProcessingRepository` 與 `ExportRepository` 已導入，並由 review use case 注入使用。
+  - [~] 提供 Android / file-system 實作。
+    - enhancement 與 export 先以 Android repository wrapper 包住既有 `ImageEnhancer` 與 `StorageManager`。
   - [ ] 將 `ContentResolver` 相關程式集中到 data layer。
   - [ ] 將 temp file、session file、stale cleanup 集中到 repository。
   - [ ] 為 repository 設計測試替身。

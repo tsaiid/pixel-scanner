@@ -1,12 +1,11 @@
 package com.example.pixelscanner.domain
 
 import android.content.Context
-import com.example.pixelscanner.core.image.ImageEnhancer
 import com.example.pixelscanner.core.model.PageVariant
 import com.example.pixelscanner.core.model.ScannedPage
 
 class ToggleEnhancementUseCase(
-    private val imageEnhancer: ImageEnhancer = ImageEnhancer(),
+    private val imageProcessingRepository: ImageProcessingRepository,
 ) {
 
     suspend operator fun invoke(
@@ -27,7 +26,7 @@ class ToggleEnhancementUseCase(
             )
         }
 
-        val enhancedUri = imageEnhancer.enhance(context, page.originalSourceUri)
+        val enhancedUri = imageProcessingRepository.enhance(context, page.originalSourceUri)
         return ToggleEnhancementResult(
             updatedPage = page.copy(
                 enhancedUri = enhancedUri,

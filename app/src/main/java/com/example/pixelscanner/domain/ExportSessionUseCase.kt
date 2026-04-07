@@ -5,10 +5,9 @@ import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
 import com.example.pixelscanner.core.model.ScanSession
-import com.example.pixelscanner.core.storage.StorageManager
 
 class ExportSessionUseCase(
-    private val storageManagerFactory: (Context) -> StorageManager = ::StorageManager,
+    private val exportRepository: ExportRepository,
 ) {
 
     suspend operator fun invoke(
@@ -21,7 +20,6 @@ class ExportSessionUseCase(
             return ExportResult.Failure("No pages to export")
         }
 
-        val storageManager = storageManagerFactory(context)
         val timestamp = System.currentTimeMillis()
         val urisToSave = pagesToExport.map { it.displayUri() }
 
@@ -29,14 +27,16 @@ class ExportSessionUseCase(
             ExportFormat.PDF -> {
                 val outputUri = when (val decision = decidePdfExport(session)) {
                     is PdfExportDecision.ReuseOriginalPdf -> {
-                        storageManager.copyPdfToDocuments(
+                        exportRepository.copyPdfToDocuments(
+                            context = context,
                             sourceUri = decision.originalPdfUri,
                             fileName = "PixelScanner_$timestamp.pdf",
                         )
                     }
 
                     PdfExportDecision.RebuildPdf -> {
-                        storageManager.saveUrisToPdf(
+                        exportRepository.saveUrisToPdf(
+                            context = context,
                             sourceUris = urisToSave,
                             fileName = "PixelScanner_$timestamp.pdf",
                         )
@@ -51,7 +51,8 @@ class ExportSessionUseCase(
 
             ExportFormat.IMAGE -> {
                 val savedUris = urisToSave.mapIndexed { index, uri ->
-                    storageManager.saveUriToGallery(
+                    exportRepository.saveUriToGallery(
+                        context = context,
                         sourceUri = uri,
                         fileName = "PixelScanner_${timestamp}_$index.jpg",
                     )

@@ -1,5 +1,8 @@
 package com.example.pixelscanner.app
 
+import androidx.savedstate.SavedStateRegistryOwner
+import com.example.pixelscanner.core.image.AndroidImageProcessingRepository
+import com.example.pixelscanner.core.storage.AndroidExportRepository
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
@@ -7,15 +10,16 @@ import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ReviewViewModelFactory
-import androidx.savedstate.SavedStateRegistryOwner
 
 class AppContainer {
+    val imageProcessingRepository = AndroidImageProcessingRepository()
+    val exportRepository = AndroidExportRepository()
     val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
-    val toggleEnhancementUseCase = ToggleEnhancementUseCase()
+    val toggleEnhancementUseCase = ToggleEnhancementUseCase(imageProcessingRepository)
     val deletePageUseCase = DeletePageUseCase()
     val discardSessionUseCase = DiscardSessionUseCase()
     val restorePageUseCase = RestorePageUseCase()
-    val exportSessionUseCase = ExportSessionUseCase()
+    val exportSessionUseCase = ExportSessionUseCase(exportRepository)
 
     fun createReviewViewModelFactory(owner: SavedStateRegistryOwner): ReviewViewModelFactory {
         return ReviewViewModelFactory(
