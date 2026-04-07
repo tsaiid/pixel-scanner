@@ -60,16 +60,14 @@ fun ReviewScreen(
     BackHandler(onBack = onBack)
 
     val context = LocalContext.current
-    val scannedPages by viewModel.scannedPages.collectAsState()
-    val exportFormat by viewModel.exportFormat.collectAsState()
-    val isProcessing by viewModel.isProcessing.collectAsState()
-    val pagerState = rememberPagerState(pageCount = { scannedPages.size })
+    val uiState by viewModel.uiState.collectAsState()
+    val pagerState = rememberPagerState(pageCount = { uiState.pages.size })
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     // If all pages are deleted, go back automatically
-    LaunchedEffect(scannedPages.size) {
-        if (scannedPages.isEmpty()) {
+    LaunchedEffect(uiState.pages.size) {
+        if (!uiState.hasPages) {
             onBack()
         }
     }
@@ -101,7 +99,7 @@ fun ReviewScreen(
                     Text("Rescan")
                 }
 
-                if (scannedPages.isNotEmpty()) {
+                if (uiState.hasPages) {
                     Button(
                         onClick = onSave,
                         modifier = Modifier.align(Alignment.CenterEnd)
@@ -111,7 +109,7 @@ fun ReviewScreen(
                 }
             }
 
-            if (scannedPages.isNotEmpty()) {
+            if (uiState.hasPages) {
                 // 2, 3, 4. Centered Info & Actions
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -123,7 +121,7 @@ fun ReviewScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "(${pagerState.currentPage + 1}/${scannedPages.size})",
+                        text = "(${pagerState.currentPage + 1}/${uiState.pages.size})",
                         color = Color.LightGray,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 4.dp)
@@ -139,9 +137,9 @@ fun ReviewScreen(
                             onClick = {
                                 viewModel.toggleEnhancement(pagerState.currentPage, context)
                             },
-                            enabled = !isProcessing
+                            enabled = !uiState.isProcessing
                         ) {
-                            if (isProcessing) {
+                            if (uiState.isProcessing) {
                                 CircularProgressIndicator(
                                     modifier = Modifier
                                         .padding(8.dp)
@@ -153,7 +151,7 @@ fun ReviewScreen(
                                 Icon(
                                     imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = "Enhance",
-                                    tint = if (scannedPages.getOrNull(pagerState.currentPage)?.isEnhanced() == true) Color.Yellow else Color.White
+                                    tint = if (uiState.pages.getOrNull(pagerState.currentPage)?.isEnhanced == true) Color.Yellow else Color.White
                                 )
                             }
                         }
@@ -163,7 +161,7 @@ fun ReviewScreen(
                         // Delete
                         IconButton(
                             onClick = {
-                                val pageToDelete = scannedPages.getOrNull(pagerState.currentPage)
+                                val pageToDelete = uiState.pages.getOrNull(pagerState.currentPage)
                                 val indexToDelete = pagerState.currentPage
                                 if (pageToDelete != null) {
                                     viewModel.deletePage(indexToDelete)
@@ -175,7 +173,7 @@ fun ReviewScreen(
                                             duration = SnackbarDuration.Short
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {
-                                            viewModel.restorePage(pageToDelete)
+                                            viewModel.restorePage(pageToDelete.id)
                                         }
                                     }
                                 }
@@ -192,32 +190,32 @@ fun ReviewScreen(
             }
 
             TabRow(
-                selectedTabIndex = if (exportFormat == ExportFormat.IMAGE) 0 else 1,
+                selectedTabIndex = if (uiState.exportFormat == ExportFormat.IMAGE) 0 else 1,
                 containerColor = Color.Transparent,
                 contentColor = Color.White,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Tab(
-                    selected = exportFormat == ExportFormat.IMAGE,
+                    selected = uiState.exportFormat == ExportFormat.IMAGE,
                     onClick = { viewModel.setExportFormat(ExportFormat.IMAGE) },
                     text = { Text("JPEG") }
                 )
                 Tab(
-                    selected = exportFormat == ExportFormat.PDF,
+                    selected = uiState.exportFormat == ExportFormat.PDF,
                     onClick = { viewModel.setExportFormat(ExportFormat.PDF) },
                     text = { Text("PDF") }
                 )
             }
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                if (scannedPages.isNotEmpty()) {
+                if (uiState.hasPages) {
                     HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
                         // Guard against index out of bounds during deletion animation
-                        if (pageIndex < scannedPages.size) {
-                            val page = scannedPages[pageIndex]
+                        if (pageIndex < uiState.pages.size) {
+                            val page = uiState.pages[pageIndex]
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 AsyncImage(
-                                    model = page.displayUri(),
+                                    model = page.displayUri,
                                     contentDescription = "Scanned Page $pageIndex",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Fit

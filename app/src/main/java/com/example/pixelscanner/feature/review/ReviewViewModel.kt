@@ -14,6 +14,8 @@ import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
+import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
+import com.example.pixelscanner.feature.review.ui.ReviewUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,17 +31,11 @@ class ReviewViewModel : ViewModel() {
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
 
-    private val _scannedPages = MutableStateFlow<List<ScannedPage>>(emptyList())
-    val scannedPages: StateFlow<List<ScannedPage>> = _scannedPages.asStateFlow()
-
-    private val _isProcessing = MutableStateFlow(false)
-    val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
-
-    private val _exportFormat = MutableStateFlow(ExportFormat.IMAGE)
-    val exportFormat: StateFlow<ExportFormat> = _exportFormat.asStateFlow()
+    private val _uiState = MutableStateFlow(ReviewUiState())
+    val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
 
     fun setExportFormat(format: ExportFormat) {
-        _exportFormat.value = format
+        _uiState.value = _uiState.value.copy(exportFormat = format)
     }
 
     fun setScanResult(scanResult: ScanResultPayload) {
@@ -52,7 +48,7 @@ class ReviewViewModel : ViewModel() {
         val page = session.activePages().getOrNull(index) ?: return
 
         viewModelScope.launch {
-            _isProcessing.value = true
+            updateUiState { it.copy(isProcessing = true) }
             try {
                 val result = toggleEnhancementUseCase(page, context)
                 val updatedPages = session.pages.map { existingPage ->
@@ -66,7 +62,7 @@ class ReviewViewModel : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace() // Handle error appropriately
             } finally {
-                _isProcessing.value = false
+                updateUiState { it.copy(isProcessing = false) }
             }
         }
     }
@@ -77,8 +73,9 @@ class ReviewViewModel : ViewModel() {
         applySessionUpdate(result.updatedSession)
     }
 
-    fun restorePage(page: ScannedPage) {
+    fun restorePage(pageId: String) {
         val session = _scanSession.value ?: return
+        val page = session.pages.firstOrNull { it.id == pageId } ?: return
         applySessionUpdate(restorePageUseCase(session, page))
     }
 
@@ -87,7 +84,7 @@ class ReviewViewModel : ViewModel() {
             val session = _scanSession.value ?: return@launch
             val request = ExportRequest(
                 sessionId = session.id,
-                format = _exportFormat.value,
+                format = _uiState.value.exportFormat,
             )
             val result = exportSessionUseCase(
                 session = session,
@@ -104,6 +101,22 @@ class ReviewViewModel : ViewModel() {
 
     private fun applySessionUpdate(session: ScanSession) {
         _scanSession.value = session
-        _scannedPages.value = session.activePages()
+        updateUiState { currentState ->
+            currentState.copy(
+                pages = session.activePages().map { it.toUiModel() },
+            )
+        }
     }
+
+    private fun updateUiState(transform: (ReviewUiState) -> ReviewUiState) {
+        _uiState.value = transform(_uiState.value)
+    }
+}
+
+private fun ScannedPage.toUiModel(): ReviewPageUiModel {
+    return ReviewPageUiModel(
+        id = id,
+        displayUri = displayUri(),
+        isEnhanced = isEnhanced(),
+    )
 }

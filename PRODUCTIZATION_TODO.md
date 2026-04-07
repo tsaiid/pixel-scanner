@@ -99,6 +99,7 @@
   - [ ] 設計頁級 `ProcessingState`。
   - [x] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
   - [~] 定義 domain model 與 UI model 的映射方式。
+    - 已落地 review 畫面的 `ScannedPage -> ReviewPageUiModel` 映射；其餘首頁 / export flow 尚待補齊。
 - [~] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
   - 建議 use cases：`CreateSessionFromScanResultUseCase`, `LoadScanSessionUseCase`, `ToggleEnhancementUseCase`, `DeletePageUseCase`, `RestorePageUseCase`, `ExportSessionUseCase`, `DiscardSessionUseCase`, `ResumeSessionUseCase`。
   - 驗收標準：ViewModel 僅負責 state reduction、event handling、effect emission。
@@ -119,7 +120,9 @@
 - [~] 建立單向資料流的 UI state 結構。
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
   - [ ] 為首頁定義 `HomeUiState`。
-  - [~] 為 review 定義 `ReviewUiState`。
+  - [x] 為 review 定義 `ReviewUiState`。
+  - [~] review 畫面已改為單一 `uiState` 驅動畫面；`UiEvent` / `UiEffect` 尚未拆出。
+    - 目前 `ReviewUiState` 已收斂 pages、export format、processing flag，畫面不再直接消費 `ScannedPage` domain list。
   - [ ] 為 export 定義 `ExportUiState` 或等效 effect/state。
   - [ ] 定義 `ReviewUiEvent`。
   - [ ] 定義 `ReviewUiEffect`。

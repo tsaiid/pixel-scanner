@@ -48,7 +48,7 @@ fun AppNavigation() {
             ReviewScreen(
                 viewModel = reviewViewModel,
                 onSave = {
-                    val format = reviewViewModel.exportFormat.value
+                    val format = reviewViewModel.uiState.value.exportFormat
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     reviewViewModel.saveAll(context) {
                         val message = if (format == ExportFormat.PDF) {
