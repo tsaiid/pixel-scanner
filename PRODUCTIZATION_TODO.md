@@ -1,0 +1,646 @@
+# Pixel Scanner Productization Todo
+
+本文件將 Pixel Scanner 從「MVP 可用」推進到「可持續開發、可驗證品質、可上線維運」的產品化重構清單。
+
+本版本已整合 `PRODUCTIZATION_REQS_SUPPLEMENT.md` 的補強建議，但調整為與主重構流程一致的 backlog：
+
+- 對主線有直接影響的項目，併入既有 phase。
+- 風險較高或技術選型尚未定案的項目，改列為 ADR、spike 或 benchmark gate。
+- 不另開平行流程，避免 backlog 分裂。
+
+## Status Legend
+
+- [ ] Not started
+- [~] In progress
+- [x] Done
+- [!] Blocked
+
+## Backlog Usage
+
+- 每個 phase 先完成設計與決策，再進入實作，最後補驗證。
+- 一個 issue 應對應一個最小可交付項，不要把整個 phase 當單一工作。
+- 若某項需要技術選型或產品決策，先建立 ADR 或 design note，再開始實作。
+- 若某項只在特定條件下才值得做，先定義 benchmark 或觸發條件，再決定是否投入。
+
+## Overall Goals
+
+- 建立可擴充的掃描流程架構，避免 UI、狀態、I/O 與影像處理耦合在一起。
+- 讓 scan session、影像檔案、匯出流程都由 app 自己掌控生命週期，不依賴短生命週期的外部 URI。
+- 提升高解析度掃描、多頁文件與長時間匯出的穩定性、可恢復性與效能。
+- 重構 Review / Export 體驗，使其符合文件掃描工具的產品心智模型。
+- 補齊錯誤處理、測試、監測與文件，讓專案可持續維護。
+
+## Productization Principles
+
+- Session-owned files first：掃描完成後，app 應盡快將掃描結果收編進自己的 session 目錄。
+- Strategy over hardcode：匯出路徑應由 decision tree 決定，而不是一律重建 PDF。
+- Preview and export are different workloads：預覽優先互動流暢，匯出優先正確性與完整畫質。
+- Large-document support is intentional：50-100 頁流程需要明確的背景執行、進度、清理與恢復策略。
+- Benchmark before advanced optimization：GPU、第三方 PDF 操作庫等高成本方案，必須以 benchmark 或實際瓶頸為前提。
+
+## Phase 0: Baseline And Alignment
+
+- [ ] 對齊 README、spec、Gradle 設定與實際實作，修正 target SDK、功能描述與已完成項目。
+  - 驗收標準：README、`spec.md`、`todo.md`、build config 之間不再互相矛盾。
+  - [ ] 比對 README 與實際功能清單，列出不一致項目。
+  - [ ] 比對 `spec.md` 與目前程式碼行為，標記未落地功能。
+  - [ ] 比對 `todo.md` 與目前實作，移除已失真的完成標記。
+  - [ ] 對齊 `compileSdk`、`targetSdk`、README 中的環境描述。
+  - [ ] 將已完成、進行中、規劃中三種功能狀態寫清楚。
+- [ ] 建立產品化重構分支策略與里程碑規劃。
+  - 驗收標準：定義 milestone，例如 `architecture`, `session-lifecycle`, `performance`, `ux`, `quality`, `release-prep`。
+  - [ ] 定義分支命名規則。
+  - [ ] 定義 milestone 與對應輸出物。
+  - [ ] 定義每個 milestone 的完成條件。
+  - [ ] 建立簡易 roadmap 文件或看板欄位。
+- [ ] 釐清產品範圍與非目標。
+  - 驗收標準：明確標記第一版是否包含歷史紀錄、頁面排序、分享流程、OCR、雲端同步、批量操作。
+  - [ ] 列出 v1 must-have 功能。
+  - [ ] 列出 v1 should-have 功能。
+  - [ ] 列出明確不做的功能。
+  - [ ] 為爭議項建立決策清單，例如 OCR、同步、歷史紀錄、增量 PDF 重組。
+- [ ] 建立性能與穩定性基線。
+  - 驗收標準：記錄冷啟動、首次掃描、session ingestion、單頁增強、多頁 PDF 匯出的耗時與記憶體占用。
+  - [ ] 定義量測場景與裝置條件。
+  - [ ] 準備單頁 / 多頁 / 大圖 / 長文件測試樣本。
+  - [ ] 記錄冷啟動耗時。
+  - [ ] 記錄掃描返回 review 的耗時。
+  - [ ] 記錄掃描結果 ingest 至 session 的耗時。
+  - [ ] 記錄單頁增強耗時。
+  - [ ] 記錄多頁 PDF 匯出耗時。
+  - [ ] 記錄記憶體峰值與可能的 OOM 風險。
+- [ ] 建立產品化關鍵 ADR。
+  - 驗收標準：session ingestion、export decision tree、背景匯出策略、preview/export 雙 pipeline 有正式決策文件。
+  - [ ] 撰寫 session ownership ADR。
+  - [ ] 撰寫 export strategy ADR。
+  - [ ] 撰寫 background export ADR。
+  - [ ] 撰寫 image pipeline ADR。
+
+## Phase 1: Architecture Refactor
+
+- [ ] 導入明確的 feature/module 分層。
+  - 建議目標：`scanner`, `review`, `export`, `core-ui`, `core-storage`, `core-image`, `core-model`。
+  - 驗收標準：UI、domain、data 職責清楚，主要流程不再集中於單一 ViewModel。
+  - [ ] 定義第一階段是否先保留單 module、只做 package 分層。
+  - [ ] 設計目錄結構與命名規則。
+  - [ ] 抽出 `core-model` 或等效 model package。
+  - [ ] 抽出 `core-image` 或等效 image domain/data package。
+  - [ ] 抽出 `core-storage` 或等效 export/storage package。
+  - [ ] 將 scanner、review、export UI 各自集中到 feature 區域。
+- [ ] 定義核心 domain model。
+  - 建議實體：`ScanSession`, `ScannedPage`, `PageVariant`, `ExportRequest`, `ExportResult`, `ProcessingState`, `SessionDirtyFlags`。
+  - 驗收標準：UI 層不再直接依賴裸 `Uri` 列表做主要業務判斷。
+  - [ ] 設計 `ScanSession` 欄位。
+  - [ ] 設計 `ScannedPage` 欄位。
+  - [ ] 設計 `PageVariant` 結構，區分 `original`, `previewEnhanced`, `exportEnhanced`。
+  - [ ] 設計 `ExportRequest` 與 `ExportResult`。
+  - [ ] 設計頁級 `ProcessingState`。
+  - [ ] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
+  - [ ] 定義 domain model 與 UI model 的映射方式。
+- [ ] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
+  - 建議 use cases：`CreateSessionFromScanResultUseCase`, `LoadScanSessionUseCase`, `ToggleEnhancementUseCase`, `DeletePageUseCase`, `RestorePageUseCase`, `ExportSessionUseCase`, `DiscardSessionUseCase`, `ResumeSessionUseCase`。
+  - 驗收標準：ViewModel 僅負責 state reduction、event handling、effect emission。
+  - [ ] 盤點 `ReviewViewModel` 現有責任。
+  - [ ] 抽出 session 初始化 use case。
+  - [ ] 抽出增強流程 use case。
+  - [ ] 抽出刪除 / 復原 use case。
+  - [ ] 抽出 export use case。
+  - [ ] 抽出 discard / resume / scan-more use case。
+- [ ] 引入 repository 邊界。
+  - 建議 repositories：`ScanSessionRepository`, `ImageProcessingRepository`, `ExportRepository`, `TempFileRepository`, `StorageRepository`。
+  - 驗收標準：Android framework 依賴集中在 data layer。
+  - [ ] 定義 repository interface。
+  - [ ] 提供 Android / file-system 實作。
+  - [ ] 將 `ContentResolver` 相關程式集中到 data layer。
+  - [ ] 將 temp file、session file、stale cleanup 集中到 repository。
+  - [ ] 為 repository 設計測試替身。
+- [ ] 建立單向資料流的 UI state 結構。
+  - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
+  - [ ] 為首頁定義 `HomeUiState`。
+  - [ ] 為 review 定義 `ReviewUiState`。
+  - [ ] 為 export 定義 `ExportUiState` 或等效 effect/state。
+  - [ ] 定義 `ReviewUiEvent`。
+  - [ ] 定義 `ReviewUiEffect`。
+  - [ ] 整理 loading、error、selection、pager、batch progress 的責任邊界。
+- [ ] 導入依賴注入方案。
+  - 建議可選：先用簡單 constructor injection，必要時再導入 Hilt。
+  - 驗收標準：ViewModel 與 use case 可被測試替換，不需在測試中直接建立 Android `Context`。
+  - [ ] 先決定是否維持純手動 DI。
+  - [ ] 若手動 DI，建立 app container。
+  - [ ] 若 Hilt，規劃 migration 範圍。
+  - [ ] 將 ViewModel 依賴改由注入提供。
+- [ ] 正式導入 Navigation。
+  - 建議使用 Navigation Compose 或至少明確封裝 screen contract。
+  - 驗收標準：導航狀態可保存，返回行為一致。
+  - [ ] 定義 screen route 或等效 contract。
+  - [ ] 決定 scanner return result 如何接回 app flow。
+  - [ ] 定義 home -> scanner -> review -> export complete 的導航圖。
+  - [ ] 驗證返回鍵行為與 deep restore 行為。
+- [ ] 將流程狀態從 composable `remember` 遷移到可保存狀態。
+  - 驗收標準：旋轉螢幕與 process recreation 時不會意外丟失流程狀態。
+  - [ ] 盤點目前依賴 `remember` 的流程狀態。
+  - [ ] 將必要狀態移至 ViewModel / SavedStateHandle。
+  - [ ] 驗證 configuration change。
+  - [ ] 驗證 process death restore 策略。
+
+## Phase 2: Scan Session And Data Lifecycle
+
+- [ ] 擴充掃描結果模型，保留 ML Kit 回傳的 JPEG pages 與原始 PDF URI。
+  - 驗收標準：後續匯出時可根據是否修改過內容決定是否重用原始 PDF。
+  - [ ] 研究 ML Kit result 中需要持久化的欄位。
+  - [ ] 擴充 session model 接住 page URIs 與 pdf URI。
+  - [ ] 定義 `session dirty` 的判斷規則。
+  - [ ] 驗證未修改 session 可直接重用 PDF。
+- [ ] 導入掃描結果 eager ingestion。
+  - 驗收標準：掃描完成後，review 與後續處理都以 app 內部 session 檔案為主，不直接依賴外部短生命週期 URI。
+  - [ ] 定義 ingestion 的觸發點與執行緒模型。
+  - [ ] 將 page JPEG 拷貝到 `cacheDir/sessions/{sessionId}/original/`。
+  - [ ] 若有原始 PDF，拷貝到 session 目錄並記錄 metadata。
+  - [ ] 建立 source URI 到 session file 的映射資訊。
+  - [ ] 定義 ingestion 失敗時的 fallback 與錯誤回報。
+- [ ] 建立 scan session 暫存目錄與 metadata。
+  - 驗收標準：單次掃描的原圖、增強圖、排序資訊、刪除狀態、匯出狀態都有可追蹤 metadata。
+  - [ ] 定義 session id 生成規則。
+  - [ ] 定義 session metadata schema。
+  - [ ] 建立 session 目錄命名規則。
+  - [ ] 決定 metadata 存放格式，例如 JSON 或 Room。
+  - [ ] 實作 metadata 讀寫。
+- [ ] 定義 session 清理策略。
+  - 驗收標準：離開 review、匯出完成、App 重啟後能安全清理舊快取，不殘留大量暫存檔。
+  - [ ] 定義 preview cache 何時清理。
+  - [ ] 定義 export temp files 何時清理。
+  - [ ] 定義失敗 / 中斷 session 的保留時間。
+  - [ ] 定義 stale session cleanup 規則，例如時效或 LRU。
+  - [ ] 實作 app launch 時的 stale session cleanup。
+- [ ] 加入 session recovery 策略。
+  - 驗收標準：掃描完成後若 app 被系統回收，重新進入時可提示恢復或捨棄未完成 session。
+  - [ ] 定義可恢復 session 的最小資訊。
+  - [ ] 定義恢復提示 UI。
+  - [ ] 實作 restore session flow。
+  - [ ] 驗證部分檔案遺失時的 fallback。
+- [ ] 明確區分 `Rescan`、`Scan More`、`Discard Session` 三種動作。
+  - 驗收標準：使用者操作語意與實際行為一致，不再用模糊返回行為代替。
+  - [ ] 定義三種動作的產品語意。
+  - [ ] 定義各自是否保留當前頁面。
+  - [ ] 定義按鈕文案與確認對話框。
+  - [ ] 驗證返回鍵是否對應其中一種動作。
+
+## Phase 3: Image Processing Pipeline
+
+- [ ] 將影像增強拆成 preview pipeline 與 export pipeline。
+  - 驗收標準：預覽切換速度以互動流暢為優先，匯出時才處理 full-resolution。
+  - [ ] 定義 preview pipeline 輸入 / 輸出。
+  - [ ] 定義 export pipeline 輸入 / 輸出。
+  - [ ] 定義兩條 pipeline 的 cache key。
+  - [ ] 實作 preview pipeline。
+  - [ ] 實作 export pipeline。
+- [ ] 導入安全 decode 策略。
+  - 包含：bounds decode、`inSampleSize`、色彩格式選擇、尺寸上限保護。
+  - 驗收標準：處理大圖與異常圖片時不因一次性 full decode 容易 OOM。
+  - [ ] 建立 decode helper。
+  - [ ] 加入 bounds decode。
+  - [ ] 加入 `inSampleSize` 計算。
+  - [ ] 決定預覽與匯出各自的 bitmap config。
+  - [ ] 評估預覽是否使用 `Bitmap.Config.HARDWARE` 或其他低拷貝策略。
+  - [ ] 為異常尺寸建立保護條件。
+- [ ] 修正背景估計演算法的極端尺寸邊界。
+  - 驗收標準：小圖、長圖、極端比例圖片不會因縮放到 0 尺寸而 crash。
+  - [ ] 加入最小縮放尺寸保護。
+  - [ ] 驗證超長圖與超寬圖。
+  - [ ] 驗證小尺寸輸入圖片。
+- [ ] 重新設計像素處理的記憶體策略。
+  - 建議方向：tile-based、row-based 或分段 buffer 處理。
+  - 驗收標準：12MP 圖片處理過程的瞬時記憶體峰值顯著下降。
+  - [ ] 比較 tile-based 與 row-based 方案。
+  - [ ] 選定實作方案並記錄設計理由。
+  - [ ] 實作分段處理。
+  - [ ] 加入記憶體量測點。
+- [ ] 建立增強結果快取索引。
+  - 驗收標準：同頁面重複切換不重新運算，可命中快取。
+  - [ ] 定義快取 key。
+  - [ ] 定義快取 metadata。
+  - [ ] 實作快取查詢。
+  - [ ] 實作快取失效與清理。
+- [ ] 為每頁增強建立獨立處理狀態。
+  - 驗收標準：單頁處理不會鎖住整個 review 畫面。
+  - [ ] 在 page model 加入 processing state。
+  - [ ] UI 只鎖當前處理頁或對應控制項。
+  - [ ] 驗證多頁快速切換時狀態一致。
+- [ ] 為影像處理加入可取消性。
+  - 驗收標準：離開畫面、切換 session 或重複操作時可中止過時工作。
+  - [ ] 為每頁處理任務建立 job 管理。
+  - [ ] 離開畫面時取消過時任務。
+  - [ ] 重複點擊時取消前一個同頁任務。
+  - [ ] 驗證取消後狀態回復。
+- [ ] 評估進階硬體加速方案。
+  - 驗收標準：只有在 CPU 路徑無法達標時，才進入更高成本的技術路線。
+  - [ ] 定義目前 CPU 路徑的可接受性能門檻。
+  - [ ] 評估 `ColorMatrix` 是否能覆蓋部分簡化增強情境。
+  - [ ] 若 benchmark 未達標，再開 spike 評估 GPU / NDK / 其他方案。
+  - [ ] 記錄不採用過時或高維護成本方案的理由。
+- [ ] 建立影像處理 benchmark。
+  - 驗收標準：至少有基準測試覆蓋 1 頁、10 頁與不同解析度樣本。
+  - [ ] 定義 benchmark 樣本集。
+  - [ ] 新增 1 頁處理 benchmark。
+  - [ ] 新增多頁處理 benchmark。
+  - [ ] 輸出 baseline 報表。
+
+## Phase 4: Export Pipeline
+
+- [ ] 重構 export 為明確的 request/result 流程。
+  - 驗收標準：UI 可知道 export 是否成功、失敗、取消或部分成功。
+  - [ ] 定義 export state machine。
+  - [ ] 定義 success / partial / failure / cancelled result model。
+  - [ ] 調整 UI 消費 export result 的方式。
+- [ ] 建立 export decision tree。
+  - 驗收標準：匯出路徑可根據 session 狀態選擇 reuse original PDF、rebuild PDF 或輸出 JPEG，而不是一律重建。
+  - [ ] 定義 `reuse original PDF` 的條件。
+  - [ ] 定義 `rebuild from reordered pages` 的條件。
+  - [ ] 定義 `rebuild from enhanced pages` 的條件。
+  - [ ] 將 decision tree 寫入 `ExportRequest` 或等效策略物件。
+  - [ ] 驗證刪頁、排序、增強、旋轉後會走對應分支。
+- [ ] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
+  - 驗收標準：避免不必要的 PDF 重建與解碼成本，保留原 PDF 可能包含的文字層或其他 metadata。
+  - [ ] 定義 destination write 流程。
+  - [ ] 實作 fast-track copy path。
+  - [ ] 驗證結果檔可正常開啟與分享。
+- [ ] 評估刪頁 / 排序場景的增量 PDF 重組方案。
+  - 驗收標準：先完成可研究、可比較、可決策，不預設採用特定庫。
+  - [ ] 列出可行方案，例如重建 PDF、增量操作 PDF、延後到 v2。
+  - [ ] 評估第三方庫的體積、效能、授權與維護成本。
+  - [ ] 若不採用增量重組，記錄以重建 PDF 為 v1 決策的理由。
+- [ ] 若需重建 PDF，加入輸出尺寸策略。
+  - 建議支援：原始尺寸、A4、Letter、壓縮等級。
+  - 驗收標準：輸出檔案大小、品質與效能可控。
+  - [ ] 決定 v1 要暴露給使用者還是先固定策略。
+  - [ ] 定義 page scaling 規則。
+  - [ ] 加入 JPEG 壓縮品質設定。
+  - [ ] 測試檔案大小與畫質 tradeoff。
+- [ ] 將 JPEG 與 PDF 匯出都改為可回報逐步進度。
+  - 驗收標準：多頁匯出時 UI 可顯示進度而非只有全域 loading。
+  - [ ] 設計 progress model。
+  - [ ] 匯出頁級進度回報。
+  - [ ] UI 呈現 overall progress。
+  - [ ] 失敗時保留已完成頁面的處理資訊。
+- [ ] 為大型匯出建立背景執行策略。
+  - 驗收標準：長時間 PDF 匯出在 app 進入背景時仍能穩定執行，且不把短任務複雜化。
+  - [ ] 定義何種條件下切換到 `WorkManager`。
+  - [ ] 定義 worker 與前台通知的責任邊界。
+  - [ ] 實作大型匯出走 background worker。
+  - [ ] 驗證取消、重試、app 重啟後狀態恢復。
+- [ ] 補齊錯誤分類與前置檢查。
+  - 類型：讀取失敗、decode 失敗、寫入失敗、儲存空間不足、權限或 `ContentResolver` 異常、來源檔失效。
+  - 驗收標準：不同錯誤能映射成可理解的使用者訊息，且可區分可重試與不可重試。
+  - [ ] 定義 domain error 類型。
+  - [ ] 定義使用者訊息映射表。
+  - [ ] 定義可重試與不可重試錯誤。
+  - [ ] 在掃描前與匯出前加入磁碟空間檢查。
+  - [ ] 為未完成匯出殘檔建立清理策略。
+- [ ] 建立匯出後動作。
+  - 建議支援：開啟檔案、分享、回到首頁、繼續掃描。
+  - 驗收標準：匯出成功後有明確 next step，而不只是 toast。
+  - [ ] 設計 export success sheet 或 dialog。
+  - [ ] 加入 open/share action。
+  - [ ] 加入 continue scanning action。
+  - [ ] 驗證取消與返回後狀態。
+- [ ] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
+  - 驗收標準：實機上可預期地出現在正確位置，命名規則一致。
+  - [ ] 驗證 JPEG 寫入 `Pictures/PixelScanner`。
+  - [ ] 驗證 PDF 寫入 `Documents/PixelScanner` 或選定位置。
+  - [ ] 驗證檔名重複時行為。
+  - [ ] 驗證 Android 版本差異。
+  - [ ] 明確記錄哪些情況需要 `MediaScannerConnection`，哪些情況不需要。
+
+## Phase 5: Review Experience Redesign
+
+- [ ] 重設 review screen 資訊架構。
+  - 建議區塊：top app bar、主預覽、縮圖列、頁面工具列、底部 primary action。
+  - 驗收標準：多頁操作時可快速理解目前頁面與下一步動作。
+  - [ ] 畫 review screen wireframe。
+  - [ ] 定義資訊優先順序。
+  - [ ] 定義單頁與多頁時的版型差異。
+  - [ ] 定義 loading、error、empty 的版型。
+- [ ] 加入縮圖帶與頁面快速切換。
+  - 驗收標準：10 頁以上文件仍可有效管理，不需只靠左右滑動。
+  - [ ] 決定縮圖帶是水平列還是底部 filmstrip。
+  - [ ] 實作縮圖點選切頁。
+  - [ ] 顯示目前頁選中狀態。
+  - [ ] 驗證大量頁數捲動效能。
+- [ ] 加入頁面排序能力。
+  - 驗收標準：可拖曳排序或透過明確操作重新排列頁序。
+  - [ ] 選擇拖曳方案。
+  - [ ] 實作頁序更新 state。
+  - [ ] 排序後同步更新匯出順序。
+  - [ ] 驗證排序後 undo / export 行為。
+- [ ] 讓刪除、復原與頁數更新更穩定。
+  - 驗收標準：刪除最後一頁時不會立刻誤觸發重掃流程，undo 行為可靠。
+  - [ ] 重設刪除最後一頁的行為。
+  - [ ] 決定空 session 時顯示空狀態或離開流程。
+  - [ ] 改善 snackbar undo 與 pager 同步問題。
+- [ ] 重新命名與拆分掃描相關按鈕文案。
+  - 驗收標準：`Scan More`、`Discard & Rescan`、`Save as JPEG`、`Save as PDF` 等語意明確。
+  - [ ] 建立文案表。
+  - [ ] 決定 destructive action 是否需要二次確認。
+  - [ ] 驗證英文與中文文案長度。
+- [ ] 加入頁級 enhancement toggle 與狀態提示。
+  - 驗收標準：使用者知道當前頁是原圖或增強圖，處理中有明確 feedback。
+  - [ ] 加入頁級狀態標示。
+  - [ ] 加入 enhancement 前後的明確 label。
+  - [ ] 加入處理中 spinner 或 inline progress。
+  - [ ] 加入失敗提示與重試。
+- [ ] 規劃批量操作 UX。
+  - 驗收標準：大文件流程可用，但不在基礎狀態機不穩定時提早上線複雜互動。
+  - [ ] 將 `Apply to All` 定義為 should-have 或 milestone gated 功能。
+  - [ ] 若要支援全部增強，先定義背景佇列與全域進度模型。
+  - [ ] 評估是否加入 grid view 以支援大頁數快速跳轉與批量刪除。
+  - [ ] 以前置條件方式記錄依賴：頁級 processing state、非阻塞 queue、排序 state 穩定。
+- [ ] 設計空狀態與錯誤狀態。
+  - 驗收標準：無頁面、頁面讀取失敗、處理失敗、匯出失敗時都有合理 UI。
+  - [ ] 定義無頁面狀態。
+  - [ ] 定義單頁讀取失敗狀態。
+  - [ ] 定義整體匯出失敗狀態。
+  - [ ] 定義部分頁失敗狀態。
+- [ ] 補齊 accessibility。
+  - 驗收標準：content description、可聚焦順序、色彩對比與觸控目標符合基本標準。
+  - [ ] 為所有 icon button 加上語意。
+  - [ ] 驗證主要觸控目標至少達建議尺寸。
+  - [ ] 驗證文字與背景對比。
+  - [ ] 驗證 TalkBack 流程。
+
+## Phase 6: Start Flow And Product Identity
+
+- [ ] 重構首頁，從單一 landing screen 升級為產品入口。
+  - 可選內容：最近掃描、上次未完成 session、快速開始、匯出說明。
+  - 驗收標準：首頁除了按鈕外，也能承接回訪情境。
+  - [ ] 定義首頁的主要任務。
+  - [ ] 決定是否顯示 recent scans。
+  - [ ] 決定是否顯示 resume session。
+  - [ ] 重畫首頁 wireframe。
+- [ ] 統一品牌色、字體、圖示與 Material 3 token。
+  - 驗收標準：首頁與 review 頁視覺語言一致，不再混用品牌紫與 dynamic color 導致割裂。
+  - [ ] 選定品牌主色與輔色。
+  - [ ] 選定字體策略。
+  - [ ] 定義 icon style。
+  - [ ] 將 token 映射到 Material 3 theme。
+- [ ] 決定 dynamic color 策略。
+  - 驗收標準：明確定義哪些畫面跟隨系統色，哪些畫面使用品牌色。
+  - [ ] 列出所有畫面與對應色彩策略。
+  - [ ] 記錄決策理由。
+  - [ ] 驗證深淺色模式一致性。
+- [ ] 建立 design tokens。
+  - 類型：color, spacing, radius, elevation, typography, motion。
+  - 驗收標準：畫面不再直接硬編碼大量顏色與尺寸。
+  - [ ] 建立 color tokens。
+  - [ ] 建立 spacing tokens。
+  - [ ] 建立 radius tokens。
+  - [ ] 建立 typography tokens。
+  - [ ] 建立 motion tokens。
+- [ ] 修正系統列與 edge-to-edge 行為。
+  - 驗收標準：狀態列與導覽列在深淺色模式下都可讀、沉浸且一致。
+  - [ ] 修正 status bar icon appearance 邏輯。
+  - [ ] 導入 edge-to-edge。
+  - [ ] 驗證首頁與 review 頁的 inset 行為。
+- [ ] 將所有硬編碼文案移入 string resources。
+  - 驗收標準：所有使用者可見文案都集中管理，為在地化做好準備。
+  - [ ] 盤點所有 hardcoded strings。
+  - [ ] 移入 `strings.xml`。
+  - [ ] 按功能分類資源 key。
+  - [ ] 檢查 content description 與錯誤訊息也已資源化。
+
+## Phase 7: State, Errors, And User Feedback
+
+- [ ] 建立統一的 loading / error / success feedback pattern。
+  - 驗收標準：不再依賴 scattered toast，改用 snackbar、banner、dialog 或 inline status。
+  - [ ] 定義全域 feedback pattern 規範。
+  - [ ] 定義哪些情境用 snackbar。
+  - [ ] 定義哪些情境用 dialog。
+  - [ ] 定義哪些情境用 inline status。
+- [ ] 導入 effect channel。
+  - 驗收標準：一次性事件如 toast、navigation、share sheet 不混在 persistent state 裡。
+  - [ ] 定義 effect 類型。
+  - [ ] 在 ViewModel 導入 effect emission。
+  - [ ] UI 改為消費 effect channel。
+- [ ] 為所有長任務提供取消與重試入口。
+  - 驗收標準：增強與匯出失敗後可明確重試，不需離開整個流程。
+  - [ ] 設計 enhancement retry。
+  - [ ] 設計 export retry。
+  - [ ] 設計 export cancel。
+  - [ ] 驗證取消後 state 一致性。
+- [ ] 為不可恢復錯誤設計 fallback。
+  - 驗收標準：例如圖片檔失效時可提示重新掃描，而非沉默失敗。
+  - [ ] 列出不可恢復錯誤清單。
+  - [ ] 定義各錯誤的 fallback CTA。
+  - [ ] 驗證 fallback 是否會造成資料遺失誤解。
+
+## Phase 8: Performance And Quality
+
+- [ ] 加入 Macrobenchmark。
+  - 指標：冷啟動、首頁到掃描、review 切頁、增強切換、session ingestion、PDF 匯出。
+  - 驗收標準：建立可持續追蹤的 benchmark 模組與基線結果。
+  - [ ] 建立 benchmark module。
+  - [ ] 新增冷啟動 benchmark。
+  - [ ] 新增 review 切頁 benchmark。
+  - [ ] 新增 enhancement toggle benchmark。
+  - [ ] 新增 session ingestion benchmark。
+  - [ ] 新增 export benchmark。
+- [ ] 增加 Baseline Profile。
+  - 驗收標準：降低實機冷啟動與主要互動卡頓。
+  - [ ] 建立 baseline profile 規則。
+  - [ ] 覆蓋首頁、掃描返回、review、export。
+  - [ ] 驗證 profile 成效。
+- [ ] 對 Compose 畫面做 recomposition 檢查。
+  - 驗收標準：大圖切換、processing state 更新不造成不必要重組。
+  - [ ] 找出 review screen 高頻重組來源。
+  - [ ] 調整 state 結構降低整頁重組。
+  - [ ] 驗證 pager 與縮圖列分離後的重組數。
+- [ ] 檢查 Coil 載入策略。
+  - 驗收標準：預覽頁使用合適的大小、快取與 placeholder，不浪費解碼成本。
+  - [ ] 定義主預覽尺寸需求。
+  - [ ] 定義縮圖尺寸需求。
+  - [ ] 為不同用途設定不同 request。
+  - [ ] 驗證 memory cache / disk cache 行為。
+- [ ] 對大型文件流程做壓力測試。
+  - 驗收標準：50-100 頁 session 仍可接受，不出現明顯 ANR 或 OOM。
+  - [ ] 建立 50 頁測試場景。
+  - [ ] 建立 100 頁測試場景。
+  - [ ] 記錄滑動、排序、匯出的表現。
+  - [ ] 記錄失敗模式。
+- [ ] 補上 StrictMode 與 debug 檢查策略。
+  - 驗收標準：開發期可早期發現主執行緒 I/O、資源洩漏等問題。
+  - [ ] 在 debug build 開啟 StrictMode。
+  - [ ] 加入主執行緒 I/O 檢查。
+  - [ ] 加入 leaked closable / file handle 檢查。
+
+## Phase 9: Testing Strategy
+
+- [ ] 建立 ViewModel 單元測試。
+  - 驗收標準：覆蓋 scan session state transition、delete/undo、export success/failure。
+  - [ ] 建立 ViewModel test base。
+  - [ ] 測試 session 初始化。
+  - [ ] 測試 delete / undo。
+  - [ ] 測試 enhancement state transition。
+  - [ ] 測試 export state transition。
+- [ ] 建立 use case 單元測試。
+  - 驗收標準：增強流程、快取命中、匯出策略分支都可測試。
+  - [ ] 測試 ingestion use case。
+  - [ ] 測試 enhancement 命中快取。
+  - [ ] 測試 enhancement miss cache。
+  - [ ] 測試 export reuse original PDF。
+  - [ ] 測試 export rebuild PDF。
+  - [ ] 測試 background export 分流條件。
+- [ ] 建立 repository 層測試。
+  - 驗收標準：MediaStore、temp file、session metadata、PDF rebuild 等流程有 fake 或 instrumentation 覆蓋。
+  - [ ] 建立 fake repositories。
+  - [ ] 建立 temp file repository 測試。
+  - [ ] 建立 session metadata 測試。
+  - [ ] 建立 MediaStore instrumentation 測試。
+  - [ ] 建立 PDF export instrumentation 測試。
+- [ ] 建立 Compose UI tests。
+  - 驗收標準：首頁、review 頁、刪除復原、格式切換、loading/error 狀態可驗證。
+  - [ ] 測試首頁主要 CTA。
+  - [ ] 測試 review 頁主預覽與縮圖列。
+  - [ ] 測試刪除與 undo。
+  - [ ] 測試 export format 切換。
+  - [ ] 測試 error / loading UI。
+- [ ] 加入整合測試樣本資產。
+  - 驗收標準：包含單頁、多頁、低光、陰影、旋轉、超大圖檔、長文件等案例。
+  - [ ] 蒐集單頁樣本。
+  - [ ] 蒐集多頁樣本。
+  - [ ] 蒐集極端陰影樣本。
+  - [ ] 蒐集旋轉與傾斜樣本。
+  - [ ] 蒐集高解析度大圖樣本。
+  - [ ] 蒐集 50+ 頁樣本。
+- [ ] 建立手動 QA checklist。
+  - 驗收標準：每次 release 前可一致性驗證核心流程。
+  - [ ] 建立首頁 QA。
+  - [ ] 建立掃描流程 QA。
+  - [ ] 建立 review 編輯 QA。
+  - [ ] 建立 export QA。
+  - [ ] 建立效能與記憶體 QA。
+
+## Phase 10: Build, Tooling, And Delivery
+
+- [ ] 修正與升級 Android / Kotlin / Compose 版本策略。
+  - 驗收標準：依實際可用版本對齊 AGP、Kotlin、Compose BOM 與 target SDK。
+  - [ ] 盤點目前版本組合。
+  - [ ] 查核相容矩陣。
+  - [ ] 升級至選定版本組合。
+  - [ ] 更新文件中的版本描述。
+- [ ] 檢查是否需要恢復 `org.jetbrains.kotlin.android` plugin 聲明或調整現有 plugin 配置。
+  - 驗收標準：build 設定一致、可被新成員快速理解。
+  - [ ] 釐清目前 plugin 配置依賴。
+  - [ ] 決定保留或恢復 Kotlin Android plugin。
+  - [ ] 將選擇寫入 build note。
+- [ ] 將 Java / Kotlin target 升到較合理版本。
+  - 驗收標準：與當前 Android toolchain 一致，避免停留在 1.8 慣性設定。
+  - [ ] 決定 JVM target。
+  - [ ] 更新 compile options / kotlin options。
+  - [ ] 驗證相依套件相容性。
+- [ ] 補齊 release build 與 shrinker 策略。
+  - 驗收標準：release 版可混淆與縮減，且功能正常。
+  - [ ] 開啟 release minify。
+  - [ ] 補齊必要 keep rules。
+  - [ ] 驗證 ML Kit、Coil、Compose 在 release 正常。
+- [ ] 建立 CI。
+  - 至少包含：lint、unit tests、assemble debug、必要時 instrumentation smoke test。
+  - 驗收標準：每次 PR 都能自動驗證基本品質。
+  - [ ] 建立 CI workflow。
+  - [ ] 加入 assemble debug。
+  - [ ] 加入單元測試。
+  - [ ] 加入 lint。
+  - [ ] 視可行性加入 smoke test。
+- [ ] 補上 static analysis。
+  - 建議可選：ktlint、detekt、dependency analysis。
+  - 驗收標準：風格與常見錯誤有自動檢查。
+  - [ ] 選定 static analysis 工具。
+  - [ ] 建立規則檔。
+  - [ ] 將檢查接入 CI。
+
+## Phase 11: Observability And Diagnostics
+
+- [ ] 建立 debug logging policy。
+  - 驗收標準：開發期有足夠資訊，release 不暴露敏感內容。
+  - [ ] 定義 log tag 規則。
+  - [ ] 定義哪些事件要記錄。
+  - [ ] 定義 release build log 降級策略。
+- [ ] 設計非侵入式錯誤統計策略。
+  - 驗收標準：在不違反隱私前提下，能知道匯出或處理失敗率。
+  - [ ] 定義匿名事件模型。
+  - [ ] 定義不收集的敏感資料。
+  - [ ] 決定是否只做本地 debug 統計或接入遙測。
+- [ ] 為性能關鍵路徑加入 timing logs。
+  - 驗收標準：可追蹤掃描返回、session ingestion、預覽處理、匯出耗時。
+  - [ ] 為 scanner return 加 timing。
+  - [ ] 為 ingestion 加 timing。
+  - [ ] 為 enhancement 加 timing。
+  - [ ] 為 export 加 timing。
+  - [ ] 將 timing 結果格式化便於比較。
+
+## Phase 12: Documentation And Handoff
+
+- [ ] 重寫 README，使其反映實際功能、限制與開發方式。
+  - 驗收標準：新加入開發者能依 README 成功建置、理解架構與限制。
+  - [ ] 重寫功能概述。
+  - [ ] 補上目前限制。
+  - [ ] 補上建置需求。
+  - [ ] 補上架構簡圖或說明。
+- [ ] 撰寫 architecture decision records。
+  - 主題：ML Kit 掃描限制、session 模型、preview/export 雙 pipeline、PDF 策略、背景匯出策略。
+  - 驗收標準：關鍵決策有留痕，不依賴口頭傳承。
+  - [ ] 撰寫 ML Kit session limitation ADR。
+  - [ ] 撰寫 scan session model ADR。
+  - [ ] 撰寫 image pipeline ADR。
+  - [ ] 撰寫 export strategy ADR。
+  - [ ] 撰寫 background export ADR。
+- [ ] 建立 contributor guide。
+  - 驗收標準：明確說明 module 邊界、命名慣例、測試要求、UI 規範。
+  - [ ] 定義 package / module 邊界。
+  - [ ] 定義命名慣例。
+  - [ ] 定義 PR 要求。
+  - [ ] 定義測試最低要求。
+- [ ] 維護 release checklist。
+  - 驗收標準：每次上線前知道該檢查哪些項目。
+  - [ ] 列出 release build 檢查項。
+  - [ ] 列出 QA 檢查項。
+  - [ ] 列出文件更新檢查項。
+
+## Suggested Execution Order
+
+- [ ] Milestone 1: 架構邊界與 session ownership
+  - [ ] 完成 Phase 1 中 model、use case、repository 邊界。
+  - [ ] 完成 Phase 2 中 eager ingestion、session metadata、cleanup/recovery 設計。
+- [ ] Milestone 2: image/export pipeline 重構
+  - [ ] 完成 Phase 3 中 preview/export 雙 pipeline與安全 decode。
+  - [ ] 完成 Phase 4 中 export decision tree 與 result model。
+- [ ] Milestone 3: review UX 重設
+  - [ ] 完成 Phase 5 review 新版畫面。
+  - [ ] 完成 Phase 6 主題與 design token 收斂。
+- [ ] Milestone 4: 長文件穩定性與品質線
+  - [ ] 完成大型匯出背景化策略。
+  - [ ] 完成 Phase 8、9、10 的最低可用品質線。
+- [ ] Milestone 5: 文件、診斷、發版準備
+  - [ ] 完成 Phase 11、12 與 release checklist。
+
+## Immediate Next Slice
+
+- [ ] 定義 `ScanSession`、`ScannedPage`、`ExportRequest`、`ExportResult`、`SessionDirtyFlags` 資料模型。
+- [ ] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
+- [ ] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
+- [ ] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
+- [ ] 設計 review 畫面新資訊架構草案。
+- [ ] 建立效能基線量測方式與測試樣本。
+
+## Sprint-Ready Candidate Tasks
+
+- [ ] 建立 domain model 初稿並補對應 mapper。
+- [ ] 建立 `CreateSessionFromScanResultUseCase`，先做 eager ingestion 最小版。
+- [ ] 將現有 `ReviewViewModel` 拆出 `ToggleEnhancementUseCase`。
+- [ ] 將現有 `saveAll` 拆出 `ExportSessionUseCase`。
+- [ ] 擴充 scanner result，保留原始 PDF URI。
+- [ ] 為 export 建立 success / failure result model。
+- [ ] 定義 `session dirty` 規則。
+- [ ] 設計 review 新版 wireframe 與互動流程。
+- [ ] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
+- [ ] 為增強流程加入頁級 processing state。
+- [ ] 建立單頁與多頁效能基線測試樣本。
+- [ ] 建立第一批 ViewModel 與 use case 單元測試骨架。
