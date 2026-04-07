@@ -6,12 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
-import com.example.pixelscanner.core.model.PageVariant
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.core.model.SessionDirtyFlags
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
+import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.storage.StorageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,10 +20,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-import com.example.pixelscanner.image.ImageProcessor
-
 class ReviewViewModel : ViewModel() {
     private val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
+    private val toggleEnhancementUseCase = ToggleEnhancementUseCase()
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
@@ -55,40 +54,21 @@ class ReviewViewModel : ViewModel() {
         val page = currentList[index]
 
         viewModelScope.launch {
-            if (page.isEnhanced()) {
-                // Revert to original
-                currentList[index] = page.copy(activeVariant = PageVariant.ORIGINAL)
-                updateSessionPages(session, currentList)
-            } else {
-                // Switch to enhanced
-                if (page.enhancedUri != null) {
-                    // Already processed, just switch
-                    currentList[index] = page.copy(activeVariant = PageVariant.PREVIEW_ENHANCED)
-                    updateSessionPages(
-                        session = session,
-                        activePages = currentList,
-                        dirtyFlags = session.dirtyFlags.copy(hasEnhancedPages = true)
+            _isProcessing.value = true
+            try {
+                val result = toggleEnhancementUseCase(page, context)
+                currentList[index] = result.updatedPage
+                updateSessionPages(
+                    session = session,
+                    activePages = currentList,
+                    dirtyFlags = session.dirtyFlags.copy(
+                        hasEnhancedPages = session.dirtyFlags.hasEnhancedPages || result.enabled
                     )
-                } else {
-                    // Need to process
-                    _isProcessing.value = true
-                    try {
-                        val enhanced = ImageProcessor.enhanceImage(context, page.originalSourceUri)
-                        currentList[index] = page.copy(
-                            enhancedUri = enhanced,
-                            activeVariant = PageVariant.PREVIEW_ENHANCED
-                        )
-                        updateSessionPages(
-                            session = session,
-                            activePages = currentList,
-                            dirtyFlags = session.dirtyFlags.copy(hasEnhancedPages = true)
-                        )
-                    } catch (e: Exception) {
-                        e.printStackTrace() // Handle error appropriately
-                    } finally {
-                        _isProcessing.value = false
-                    }
-                }
+                )
+            } catch (e: Exception) {
+                e.printStackTrace() // Handle error appropriately
+            } finally {
+                _isProcessing.value = false
             }
         }
     }
