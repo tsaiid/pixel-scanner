@@ -8,6 +8,7 @@ data class ReviewUiState(
     val currentPage: Int = 0,
     val exportFormat: ExportFormat = ExportFormat.IMAGE,
     val isProcessing: Boolean = false,
+    val isExporting: Boolean = false,
 ) {
     val hasPages: Boolean
         get() = pages.isNotEmpty()

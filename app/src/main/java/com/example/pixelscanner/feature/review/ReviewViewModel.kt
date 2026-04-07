@@ -118,24 +118,29 @@ class ReviewViewModel : ViewModel() {
                 sessionId = session.id,
                 format = _uiState.value.exportFormat,
             )
-            val result = exportSessionUseCase(
-                session = session,
-                request = request,
-                context = context,
-            )
+            updateUiState { it.copy(isExporting = true) }
+            try {
+                val result = exportSessionUseCase(
+                    session = session,
+                    request = request,
+                    context = context,
+                )
 
-            when (result) {
-                is ExportResult.Success -> {
-                    _effects.emit(ReviewUiEffect.ExportSucceeded(request.format))
-                }
+                when (result) {
+                    is ExportResult.Success -> {
+                        _effects.emit(ReviewUiEffect.ExportSucceeded(request.format))
+                    }
 
-                is ExportResult.Failure -> {
-                    _effects.emit(
-                        ReviewUiEffect.ShowMessage(
-                            result.errorMessage ?: "Export failed"
+                    is ExportResult.Failure -> {
+                        _effects.emit(
+                            ReviewUiEffect.ShowMessage(
+                                result.errorMessage ?: "Export failed"
+                            )
                         )
-                    )
+                    }
                 }
+            } finally {
+                updateUiState { it.copy(isExporting = false) }
             }
         }
     }

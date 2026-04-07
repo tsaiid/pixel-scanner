@@ -149,9 +149,10 @@ fun ReviewScreen(
                 if (uiState.hasPages) {
                     Button(
                         onClick = { viewModel.onEvent(SaveAll(context)) },
+                        enabled = !uiState.isExporting,
                         modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
-                        Text("Save All")
+                        Text(if (uiState.isExporting) "Saving..." else "Save All")
                     }
                 }
             }

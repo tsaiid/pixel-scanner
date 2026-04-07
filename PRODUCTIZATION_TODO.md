@@ -129,10 +129,12 @@
     - save/export 入口已收斂到 ViewModel，畫面層只處理 effect 消費。
     - 目前 effect 已覆蓋 snackbar undo、匯出成功 toast 觸發與匯出失敗訊息；返回導航仍由畫面層直接處理。
     - pager selection 已回寫到 ViewModel，`currentPage` 會隨頁面變更與刪除後自動校正。
+    - export loading 也已收斂成 `ReviewUiState.isExporting`，避免重複觸發 save。
   - [ ] 為 export 定義 `ExportUiState` 或等效 effect/state。
   - [x] 定義 `ReviewUiEvent`。
   - [x] 定義 `ReviewUiEffect`。
-  - [ ] 整理 loading、error、selection、pager、batch progress 的責任邊界。
+  - [~] 整理 loading、error、selection、pager、batch progress 的責任邊界。
+    - loading 與 selection / pager 已部分收斂；error 與 batch progress 仍待拆出更明確的狀態模型。
 - [ ] 導入依賴注入方案。
   - 建議可選：先用簡單 constructor injection，必要時再導入 Hilt。
   - 驗收標準：ViewModel 與 use case 可被測試替換，不需在測試中直接建立 Android `Context`。
