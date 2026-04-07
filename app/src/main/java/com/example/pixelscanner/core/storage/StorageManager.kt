@@ -13,40 +13,28 @@ import kotlinx.coroutines.withContext
 
 class StorageManager(private val context: Context) {
 
+    suspend fun copyPdfToDocuments(sourceUri: Uri, fileName: String): Uri? = withContext(Dispatchers.IO) {
+        copyUriToMediaStore(
+            sourceUri = sourceUri,
+            fileName = fileName,
+            mimeType = "application/pdf",
+            relativePath = Environment.DIRECTORY_DOCUMENTS + "/PixelScanner",
+            collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            } else {
+                MediaStore.Files.getContentUri("external")
+            },
+        )
+    }
+
     suspend fun saveUriToGallery(sourceUri: Uri, fileName: String): Uri? = withContext(Dispatchers.IO) {
-        val resolver = context.contentResolver
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PixelScanner")
-                put(MediaStore.MediaColumns.IS_PENDING, 1)
-            }
-        }
-
-        val destinationUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-        destinationUri?.let { destUri ->
-            try {
-                resolver.openInputStream(sourceUri)?.use { inputStream ->
-                    resolver.openOutputStream(destUri)?.use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    contentValues.clear()
-                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                    resolver.update(destUri, contentValues, null, null)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                resolver.delete(destUri, null, null)
-                return@withContext null
-            }
-        }
-
-        return@withContext destinationUri
+        copyUriToMediaStore(
+            sourceUri = sourceUri,
+            fileName = fileName,
+            mimeType = "image/jpeg",
+            relativePath = Environment.DIRECTORY_PICTURES + "/PixelScanner",
+            collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        )
     }
 
     suspend fun saveUrisToPdf(sourceUris: List<Uri>, fileName: String): Uri? = withContext(Dispatchers.IO) {
@@ -111,5 +99,47 @@ class StorageManager(private val context: Context) {
         } ?: pdfDocument.close()
 
         return@withContext pdfUri
+    }
+
+    private fun copyUriToMediaStore(
+        sourceUri: Uri,
+        fileName: String,
+        mimeType: String,
+        relativePath: String,
+        collection: Uri,
+    ): Uri? {
+        val resolver = context.contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+        }
+
+        val destinationUri = resolver.insert(collection, contentValues)
+
+        destinationUri?.let { destUri ->
+            try {
+                resolver.openInputStream(sourceUri)?.use { inputStream ->
+                    resolver.openOutputStream(destUri)?.use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    } ?: return null
+                } ?: return null
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    contentValues.clear()
+                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                    resolver.update(destUri, contentValues, null, null)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                resolver.delete(destUri, null, null)
+                return null
+            }
+        }
+
+        return destinationUri
     }
 }

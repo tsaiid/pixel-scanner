@@ -253,17 +253,17 @@
   - [ ] 定義 export state machine。
   - [ ] 定義 success / partial / failure / cancelled result model。
   - [ ] 調整 UI 消費 export result 的方式。
-- [ ] 建立 export decision tree。
+- [~] 建立 export decision tree。
   - 驗收標準：匯出路徑可根據 session 狀態選擇 reuse original PDF、rebuild PDF 或輸出 JPEG，而不是一律重建。
-  - [ ] 定義 `reuse original PDF` 的條件。
-  - [ ] 定義 `rebuild from reordered pages` 的條件。
+  - [x] 定義 `reuse original PDF` 的條件。
+  - [x] 定義 `rebuild from reordered pages` 的條件。
   - [ ] 定義 `rebuild from enhanced pages` 的條件。
   - [ ] 將 decision tree 寫入 `ExportRequest` 或等效策略物件。
   - [ ] 驗證刪頁、排序、增強、旋轉後會走對應分支。
-- [ ] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
+- [x] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
   - 驗收標準：避免不必要的 PDF 重建與解碼成本，保留原 PDF 可能包含的文字層或其他 metadata。
-  - [ ] 定義 destination write 流程。
-  - [ ] 實作 fast-track copy path。
+  - [x] 定義 destination write 流程。
+  - [x] 實作 fast-track copy path。
   - [ ] 驗證結果檔可正常開啟與分享。
 - [ ] 評估刪頁 / 排序場景的增量 PDF 重組方案。
   - 驗收標準：先完成可研究、可比較、可決策，不預設採用特定庫。
@@ -627,7 +627,7 @@
 - [x] 定義 `ScanSession`、`ScannedPage`、`ExportRequest`、`ExportResult`、`SessionDirtyFlags` 資料模型。
 - [~] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
 - [~] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
-- [ ] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
+- [x] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
 - [ ] 設計 review 畫面新資訊架構草案。
 - [ ] 建立效能基線量測方式與測試樣本。
 
@@ -635,8 +635,8 @@
 
 - [x] 建立 domain model 初稿並補對應 mapper。
 - [~] 建立 `CreateSessionFromScanResultUseCase`，先做 eager ingestion 最小版。
-- [ ] 將現有 `ReviewViewModel` 拆出 `ToggleEnhancementUseCase`。
-- [ ] 將現有 `saveAll` 拆出 `ExportSessionUseCase`。
+- [x] 將現有 `ReviewViewModel` 拆出 `ToggleEnhancementUseCase`。
+- [x] 將現有 `saveAll` 拆出 `ExportSessionUseCase`。
 - [x] 擴充 scanner result，保留原始 PDF URI。
 - [x] 為 export 建立 success / failure result model。
 - [ ] 定義 `session dirty` 規則。
