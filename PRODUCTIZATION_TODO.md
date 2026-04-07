@@ -103,7 +103,8 @@
 - [~] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
   - 建議 use cases：`CreateSessionFromScanResultUseCase`, `LoadScanSessionUseCase`, `ToggleEnhancementUseCase`, `DeletePageUseCase`, `RestorePageUseCase`, `ExportSessionUseCase`, `DiscardSessionUseCase`, `ResumeSessionUseCase`。
   - 驗收標準：ViewModel 僅負責 state reduction、event handling、effect emission。
-  - [ ] 盤點 `ReviewViewModel` 現有責任。
+  - [x] 盤點 `ReviewViewModel` 現有責任。
+    - 已整理成 [`docs/review-viewmodel-responsibilities.md`](/Users/tsaiid/git/pixel-scanner/docs/review-viewmodel-responsibilities.md)。
   - [x] 抽出 session 初始化 use case。
   - [x] 抽出增強流程 use case。
   - [x] 抽出刪除 / 復原 use case。
