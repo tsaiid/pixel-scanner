@@ -76,13 +76,6 @@ fun ReviewScreen(
     )
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // If all pages are deleted, go back automatically
-    LaunchedEffect(uiState.pages.size) {
-        if (!uiState.hasPages) {
-            onBack()
-        }
-    }
-
     LaunchedEffect(viewModel, snackbarHostState) {
             viewModel.effects.collect { effect ->
                 when (effect) {

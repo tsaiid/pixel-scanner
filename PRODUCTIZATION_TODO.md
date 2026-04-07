@@ -128,7 +128,7 @@
     - review 畫面互動已透過 `ReviewUiEvent` 送入 ViewModel；刪除 undo、匯出成功、匯出失敗已透過 `ReviewUiEffect` 發送。
     - 已事件化的互動包含 export format 切換、頁面增強、刪除與復原。
     - save/export 入口已收斂到 ViewModel，畫面層只處理 effect 消費。
-    - 目前 effect 已覆蓋 snackbar undo、匯出成功 toast 觸發與匯出失敗訊息；返回導航仍由畫面層直接處理。
+    - 目前 effect 已覆蓋 snackbar undo、匯出成功 toast 觸發、匯出失敗訊息與返回導航；last-page delete 也已改由 ViewModel 直接發出返回 effect。
     - pager selection 已回寫到 ViewModel，`currentPage` 會隨頁面變更與刪除後自動校正。
     - export state 已獨立為 `ExportUiState`，目前涵蓋 export format 與 exporting flag。
   - [x] 為 export 定義 `ExportUiState` 或等效 effect/state。
