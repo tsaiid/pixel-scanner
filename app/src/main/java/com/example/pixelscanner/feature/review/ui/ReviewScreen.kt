@@ -149,10 +149,10 @@ fun ReviewScreen(
                 if (uiState.hasPages) {
                     Button(
                         onClick = { viewModel.onEvent(SaveAll(context)) },
-                        enabled = !uiState.isExporting,
+                        enabled = !uiState.export.isExporting,
                         modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
-                        Text(if (uiState.isExporting) "Saving..." else "Save All")
+                        Text(if (uiState.export.isExporting) "Saving..." else "Save All")
                     }
                 }
             }
@@ -232,18 +232,18 @@ fun ReviewScreen(
             }
 
             TabRow(
-                selectedTabIndex = if (uiState.exportFormat == ExportFormat.IMAGE) 0 else 1,
+                selectedTabIndex = if (uiState.export.format == ExportFormat.IMAGE) 0 else 1,
                 containerColor = Color.Transparent,
                 contentColor = Color.White,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Tab(
-                    selected = uiState.exportFormat == ExportFormat.IMAGE,
+                    selected = uiState.export.format == ExportFormat.IMAGE,
                     onClick = { viewModel.onEvent(ChangeExportFormat(ExportFormat.IMAGE)) },
                     text = { Text("JPEG") }
                 )
                 Tab(
-                    selected = uiState.exportFormat == ExportFormat.PDF,
+                    selected = uiState.export.format == ExportFormat.PDF,
                     onClick = { viewModel.onEvent(ChangeExportFormat(ExportFormat.PDF)) },
                     text = { Text("PDF") }
                 )

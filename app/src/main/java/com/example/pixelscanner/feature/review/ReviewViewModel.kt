@@ -62,7 +62,9 @@ class ReviewViewModel : ViewModel() {
     }
 
     private fun setExportFormat(format: ExportFormat) {
-        _uiState.value = _uiState.value.copy(exportFormat = format)
+        updateUiState { currentState ->
+            currentState.copy(export = currentState.export.copy(format = format))
+        }
     }
 
     private fun setCurrentPage(pageIndex: Int) {
@@ -116,9 +118,11 @@ class ReviewViewModel : ViewModel() {
             val session = _scanSession.value ?: return@launch
             val request = ExportRequest(
                 sessionId = session.id,
-                format = _uiState.value.exportFormat,
+                format = _uiState.value.export.format,
             )
-            updateUiState { it.copy(isExporting = true) }
+            updateUiState { currentState ->
+                currentState.copy(export = currentState.export.copy(isExporting = true))
+            }
             try {
                 val result = exportSessionUseCase(
                     session = session,
@@ -140,7 +144,9 @@ class ReviewViewModel : ViewModel() {
                     }
                 }
             } finally {
-                updateUiState { it.copy(isExporting = false) }
+                updateUiState { currentState ->
+                    currentState.copy(export = currentState.export.copy(isExporting = false))
+                }
             }
         }
     }
