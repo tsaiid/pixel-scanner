@@ -17,6 +17,15 @@ data class SessionDirtyFlags(
     fun isDirty(): Boolean {
         return hasEnhancedPages || hasDeletedPages || hasReorderedPages || hasRotatedPages || hasCroppedPages
     }
+
+    companion object {
+        fun fromPages(pages: List<ScannedPage>): SessionDirtyFlags {
+            return SessionDirtyFlags(
+                hasEnhancedPages = pages.any { it.isEnhanced() },
+                hasDeletedPages = pages.any { it.isDeleted },
+            )
+        }
+    }
 }
 
 enum class PageVariant {
@@ -51,6 +60,13 @@ data class ScanSession(
     val dirtyFlags: SessionDirtyFlags = SessionDirtyFlags(),
 ) {
     fun activePages(): List<ScannedPage> = pages.filterNot { it.isDeleted }
+
+    fun withPages(updatedPages: List<ScannedPage>): ScanSession {
+        return copy(
+            pages = updatedPages,
+            dirtyFlags = SessionDirtyFlags.fromPages(updatedPages),
+        )
+    }
 }
 
 data class ExportRequest(

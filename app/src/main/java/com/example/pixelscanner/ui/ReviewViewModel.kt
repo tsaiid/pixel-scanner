@@ -9,9 +9,10 @@ import com.example.pixelscanner.core.model.ExportResult
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
-import com.example.pixelscanner.core.model.SessionDirtyFlags
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
+import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
+import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,8 @@ import kotlinx.coroutines.launch
 class ReviewViewModel : ViewModel() {
     private val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
     private val toggleEnhancementUseCase = ToggleEnhancementUseCase()
+    private val deletePageUseCase = DeletePageUseCase()
+    private val restorePageUseCase = RestorePageUseCase()
     private val exportSessionUseCase = ExportSessionUseCase()
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
@@ -41,29 +44,25 @@ class ReviewViewModel : ViewModel() {
 
     fun setScanResult(scanResult: ScanResultPayload) {
         val session = createSessionFromScanResultUseCase(scanResult)
-        _scanSession.value = session
-        _scannedPages.value = session.activePages()
+        applySessionUpdate(session)
     }
 
     fun toggleEnhancement(index: Int, context: Context) {
         val session = _scanSession.value ?: return
-        val currentList = session.activePages().toMutableList()
-        if (index !in currentList.indices) return
-
-        val page = currentList[index]
+        val page = session.activePages().getOrNull(index) ?: return
 
         viewModelScope.launch {
             _isProcessing.value = true
             try {
                 val result = toggleEnhancementUseCase(page, context)
-                currentList[index] = result.updatedPage
-                updateSessionPages(
-                    session = session,
-                    activePages = currentList,
-                    dirtyFlags = session.dirtyFlags.copy(
-                        hasEnhancedPages = session.dirtyFlags.hasEnhancedPages || result.enabled
-                    )
-                )
+                val updatedPages = session.pages.map { existingPage ->
+                    if (existingPage.id == result.updatedPage.id) {
+                        result.updatedPage
+                    } else {
+                        existingPage
+                    }
+                }
+                applySessionUpdate(session.withPages(updatedPages))
             } catch (e: Exception) {
                 e.printStackTrace() // Handle error appropriately
             } finally {
@@ -74,24 +73,13 @@ class ReviewViewModel : ViewModel() {
 
     fun deletePage(index: Int) {
         val session = _scanSession.value ?: return
-        val currentList = session.activePages().toMutableList()
-        if (index in currentList.indices) {
-            currentList.removeAt(index)
-            updateSessionPages(
-                session = session,
-                activePages = currentList,
-                dirtyFlags = session.dirtyFlags.copy(hasDeletedPages = true)
-            )
-        }
+        val result = deletePageUseCase(session, index) ?: return
+        applySessionUpdate(result.updatedSession)
     }
 
-    fun restorePage(index: Int, page: ScannedPage) {
+    fun restorePage(page: ScannedPage) {
         val session = _scanSession.value ?: return
-        val currentList = session.activePages().toMutableList()
-        if (index >= 0 && index <= currentList.size) {
-            currentList.add(index, page)
-            updateSessionPages(session, currentList)
-        }
+        applySessionUpdate(restorePageUseCase(session, page))
     }
 
     fun saveAll(context: Context, onComplete: () -> Unit) {
@@ -114,16 +102,8 @@ class ReviewViewModel : ViewModel() {
         }
     }
 
-    private fun updateSessionPages(
-        session: ScanSession,
-        activePages: List<ScannedPage>,
-        dirtyFlags: SessionDirtyFlags = session.dirtyFlags,
-    ) {
-        val updatedSession = session.copy(
-            pages = activePages,
-            dirtyFlags = dirtyFlags,
-        )
-        _scanSession.value = updatedSession
-        _scannedPages.value = updatedSession.activePages()
+    private fun applySessionUpdate(session: ScanSession) {
+        _scanSession.value = session
+        _scannedPages.value = session.activePages()
     }
 }

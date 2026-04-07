@@ -174,7 +174,7 @@ fun ReviewScreen(
                                             duration = SnackbarDuration.Short
                                         )
                                         if (result == SnackbarResult.ActionPerformed) {
-                                            viewModel.restorePage(indexToDelete, pageToDelete)
+                                            viewModel.restorePage(pageToDelete)
                                         }
                                     }
                                 }

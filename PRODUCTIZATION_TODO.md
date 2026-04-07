@@ -104,7 +104,7 @@
   - [ ] 盤點 `ReviewViewModel` 現有責任。
   - [x] 抽出 session 初始化 use case。
   - [x] 抽出增強流程 use case。
-  - [ ] 抽出刪除 / 復原 use case。
+  - [x] 抽出刪除 / 復原 use case。
   - [x] 抽出 export use case。
   - [ ] 抽出 discard / resume / scan-more use case。
 - [ ] 引入 repository 邊界。
@@ -639,7 +639,7 @@
 - [x] 將現有 `saveAll` 拆出 `ExportSessionUseCase`。
 - [x] 擴充 scanner result，保留原始 PDF URI。
 - [x] 為 export 建立 success / failure result model。
-- [ ] 定義 `session dirty` 規則。
+- [x] 定義 `session dirty` 規則。
 - [ ] 設計 review 新版 wireframe 與互動流程。
 - [ ] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
 - [ ] 為增強流程加入頁級 processing state。
