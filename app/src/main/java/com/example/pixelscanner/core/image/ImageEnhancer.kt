@@ -11,7 +11,6 @@ import com.example.pixelscanner.domain.PreviewImageCacheRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
-import kotlin.math.max
 import kotlin.math.min
 
 class ImageEnhancer {
@@ -33,9 +32,10 @@ class ImageEnhancer {
 
         val originalBitmap = decodeHelper.decode(context, request.sourceUri)
 
-        val scaleFactor = 32
-        val backgroundWidth = max(1, originalBitmap.width / scaleFactor)
-        val backgroundHeight = max(1, originalBitmap.height / scaleFactor)
+        val (backgroundWidth, backgroundHeight) = calculateBackgroundDimensions(
+            originalBitmap = originalBitmap,
+            scaleFactor = 32,
+        )
 
         val backgroundSmall = Bitmap.createScaledBitmap(
             originalBitmap,
@@ -89,5 +89,20 @@ class ImageEnhancer {
             outputUri = Uri.fromFile(file),
             reusedCachedPreview = false,
         )
+    }
+
+    private fun calculateBackgroundDimensions(
+        originalBitmap: Bitmap,
+        scaleFactor: Int,
+    ): Pair<Int, Int> {
+        require(scaleFactor > 0) { "scaleFactor must be positive" }
+        require(originalBitmap.width > 0 && originalBitmap.height > 0) {
+            "Decoded bitmap must have positive dimensions"
+        }
+
+        val backgroundWidth = (originalBitmap.width / scaleFactor).coerceIn(1, originalBitmap.width)
+        val backgroundHeight = (originalBitmap.height / scaleFactor).coerceIn(1, originalBitmap.height)
+
+        return backgroundWidth to backgroundHeight
     }
 }
