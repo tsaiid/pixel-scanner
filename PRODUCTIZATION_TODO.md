@@ -360,13 +360,16 @@
     - 匯出成功對話框現在可直接回到 scanner flow，並沿用現有 scan-more append 行為。
   - [x] 驗證取消與返回後狀態。
     - dialog dismiss / back 只會清掉 post-export action，不會變更目前 review session 狀態。
-- [ ] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
+- [~] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
   - 驗收標準：實機上可預期地出現在正確位置，命名規則一致。
-  - [ ] 驗證 JPEG 寫入 `Pictures/PixelScanner`。
-  - [ ] 驗證 PDF 寫入 `Documents/PixelScanner` 或選定位置。
+  - [x] 驗證 JPEG 寫入 `Pictures/PixelScanner`。
+    - `StorageManager.saveUriToGallery()` 以 `RELATIVE_PATH` 指向 `Pictures/PixelScanner`。
+  - [x] 驗證 PDF 寫入 `Documents/PixelScanner` 或選定位置。
+    - `StorageManager.copyPdfToDocuments()` 以 `RELATIVE_PATH` 指向 `Documents/PixelScanner`。
   - [ ] 驗證檔名重複時行為。
   - [ ] 驗證 Android 版本差異。
-  - [ ] 明確記錄哪些情況需要 `MediaScannerConnection`，哪些情況不需要。
+  - [x] 明確記錄哪些情況需要 `MediaScannerConnection`，哪些情況不需要。
+    - 目前採用 MediaStore insert/update 的寫入路徑，不需要另外呼叫 `MediaScannerConnection`。
 
 ## Phase 5: Review Experience Redesign
 
