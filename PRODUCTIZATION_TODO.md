@@ -163,6 +163,7 @@
     - app-level current screen 已交由 Navigation Compose 管理；home auto-start flag 已移至 `HomeViewModel` / `SavedStateHandle`；home intro animation 也已改為 saveable；其餘畫面內流程狀態仍待盤點。
   - [~] 將必要狀態移至 ViewModel / SavedStateHandle。
     - review 的 current page 與 export format 已接入 SavedStateHandle；home auto-start flag 也已接入 `HomeViewModel` / `SavedStateHandle`，並補上 restore unit test；其餘需要保存的狀態仍待盤點。
+    - app-level pending export post-action flow state 已接入 `AppFlowViewModel` / `SavedStateHandle`，並補上 config change 與 process-death style restore test。
   - [x] 驗證 configuration change。
     - 相關測試：`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`
   - [x] 驗證 process death restore 策略。

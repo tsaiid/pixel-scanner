@@ -6,12 +6,9 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
@@ -44,8 +41,10 @@ fun AppNavigation() {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
-    var pendingExportAction by remember { mutableStateOf<PendingExportAction?>(null) }
     val appContainer = (context.applicationContext as PixelScannerApp).appContainer
+    val appFlowViewModel: AppFlowViewModel = viewModel(
+        factory = AppFlowViewModelFactory(owner = context as SavedStateRegistryOwner),
+    )
     val getRecoverableSessionUseCase = appContainer.getRecoverableSessionUseCase
     val restoreSessionUseCase = appContainer.restoreSessionUseCase
     val discardRecoverableSessionUseCase = appContainer.discardRecoverableSessionUseCase
@@ -57,6 +56,7 @@ fun AppNavigation() {
         owner = context as SavedStateRegistryOwner,
     )
     val reviewViewModel: ReviewViewModel = viewModel(factory = reviewViewModelFactory)
+    val appFlowUiState by appFlowViewModel.uiState.collectAsState()
     val homeUiState by homeViewModel.uiState.collectAsState()
     val reviewUiState by reviewViewModel.uiState.collectAsState()
 
@@ -145,7 +145,7 @@ fun AppNavigation() {
                         "Saved to Gallery"
                     }
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                    pendingExportAction = PendingExportAction(target)
+                    appFlowViewModel.setPendingExportAction(target)
                 },
                 onRescan = {
                     homeViewModel.setShouldAutoStartScanner(true)
@@ -163,16 +163,16 @@ fun AppNavigation() {
         }
     }
 
-    pendingExportAction?.let { action ->
+    appFlowUiState.pendingExportAction?.let { action ->
         AlertDialog(
-            onDismissRequest = { pendingExportAction = null },
+            onDismissRequest = { appFlowViewModel.clearPendingExportAction() },
             title = { Text(text = context.getString(R.string.export_post_action_title)) },
             text = {
                 Column {
                     Text(text = context.getString(R.string.export_post_action_message))
                     TextButton(
                         onClick = {
-                            pendingExportAction = null
+                            appFlowViewModel.clearPendingExportAction()
                             reviewViewModel.onEvent(RequestScanMore)
                         }
                     ) {
@@ -183,8 +183,8 @@ fun AppNavigation() {
             confirmButton = {
                 TextButton(
                     onClick = {
-                        context.openExportTarget(action.target)
-                        pendingExportAction = null
+                        context.openExportTarget(action.toTarget())
+                        appFlowViewModel.clearPendingExportAction()
                     }
                 ) {
                     Text(text = context.getString(R.string.export_post_action_open))
@@ -193,8 +193,8 @@ fun AppNavigation() {
             dismissButton = {
                 TextButton(
                     onClick = {
-                        context.shareExportTarget(action.target)
-                        pendingExportAction = null
+                        context.shareExportTarget(action.toTarget())
+                        appFlowViewModel.clearPendingExportAction()
                     }
                 ) {
                     Text(text = context.getString(R.string.export_post_action_share))
@@ -212,10 +212,6 @@ private fun NavHostController.navigateResettingToHome(route: String) {
         launchSingleTop = true
     }
 }
-
-private data class PendingExportAction(
-    val target: ExportPostActionTarget,
-)
 
 private fun Context.openExportTarget(target: ExportPostActionTarget) {
     val primaryUri = target.primaryUri ?: return
