@@ -7,8 +7,8 @@ import android.graphics.Color
 import android.net.Uri
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineResult
-import com.example.pixelscanner.core.storage.AndroidTempFileRepository
-import com.example.pixelscanner.domain.TempFileRepository
+import com.example.pixelscanner.core.storage.AndroidPreviewImageCacheRepository
+import com.example.pixelscanner.domain.PreviewImageCacheRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
@@ -16,12 +16,21 @@ import kotlin.math.max
 import kotlin.math.min
 
 class ImageEnhancer {
-    private val tempFileRepository: TempFileRepository = AndroidTempFileRepository()
+    private val previewCacheRepository: PreviewImageCacheRepository =
+        AndroidPreviewImageCacheRepository()
 
     suspend fun enhance(
         context: Context,
         request: PreviewImagePipelineRequest,
     ): PreviewImagePipelineResult = withContext(Dispatchers.IO) {
+        previewCacheRepository.getCachedPreview(context, request)?.let { cachedFile ->
+            return@withContext PreviewImagePipelineResult(
+                cacheKey = request.cacheKey,
+                outputUri = Uri.fromFile(cachedFile),
+                reusedCachedPreview = true,
+            )
+        }
+
         val sourceUri = request.sourceUri
         val originalBitmap = context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
             BitmapFactory.decodeStream(inputStream)
@@ -72,11 +81,7 @@ class ImageEnhancer {
 
         outputBitmap.setPixels(outputPixels, 0, width, 0, 0, width, height)
 
-        val file = tempFileRepository.createTempFile(
-            context = context,
-            prefix = "enhanced_${request.cacheKey.asFileToken()}_${System.currentTimeMillis()}",
-            suffix = ".jpg",
-        )
+        val file = previewCacheRepository.createPreviewFile(context, request)
         FileOutputStream(file).use { outputStream ->
             outputBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
         }
@@ -85,6 +90,7 @@ class ImageEnhancer {
         PreviewImagePipelineResult(
             cacheKey = request.cacheKey,
             outputUri = Uri.fromFile(file),
+            reusedCachedPreview = false,
         )
     }
 }

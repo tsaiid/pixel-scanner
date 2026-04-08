@@ -233,7 +233,8 @@
     - 目前以 `ExportImagePipelineRequest` / `ExportImagePipelineResult` 作為 export contract。
   - [x] 定義兩條 pipeline 的 cache key。
     - 目前以 `PipelineCacheKeyStrategy` 統一定義 preview 與 export 的 cache key。
-  - [ ] 實作 preview pipeline。
+  - [x] 實作 preview pipeline。
+    - 目前 preview 會先查 session-owned cache，命中時直接重用既有預覽檔，未命中才重新運算與寫入。
   - [ ] 實作 export pipeline。
 - [ ] 導入安全 decode 策略。
   - 包含：bounds decode、`inSampleSize`、色彩格式選擇、尺寸上限保護。

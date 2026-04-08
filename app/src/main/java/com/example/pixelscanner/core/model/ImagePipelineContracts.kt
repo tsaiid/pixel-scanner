@@ -12,6 +12,7 @@ data class PreviewImagePipelineRequest(
     val sourceUri: Uri,
     val sourceVariant: PageVariant = PageVariant.ORIGINAL,
 ) {
+    val sessionId: String = pageId.substringBefore("_page_", pageId)
     val cacheKey: PipelineCacheKey = PipelineCacheKeyStrategy.preview(
         pageId = pageId,
         sourceUri = sourceUri,
@@ -22,6 +23,7 @@ data class PreviewImagePipelineRequest(
 data class PreviewImagePipelineResult(
     val cacheKey: PipelineCacheKey,
     val outputUri: Uri,
+    val reusedCachedPreview: Boolean = false,
 )
 
 data class ExportImagePipelineRequest(
