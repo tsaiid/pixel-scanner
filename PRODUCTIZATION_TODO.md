@@ -537,11 +537,11 @@
   - [x] 定義哪些情境用 snackbar。
   - [x] 定義哪些情境用 dialog。
   - [x] 定義哪些情境用 inline status。
-- [ ] 導入 effect channel。
+- [x] 導入 effect channel。
   - 驗收標準：一次性事件如 toast、navigation、share sheet 不混在 persistent state 裡。
-  - [ ] 定義 effect 類型。
-  - [ ] 在 ViewModel 導入 effect emission。
-  - [ ] UI 改為消費 effect channel。
+  - [x] 定義 effect 類型。
+  - [x] 在 ViewModel 導入 effect emission。
+  - [x] UI 改為消費 effect channel。
 - [ ] 為所有長任務提供取消與重試入口。
   - 驗收標準：增強與匯出失敗後可明確重試，不需離開整個流程。
   - [ ] 設計 enhancement retry。

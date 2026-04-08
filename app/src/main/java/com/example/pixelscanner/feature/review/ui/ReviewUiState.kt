@@ -11,7 +11,6 @@ data class ReviewUiState(
     val export: ExportUiState = ExportUiState(),
     val isAwaitingScanMoreResult: Boolean = false,
     val hasSession: Boolean = false,
-    val statusMessage: ReviewStatusMessage? = null,
 ) {
     val hasPages: Boolean
         get() = pages.isNotEmpty()
@@ -22,11 +21,6 @@ data class ReviewUiState(
     val isProcessing: Boolean
         get() = selectedPage?.processingState == ProcessingState.PROCESSING
 }
-
-data class ReviewStatusMessage(
-    val id: Long,
-    val text: UiText,
-)
 
 data class ReviewPageUiModel(
     val id: String,

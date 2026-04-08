@@ -34,7 +34,6 @@ import com.example.pixelscanner.feature.review.ui.HomeNavigationReason
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
-import com.example.pixelscanner.feature.review.ui.ReviewStatusMessage
 import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
 import com.example.pixelscanner.R
 import kotlinx.coroutines.CancellationException
@@ -65,7 +64,6 @@ class ReviewViewModel(
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
     private val enhancementJobs = mutableMapOf<String, Job>()
-    private var statusMessageSequence = 0L
 
     private val _uiState = MutableStateFlow(
         ReviewUiState(
@@ -103,7 +101,6 @@ class ReviewViewModel(
             is ReviewUiEvent.RequestScanMore -> startScanMore()
             is ReviewUiEvent.RequestRescan -> discardAndReturnToScanner()
             is ReviewUiEvent.RequestDiscardSession -> discardAndReturnToHome()
-            is ReviewUiEvent.ClearStatusMessage -> clearStatusMessage()
             is ReviewUiEvent.SaveAll -> saveAll(event.context)
         }
     }
@@ -426,7 +423,6 @@ class ReviewViewModel(
             export = ExportUiState(
                 state = ExportState.Idle,
             ),
-            statusMessage = null,
         )
     }
 
@@ -445,19 +441,8 @@ class ReviewViewModel(
     }
 
     private fun setStatusMessage(message: UiText) {
-        updateUiState { currentState ->
-            currentState.copy(
-                statusMessage = ReviewStatusMessage(
-                    id = ++statusMessageSequence,
-                    text = message,
-                ),
-            )
-        }
-    }
-
-    private fun clearStatusMessage() {
-        updateUiState { currentState ->
-            currentState.copy(statusMessage = null)
+        viewModelScope.launch {
+            _effects.emit(ReviewUiEffect.ShowStatusMessage(message))
         }
     }
 }

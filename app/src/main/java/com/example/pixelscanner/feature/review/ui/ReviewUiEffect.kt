@@ -2,8 +2,10 @@ package com.example.pixelscanner.feature.review.ui
 
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportPostActionTarget
+import com.example.pixelscanner.core.model.UiText
 
 sealed interface ReviewUiEffect {
+    data class ShowStatusMessage(val message: UiText) : ReviewUiEffect
     data class ShowDeletedPageUndo(val pageId: String) : ReviewUiEffect
     data class ExportSucceeded(
         val format: ExportFormat,

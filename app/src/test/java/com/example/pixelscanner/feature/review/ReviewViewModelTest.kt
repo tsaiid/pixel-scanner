@@ -16,7 +16,7 @@ import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
-import com.example.pixelscanner.core.model.asString
+import com.example.pixelscanner.core.model.UiText
 import com.example.pixelscanner.core.model.uiTextResource
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
@@ -318,22 +318,32 @@ class ReviewViewModelTest {
         )
         val viewModel = createViewModel(exportRepository = exportRepository)
         val session = loadedSession(sessionId = "session_review_export_failure")
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
 
-        viewModel.setRestoredSession(session)
-        viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
-        val context = RuntimeEnvironment.getApplication()
-        viewModel.onEvent(ReviewUiEvent.SaveAll(context))
-        shadowOf(Looper.getMainLooper()).idle()
+        try {
+            viewModel.setRestoredSession(session)
+            viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+            val context = RuntimeEnvironment.getApplication()
+            viewModel.onEvent(ReviewUiEvent.SaveAll(context))
+            shadowOf(Looper.getMainLooper()).idle()
 
-        assertEquals(
-            "Failed to write review export",
-            viewModel.uiState.value.statusMessage?.text?.asString(context),
-        )
-        assertTrue(viewModel.uiState.value.export.lastResult is ExportState.Finished)
-
-        viewModel.onEvent(ReviewUiEvent.ClearStatusMessage)
-
-        assertNull(viewModel.uiState.value.statusMessage)
+            assertEquals(
+                ReviewUiEffect.ShowStatusMessage(
+                    UiText.DynamicString("Failed to write review export"),
+                ),
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertTrue(viewModel.uiState.value.export.lastResult is ExportState.Finished)
+        } finally {
+            effectJob.cancel()
+        }
     }
 
     @Test
@@ -412,7 +422,7 @@ class ReviewViewModelTest {
     }
 
     @Test
-    fun `shows enhancement failure on the page and retries successfully`() {
+    fun `shows enhancement failure on the page and retries successfully`() = runBlocking {
         val imageProcessingRepository = FailingThenSucceedingImageProcessingRepository()
         val viewModel = createViewModel(imageProcessingRepository = imageProcessingRepository)
         val context = RuntimeEnvironment.getApplication()
@@ -426,32 +436,45 @@ class ReviewViewModelTest {
             ),
         )
 
-        viewModel.setRestoredSession(session)
-        viewModel.onEvent(ReviewUiEvent.ToggleEnhancement(pageIndex = 0, context = context))
-        shadowOf(Looper.getMainLooper()).idle()
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
 
-        assertEquals(1, imageProcessingRepository.invocationCount.get())
-        assertEquals(
-            uiTextResource(R.string.review_page_enhancement_failed).asString(context),
-            viewModel.uiState.value.statusMessage?.text?.asString(context),
-        )
-        assertEquals(
-            uiTextResource(R.string.review_page_enhancement_failed),
-            viewModel.uiState.value.selectedPage?.enhancementErrorMessage,
-        )
+        try {
+            viewModel.setRestoredSession(session)
+            viewModel.onEvent(ReviewUiEvent.ToggleEnhancement(pageIndex = 0, context = context))
+            shadowOf(Looper.getMainLooper()).idle()
 
-        viewModel.onEvent(
-            ReviewUiEvent.RetryEnhancement(
-                pageId = session.pages.single().id,
-                context = context,
-            ),
-        )
-        shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(1, imageProcessingRepository.invocationCount.get())
+            assertEquals(
+                ReviewUiEffect.ShowStatusMessage(uiTextResource(R.string.review_page_enhancement_failed)),
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertEquals(
+                uiTextResource(R.string.review_page_enhancement_failed),
+                viewModel.uiState.value.selectedPage?.enhancementErrorMessage,
+            )
 
-        assertEquals(2, imageProcessingRepository.invocationCount.get())
-        assertNull(viewModel.uiState.value.selectedPage?.enhancementErrorMessage)
-        assertEquals(ProcessingState.IDLE, viewModel.uiState.value.selectedPage?.processingState)
-        assertTrue(viewModel.uiState.value.selectedPage?.isEnhanced == true)
+            viewModel.onEvent(
+                ReviewUiEvent.RetryEnhancement(
+                    pageId = session.pages.single().id,
+                    context = context,
+                ),
+            )
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(2, imageProcessingRepository.invocationCount.get())
+            assertNull(viewModel.uiState.value.selectedPage?.enhancementErrorMessage)
+            assertEquals(ProcessingState.IDLE, viewModel.uiState.value.selectedPage?.processingState)
+            assertTrue(viewModel.uiState.value.selectedPage?.isEnhanced == true)
+        } finally {
+            effectJob.cancel()
+        }
     }
 
     @Test
