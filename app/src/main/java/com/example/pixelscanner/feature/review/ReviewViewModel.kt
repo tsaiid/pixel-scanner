@@ -87,6 +87,10 @@ class ReviewViewModel(
         startEagerIngestion(resumedSession, scanResult)
     }
 
+    fun setRestoredSession(session: ScanSession) {
+        applySessionUpdate(session)
+    }
+
     private fun startEagerIngestion(
         session: ScanSession,
         scanResult: ScanResultPayload,

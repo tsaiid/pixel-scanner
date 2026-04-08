@@ -3,7 +3,7 @@ package com.example.pixelscanner.domain
 import com.example.pixelscanner.core.model.ScanSessionMetadata
 
 interface SessionRecoveryRepository {
-    suspend fun listRecoverableSessions(): List<ScanSessionMetadata>
+    suspend fun listRecoverableSessions(): List<RecoverableSessionSnapshot>
 
-    suspend fun loadRecoverableSession(sessionId: String): ScanSessionMetadata?
+    suspend fun loadRecoverableSession(sessionId: String): RecoverableSessionSnapshot?
 }

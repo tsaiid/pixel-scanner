@@ -16,6 +16,9 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(
         HomeUiState(
             shouldAutoStartScanner = savedStateHandle.get<Boolean>(KEY_SHOULD_AUTO_START_SCANNER) ?: false,
+            shouldAttemptRecoverableSessionRestore = savedStateHandle.get<Boolean>(
+                KEY_SHOULD_ATTEMPT_RECOVERABLE_SESSION_RESTORE,
+            ) ?: true,
         )
     )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -23,6 +26,14 @@ class HomeViewModel(
     fun setShouldAutoStartScanner(shouldAutoStartScanner: Boolean) {
         savedStateHandle[KEY_SHOULD_AUTO_START_SCANNER] = shouldAutoStartScanner
         _uiState.value = _uiState.value.copy(shouldAutoStartScanner = shouldAutoStartScanner)
+    }
+
+    fun setShouldAttemptRecoverableSessionRestore(shouldAttemptRecoverableSessionRestore: Boolean) {
+        savedStateHandle[KEY_SHOULD_ATTEMPT_RECOVERABLE_SESSION_RESTORE] =
+            shouldAttemptRecoverableSessionRestore
+        _uiState.value = _uiState.value.copy(
+            shouldAttemptRecoverableSessionRestore = shouldAttemptRecoverableSessionRestore,
+        )
     }
 }
 
@@ -43,3 +54,5 @@ class HomeViewModelFactory(
 }
 
 internal const val KEY_SHOULD_AUTO_START_SCANNER = "home_should_auto_start_scanner"
+internal const val KEY_SHOULD_ATTEMPT_RECOVERABLE_SESSION_RESTORE =
+    "home_should_attempt_recoverable_session_restore"
