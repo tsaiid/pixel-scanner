@@ -8,6 +8,7 @@ data class ReviewUiState(
     val pages: List<ReviewPageUiModel> = emptyList(),
     val currentPage: Int = 0,
     val export: ExportUiState = ExportUiState(),
+    val isAwaitingScanMoreResult: Boolean = false,
 ) {
     val hasPages: Boolean
         get() = pages.isNotEmpty()

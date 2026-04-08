@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Pixel Scanner</string>
+    <string name="review_action_scan_more">Scan More</string>
+    <string name="review_action_rescan">Rescan</string>
+    <string name="review_action_discard_session">Discard Session</string>
+    <string name="review_rescan_confirm_title">Rescan and discard current pages?</string>
+    <string name="review_rescan_confirm_message">This will discard the current session and restart scanning from scratch.</string>
+    <string name="review_rescan_confirm_action">Rescan</string>
+    <string name="review_discard_confirm_title">Discard current session?</string>
+    <string name="review_discard_confirm_message">This will discard the current pages and return to the home screen.</string>
+    <string name="review_discard_confirm_action">Discard</string>
+    <string name="review_cancel_action">Cancel</string>
 </resources>

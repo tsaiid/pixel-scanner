@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,15 +37,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
@@ -55,6 +61,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestDiscardSession
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestRescan
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestScanMore
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RestorePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.SaveAll
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
@@ -68,8 +75,11 @@ fun ReviewScreen(
     onRescan: () -> Unit,
     onDiscardSession: () -> Unit,
 ) {
+    var showRescanConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showDiscardConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
     BackHandler {
-        viewModel.onEvent(RequestDiscardSession)
+        showDiscardConfirmDialog = true
     }
 
     val context = LocalContext.current
@@ -143,17 +153,28 @@ fun ReviewScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
-                        onClick = { viewModel.onEvent(RequestRescan) },
+                        onClick = { viewModel.onEvent(RequestScanMore) },
+                        enabled = uiState.hasPages && !uiState.export.isExporting && !uiState.isProcessing,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.DarkGray,
-                            contentColor = Color.White
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF541765)
                         )
                     ) {
-                        Text("Rescan")
+                        Text(stringResource(id = R.string.review_action_scan_more))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = { viewModel.onEvent(RequestDiscardSession) }) {
-                        Text("Discard")
+                    TextButton(
+                        onClick = { showRescanConfirmDialog = true },
+                        enabled = !uiState.export.isExporting && !uiState.isProcessing,
+                    ) {
+                        Text(stringResource(id = R.string.review_action_rescan))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        onClick = { showDiscardConfirmDialog = true },
+                        enabled = !uiState.export.isExporting && !uiState.isProcessing,
+                    ) {
+                        Text(stringResource(id = R.string.review_action_discard_session))
                     }
                 }
 
@@ -273,5 +294,51 @@ fun ReviewScreen(
                 }
             }
         }
+    }
+
+    if (showRescanConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showRescanConfirmDialog = false },
+            title = { Text(stringResource(id = R.string.review_rescan_confirm_title)) },
+            text = { Text(stringResource(id = R.string.review_rescan_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRescanConfirmDialog = false
+                        viewModel.onEvent(RequestRescan)
+                    }
+                ) {
+                    Text(stringResource(id = R.string.review_rescan_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRescanConfirmDialog = false }) {
+                    Text(stringResource(id = R.string.review_cancel_action))
+                }
+            },
+        )
+    }
+
+    if (showDiscardConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardConfirmDialog = false },
+            title = { Text(stringResource(id = R.string.review_discard_confirm_title)) },
+            text = { Text(stringResource(id = R.string.review_discard_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardConfirmDialog = false
+                        viewModel.onEvent(RequestDiscardSession)
+                    }
+                ) {
+                    Text(stringResource(id = R.string.review_discard_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardConfirmDialog = false }) {
+                    Text(stringResource(id = R.string.review_cancel_action))
+                }
+            },
+        )
     }
 }

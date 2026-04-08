@@ -43,6 +43,7 @@ fun AppNavigation() {
     )
     val reviewViewModel: ReviewViewModel = viewModel(factory = reviewViewModelFactory)
     val homeUiState by homeViewModel.uiState.collectAsState()
+    val reviewUiState by reviewViewModel.uiState.collectAsState()
 
     LaunchedEffect(homeUiState.shouldAttemptRecoverableSessionRestore, homeUiState.shouldAutoStartScanner) {
         if (!homeUiState.shouldAttemptRecoverableSessionRestore || homeUiState.shouldAutoStartScanner) {
@@ -71,6 +72,10 @@ fun AppNavigation() {
                 },
                 onScanCancelled = {
                     homeViewModel.setShouldAutoStartScanner(false)
+                    if (reviewUiState.isAwaitingScanMoreResult) {
+                        reviewViewModel.clearScanMorePending()
+                        navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
+                    }
                 },
                 onRestoreRecoverableSession = { sessionId ->
                     coroutineScope.launch {

@@ -57,6 +57,9 @@ class ReviewViewModel(
                     ?.let(ExportFormat::valueOf)
                     ?: ExportFormat.IMAGE,
             ),
+            isAwaitingScanMoreResult = savedStateHandle.get<Boolean>(
+                KEY_IS_AWAITING_SCAN_MORE_RESULT,
+            ) ?: false,
         )
     )
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
@@ -74,6 +77,7 @@ class ReviewViewModel(
             )
             is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
+            is ReviewUiEvent.RequestScanMore -> startScanMore()
             is ReviewUiEvent.RequestRescan -> discardAndReturnToScanner()
             is ReviewUiEvent.RequestDiscardSession -> discardAndReturnToHome()
             is ReviewUiEvent.SaveAll -> saveAll(event.context)
@@ -81,14 +85,35 @@ class ReviewViewModel(
     }
 
     fun setScanResult(scanResult: ScanResultPayload) {
+        if (uiState.value.isAwaitingScanMoreResult) {
+            val currentSession = _scanSession.value
+            if (currentSession != null) {
+                clearScanMorePending()
+                val appendedSession = currentSession.appendScanResult(scanResult)
+                applySessionUpdate(appendedSession)
+                startEagerIngestion(appendedSession, scanResult)
+                return
+            }
+            clearScanMorePending()
+        }
+
         val session = createSessionFromScanResultUseCase(scanResult)
         val resumedSession = resumeSessionUseCase(session).session
+        clearScanMorePending()
         applySessionUpdate(resumedSession)
         startEagerIngestion(resumedSession, scanResult)
     }
 
     fun setRestoredSession(session: ScanSession) {
+        clearScanMorePending()
         applySessionUpdate(session)
+    }
+
+    fun clearScanMorePending() {
+        savedStateHandle[KEY_IS_AWAITING_SCAN_MORE_RESULT] = false
+        updateUiState { currentState ->
+            currentState.copy(isAwaitingScanMoreResult = false)
+        }
     }
 
     private fun startEagerIngestion(
@@ -182,10 +207,25 @@ class ReviewViewModel(
         applySessionUpdate(restorePageUseCase(session, page))
     }
 
+    private fun startScanMore() {
+        val session = _scanSession.value ?: return
+        viewModelScope.launch {
+            val result = scanMoreUseCase(session)
+            if (!result.preservesCurrentPages) {
+                return@launch
+            }
+            savedStateHandle[KEY_IS_AWAITING_SCAN_MORE_RESULT] = true
+            updateUiState { currentState ->
+                currentState.copy(isAwaitingScanMoreResult = true)
+            }
+            _effects.emit(ReviewUiEffect.NavigateBackToScanner)
+        }
+    }
+
     private fun discardAndReturnToScanner() {
         val session = _scanSession.value ?: return
         viewModelScope.launch {
-            scanMoreUseCase(session)
+            discardSessionUseCase(session)
             clearSessionState()
             _effects.emit(ReviewUiEffect.NavigateBackToScanner)
         }
@@ -256,7 +296,10 @@ class ReviewViewModel(
         _scanSession.value = null
         savedStateHandle[KEY_CURRENT_PAGE] = 0
         savedStateHandle[KEY_EXPORT_FORMAT] = ExportFormat.IMAGE.name
-        _uiState.value = ReviewUiState()
+        clearScanMorePending()
+        _uiState.value = ReviewUiState(
+            isAwaitingScanMoreResult = false,
+        )
     }
 
     private fun updateUiState(transform: (ReviewUiState) -> ReviewUiState) {
@@ -275,6 +318,7 @@ private fun ScannedPage.toUiModel(): ReviewPageUiModel {
 
 private const val KEY_CURRENT_PAGE = "review_current_page"
 private const val KEY_EXPORT_FORMAT = "review_export_format"
+private const val KEY_IS_AWAITING_SCAN_MORE_RESULT = "review_is_awaiting_scan_more_result"
 
 class ReviewViewModelFactory(
     private val createSessionFromScanResultUseCase: CreateSessionFromScanResultUseCase,

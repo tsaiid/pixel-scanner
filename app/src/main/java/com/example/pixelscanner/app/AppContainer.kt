@@ -49,7 +49,7 @@ class AppContainer(
     val deletePageUseCase = DeletePageUseCase()
     val discardSessionUseCase = DiscardSessionUseCase()
     val resumeSessionUseCase = ResumeSessionUseCase()
-    val scanMoreUseCase = ScanMoreUseCase(discardSessionUseCase)
+    val scanMoreUseCase = ScanMoreUseCase()
     val restoreSessionUseCase = RestoreSessionUseCase(sessionRecoveryRepository)
     val getRecoverableSessionUseCase = GetRecoverableSessionUseCase(sessionRecoveryRepository)
     val discardRecoverableSessionUseCase = DiscardRecoverableSessionUseCase(sessionRecoveryRepository)

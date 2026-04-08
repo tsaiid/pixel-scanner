@@ -216,11 +216,12 @@
   - [~] 定義三種動作的產品語意。
     - `Rescan` 會捨棄目前 review session 並回到 scanner flow。
     - `Discard Session` 會捨棄目前 review session 並回到 home/start screen，不會自動重啟 scanner。
-    - `Scan More` 仍待定義與實作。
-  - [ ] 定義各自是否保留當前頁面。
-  - [ ] 定義按鈕文案與確認對話框。
-  - [~] 驗證返回鍵是否對應其中一種動作。
-    - system back 已對應 `Discard Session`，而非 `Rescan`。
+    - `Scan More` 會保留目前頁面，並把下一次掃描結果 append 回同一個 session。
+  - [x] 定義各自是否保留當前頁面。
+  - [x] 定義按鈕文案與確認對話框。
+    - review 畫面已提供 `Scan More` / `Rescan` / `Discard Session`，其中 destructive actions 會跳出 confirm dialog。
+  - [x] 驗證返回鍵是否對應其中一種動作。
+    - system back 已對應 `Discard Session` 的確認流程，而非 `Rescan`。
 
 ## Phase 3: Image Processing Pipeline
 
@@ -376,8 +377,10 @@
   - [ ] 改善 snackbar undo 與 pager 同步問題。
 - [ ] 重新命名與拆分掃描相關按鈕文案。
   - 驗收標準：`Scan More`、`Discard & Rescan`、`Save as JPEG`、`Save as PDF` 等語意明確。
-  - [ ] 建立文案表。
-  - [ ] 決定 destructive action 是否需要二次確認。
+  - [x] 建立文案表。
+    - review action strings 已集中在 `strings.xml`。
+  - [x] 決定 destructive action 是否需要二次確認。
+    - `Rescan` 與 `Discard Session` 已使用 confirm dialog。
   - [ ] 驗證英文與中文文案長度。
 - [ ] 加入頁級 enhancement toggle 與狀態提示。
   - 驗收標準：使用者知道當前頁是原圖或增強圖，處理中有明確 feedback。

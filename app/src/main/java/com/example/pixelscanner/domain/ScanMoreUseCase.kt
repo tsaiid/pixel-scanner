@@ -3,15 +3,13 @@ package com.example.pixelscanner.domain
 import com.example.pixelscanner.core.model.ScanSession
 
 data class ScanMoreResult(
-    val discardedSessionId: String,
+    val session: ScanSession,
+    val preservesCurrentPages: Boolean = true,
 )
 
-class ScanMoreUseCase(
-    private val discardSessionUseCase: DiscardSessionUseCase,
-) {
+class ScanMoreUseCase {
 
     operator fun invoke(session: ScanSession): ScanMoreResult {
-        val discardResult = discardSessionUseCase(session)
-        return ScanMoreResult(discardedSessionId = discardResult.discardedSessionId)
+        return ScanMoreResult(session = session)
     }
 }

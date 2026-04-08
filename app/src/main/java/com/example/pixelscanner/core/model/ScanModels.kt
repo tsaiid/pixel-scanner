@@ -28,14 +28,21 @@ data class SessionDirtyFlags(
     val hasReorderedPages: Boolean = false,
     val hasRotatedPages: Boolean = false,
     val hasCroppedPages: Boolean = false,
+    val hasAddedPages: Boolean = false,
 ) {
     /**
      * Dirty means the exported document can no longer be treated as the untouched
-     * scanner output. Today that is driven by enhancement and delete operations.
-     * Reorder/rotate/crop remain reserved for the corresponding future actions.
+     * scanner output. Today that is driven by enhancement, delete, and scan-more
+     * append operations. Reorder/rotate/crop remain reserved for the corresponding
+     * future actions.
      */
     fun isDirty(): Boolean {
-        return hasEnhancedPages || hasDeletedPages || hasReorderedPages || hasRotatedPages || hasCroppedPages
+        return hasEnhancedPages ||
+            hasDeletedPages ||
+            hasReorderedPages ||
+            hasRotatedPages ||
+            hasCroppedPages ||
+            hasAddedPages
     }
 
     companion object {
@@ -141,14 +148,33 @@ data class ScanSession(
         return copy(
             pages = updatedPages,
             originalPdfUri = updatedOriginalPdfUri,
-            dirtyFlags = SessionDirtyFlags.fromPages(updatedPages),
+            dirtyFlags = SessionDirtyFlags.fromPages(updatedPages).copy(
+                hasAddedPages = dirtyFlags.hasAddedPages,
+            ),
+        )
+    }
+
+    fun appendScanResult(scanResult: ScanResultPayload): ScanSession {
+        val nextPageIndex = pages.size
+        val appendedPages = scanResult.pageUris.mapIndexed { index, uri ->
+            ScannedPage(
+                id = "${id}_page_${nextPageIndex + index}",
+                originalSourceUri = uri,
+            )
+        }
+
+        return copy(
+            pages = pages + appendedPages,
+            dirtyFlags = dirtyFlags.copy(hasAddedPages = true),
         )
     }
 
     fun withPages(updatedPages: List<ScannedPage>): ScanSession {
         return copy(
             pages = updatedPages,
-            dirtyFlags = SessionDirtyFlags.fromPages(updatedPages),
+            dirtyFlags = SessionDirtyFlags.fromPages(updatedPages).copy(
+                hasAddedPages = dirtyFlags.hasAddedPages,
+            ),
         )
     }
 }
