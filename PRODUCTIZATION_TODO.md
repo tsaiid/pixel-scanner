@@ -100,7 +100,7 @@
   - [x] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
   - [~] 定義 domain model 與 UI model 的映射方式。
     - 已落地 review 畫面的 `ScannedPage -> ReviewPageUiModel` 映射；其餘首頁 / export flow 尚待補齊。
-- [~] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
+- [x] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
   - 建議 use cases：`CreateSessionFromScanResultUseCase`, `LoadScanSessionUseCase`, `ToggleEnhancementUseCase`, `DeletePageUseCase`, `RestorePageUseCase`, `ExportSessionUseCase`, `DiscardSessionUseCase`, `ResumeSessionUseCase`。
   - 驗收標準：ViewModel 僅負責 state reduction、event handling、effect emission。
   - [x] 盤點 `ReviewViewModel` 現有責任。
@@ -170,13 +170,13 @@
 
 ## Phase 2: Scan Session And Data Lifecycle
 
-- [~] 擴充掃描結果模型，保留 ML Kit 回傳的 JPEG pages 與原始 PDF URI。
+- [x] 擴充掃描結果模型，保留 ML Kit 回傳的 JPEG pages 與原始 PDF URI。
   - 驗收標準：後續匯出時可根據是否修改過內容決定是否重用原始 PDF。
   - [x] 研究 ML Kit result 中需要持久化的欄位。
   - [x] 擴充 session model 接住 page URIs 與 pdf URI。
   - [x] 定義 `session dirty` 的判斷規則。
   - [x] 驗證未修改 session 可直接重用 PDF。
-- [ ] 導入掃描結果 eager ingestion。
+- [x] 導入掃描結果 eager ingestion。
   - 驗收標準：掃描完成後，review 與後續處理都以 app 內部 session 檔案為主，不直接依賴外部短生命週期 URI。
   - [x] 定義 ingestion 的觸發點與執行緒模型。
     - 目前由 `ReviewViewModel.setScanResult()` 在建立 session 後立刻觸發背景 eager ingestion，並透過 use case 內的 `Dispatchers.IO` 邊界執行。
@@ -184,7 +184,7 @@
   - [x] 若有原始 PDF，拷貝到 session 目錄並記錄 metadata。
   - [x] 建立 source URI 到 session file 的映射資訊。
   - [x] 定義 ingestion 失敗時的 fallback 與錯誤回報。
-- [ ] 建立 scan session 暫存目錄與 metadata。
+- [x] 建立 scan session 暫存目錄與 metadata。
   - 驗收標準：單次掃描的原圖、增強圖、排序資訊、刪除狀態、匯出狀態都有可追蹤 metadata。
   - [x] 定義 session id 生成規則。
   - [x] 定義 session metadata schema。
@@ -193,7 +193,7 @@
     - 目前採 JSON，並寫入 `cacheDir/sessions/{sessionId}/metadata.json`。
   - [x] 實作 metadata 讀寫。
     - 已能將 `ScanSessionMetadata` 寫入與讀回 session 目錄。
-- [ ] 定義 session 清理策略。
+- [x] 定義 session 清理策略。
   - 驗收標準：離開 review、匯出完成、App 重啟後能安全清理舊快取，不殘留大量暫存檔。
   - [x] 定義 preview cache 何時清理。
     - preview cache 會在 session 被 discard 或 last-page delete 時清理；app launch 的 stale session cleanup 也會刪除整個 session root。
@@ -205,7 +205,7 @@
     - 目前採 `metadata.json` 的建立時間做 7 天 TTL，清掉整個 session 目錄。
   - [x] 實作 app launch 時的 stale session cleanup。
     - `PixelScannerApp.onCreate()` 會在背景執行清理。
-- [~] 加入 session recovery 策略。
+- [x] 加入 session recovery 策略。
   - 驗收標準：掃描完成後若 app 被系統回收，重新進入時可提示恢復或捨棄未完成 session。
   - [x] 定義可恢復 session 的最小資訊。
     - 目前以 `ScanSessionMetadata` JSON 作為 recoverable session 摘要。
@@ -229,7 +229,7 @@
 
 ## Phase 3: Image Processing Pipeline
 
-- [ ] 將影像增強拆成 preview pipeline 與 export pipeline。
+- [x] 將影像增強拆成 preview pipeline 與 export pipeline。
   - 驗收標準：預覽切換速度以互動流暢為優先，匯出時才處理 full-resolution。
   - [x] 定義 preview pipeline 輸入 / 輸出。
     - 目前以 `PreviewImagePipelineRequest` / `PreviewImagePipelineResult` 作為 preview contract。
@@ -253,7 +253,7 @@
     - 現階段不採用 `Bitmap.Config.HARDWARE`；預覽 pipeline 需要 CPU pixel access 與重新寫回 cache，維持 software bitmap 才能避免額外 copy 與轉換成本。
   - [x] 為異常尺寸建立保護條件。
     - 預覽 decode 會先驗證 bounds，並以最大尺寸上限避免一次 full decode。
-- [ ] 修正背景估計演算法的極端尺寸邊界。
+- [x] 修正背景估計演算法的極端尺寸邊界。
   - 驗收標準：小圖、長圖、極端比例圖片不會因縮放到 0 尺寸而 crash。
   - [x] 加入最小縮放尺寸保護。
     - background size 計算會保證寬高至少為 1，且不會超過原始尺寸。
@@ -277,7 +277,7 @@
   - [x] 在 page model 加入 processing state。
   - [x] UI 只鎖當前處理頁或對應控制項。
   - [x] 驗證多頁快速切換時狀態一致。
-- [~] 為影像處理加入可取消性。
+- [x] 為影像處理加入可取消性。
   - 驗收標準：離開畫面、切換 session 或重複操作時可中止過時工作。
   - [x] 為每頁處理任務建立 job 管理。
   - [x] 離開畫面時取消過時任務。
@@ -348,7 +348,7 @@
   - [ ] 定義 worker 與前台通知的責任邊界。
   - [ ] 實作大型匯出走 background worker。
   - [ ] 驗證取消、重試、app 重啟後狀態恢復。
-- [ ] 補齊錯誤分類與前置檢查。
+- [x] 補齊錯誤分類與前置檢查。
   - 類型：讀取失敗、decode 失敗、寫入失敗、儲存空間不足、權限或 `ContentResolver` 異常、來源檔失效。
   - 驗收標準：不同錯誤能映射成可理解的使用者訊息，且可區分可重試與不可重試。
   - [x] 定義 domain error 類型。
@@ -361,7 +361,7 @@
     - eager ingestion 與 export path 會先估算需求空間，再以 shared storage / cacheDir 做 preflight，若不足則回傳 `ExportInsufficientSpaceFailure`。
   - [x] 為未完成匯出殘檔建立清理策略。
     - export failure path 會刪除已建立的 destination row，且 preflight 會避免在空間不足時留下半成品。
-- [ ] 建立匯出後動作。
+- [x] 建立匯出後動作。
   - 建議支援：開啟檔案、分享、回到首頁、繼續掃描。
   - 驗收標準：匯出成功後有明確 next step，而不只是 toast。
   - [x] 設計 export success sheet 或 dialog。
@@ -372,7 +372,7 @@
     - 匯出成功對話框現在可直接回到 scanner flow，並沿用現有 scan-more append 行為。
   - [x] 驗證取消與返回後狀態。
     - dialog dismiss / back 只會清掉 post-export action，不會變更目前 review session 狀態。
-- [~] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
+- [x] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
   - 驗收標準：實機上可預期地出現在正確位置，命名規則一致。
   - [x] 驗證 JPEG 寫入 `Pictures/PixelScanner`。
     - `StorageManager.saveUriToGallery()` 以 `RELATIVE_PATH` 指向 `Pictures/PixelScanner`。
@@ -387,7 +387,7 @@
 
 ## Phase 5: Review Experience Redesign
 
-- [~] 重設 review screen 資訊架構。
+- [x] 重設 review screen 資訊架構。
   - 建議區塊：top app bar、主預覽、縮圖列、頁面工具列、底部 primary action。
   - 驗收標準：多頁操作時可快速理解目前頁面與下一步動作。
   - [x] 畫 review screen wireframe。
