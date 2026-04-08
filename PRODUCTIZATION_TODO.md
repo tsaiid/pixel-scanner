@@ -303,8 +303,9 @@
   - 驗收標準：匯出路徑可根據 session 狀態選擇 reuse original PDF、rebuild PDF 或輸出 JPEG，而不是一律重建。
   - [x] 定義 `reuse original PDF` 的條件。
   - [x] 定義 `rebuild from reordered pages` 的條件。
-  - [ ] 定義 `rebuild from enhanced pages` 的條件。
-  - [ ] 將 decision tree 寫入 `ExportRequest` 或等效策略物件。
+  - [x] 定義 `rebuild from enhanced pages` 的條件。
+    - 目前由 `ExportRequest.resolveDecision(session)` 明確以 `hasEnhancedPages` 分支決定。
+  - [x] 將 decision tree 寫入 `ExportRequest` 或等效策略物件。
   - [ ] 驗證刪頁、排序、增強、旋轉後會走對應分支。
 - [x] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
   - 驗收標準：避免不必要的 PDF 重建與解碼成本，保留原 PDF 可能包含的文字層或其他 metadata。

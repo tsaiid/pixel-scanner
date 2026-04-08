@@ -197,6 +197,24 @@ data class ExportRequest(
     val format: ExportFormat,
 )
 
+sealed interface ExportDecision {
+    data object ReuseOriginalPdf : ExportDecision
+    data object RebuildPdfFromEnhancedPages : ExportDecision
+    data object RebuildPdfFromPages : ExportDecision
+    data object ExportJpegs : ExportDecision
+}
+
+fun ExportRequest.resolveDecision(session: ScanSession): ExportDecision {
+    return when (format) {
+        ExportFormat.IMAGE -> ExportDecision.ExportJpegs
+        ExportFormat.PDF -> when {
+            session.canReuseOriginalPdfForExport() -> ExportDecision.ReuseOriginalPdf
+            session.dirtyFlags.hasEnhancedPages -> ExportDecision.RebuildPdfFromEnhancedPages
+            else -> ExportDecision.RebuildPdfFromPages
+        }
+    }
+}
+
 sealed class ExportResult {
     data class Success(val outputUri: Uri?) : ExportResult()
     data class Failure(val errorMessage: String? = null) : ExportResult()
