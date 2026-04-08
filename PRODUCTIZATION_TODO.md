@@ -311,12 +311,13 @@
   - [x] 若 benchmark 未達標，再開 spike 評估 GPU / NDK / 其他方案。
   - [x] 記錄不採用過時或高維護成本方案的理由。
     - 參考文件：[`docs/advanced-hardware-acceleration-evaluation.md`](/Users/tsaiid/git/pixel-scanner/docs/advanced-hardware-acceleration-evaluation.md)
-- [ ] 建立影像處理 benchmark。
+- [!] 建立影像處理 benchmark。
   - 驗收標準：至少有基準測試覆蓋 1 頁、10 頁與不同解析度樣本。
-  - [ ] 定義 benchmark 樣本集。
+  - [x] 定義 benchmark 樣本集。
   - [ ] 新增 1 頁處理 benchmark。
   - [ ] 新增多頁處理 benchmark。
   - [ ] 輸出 baseline 報表。
+  - [!] 目前阻塞：缺少 benchmark module / instrumentation runner、實機量測裝置、以及可重複執行的 sample provisioning 流程；可參考 [`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)。
 
 ## Phase 4: Export Pipeline
 
