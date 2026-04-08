@@ -275,12 +275,16 @@
   - [x] 實作分段處理。
   - [x] 加入記憶體量測點。
     - preview enhancement 目前會以 `ImageEnhancerMem` debug logs 記錄 stage snapshots，涵蓋 `start`、`decode-complete`、`background-build-complete`、`row-processing-complete` 與 `final-write-complete`；12MP 峰值驗證仍需後續 benchmark 補證，因此 parent item 保持 in progress。
-- [ ] 建立增強結果快取索引。
+- [x] 建立增強結果快取索引。
   - 驗收標準：同頁面重複切換不重新運算，可命中快取。
-  - [ ] 定義快取 key。
-  - [ ] 定義快取 metadata。
-  - [ ] 實作快取查詢。
-  - [ ] 實作快取失效與清理。
+  - [x] 定義快取 key。
+    - 目前沿用 `PreviewImagePipelineRequest.cacheKey`，策略本身未變。
+  - [x] 定義快取 metadata。
+    - preview cache 以 per-session `preview-index.json` 記錄 `cacheKey -> fileName` 與存取 metadata。
+  - [x] 實作快取查詢。
+    - `AndroidPreviewImageCacheRepository.getCachedPreview()` 先讀 index，再驗證實體檔案是否有效。
+  - [x] 實作快取失效與清理。
+    - query/store 會 opportunistically prune 壞掉或 orphan 的 preview files，避免 index 與檔案內容脫節。
 - [x] 為每頁增強建立獨立處理狀態。
   - 驗收標準：單頁處理不會鎖住整個 review 畫面。
   - [x] 在 page model 加入 processing state。

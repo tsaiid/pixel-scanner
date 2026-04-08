@@ -33,6 +33,10 @@ object SessionStoragePaths {
         return File(sessionRoot(cacheDir, sessionId), PREVIEW_DIR)
     }
 
+    fun previewIndexFile(cacheDir: File, sessionId: String): File {
+        return File(previewPagesDir(cacheDir, sessionId), "preview-index.json")
+    }
+
     fun exportDir(cacheDir: File, sessionId: String): File {
         return File(sessionRoot(cacheDir, sessionId), EXPORT_DIR)
     }
