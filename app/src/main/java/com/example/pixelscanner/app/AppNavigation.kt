@@ -38,14 +38,14 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = AppScreen.Home.route,
+        startDestination = AppNavigationContract.homeRoute,
     ) {
-        composable(AppScreen.Home.route) {
+        composable(AppNavigationContract.homeRoute) {
             ScannerScreen(
                 homeUiState = homeUiState,
                 onScanResult = { scanResult ->
                     reviewViewModel.setScanResult(scanResult)
-                    navController.navigateResettingToHome(AppScreen.Review.route)
+                    navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
                 },
                 onScanCancelled = {
                     homeViewModel.setShouldAutoStartScanner(false)
@@ -53,7 +53,7 @@ fun AppNavigation() {
             )
         }
 
-        composable(AppScreen.Review.route) {
+        composable(AppNavigationContract.reviewRoute) {
             ReviewScreen(
                 viewModel = reviewViewModel,
                 onExportSuccess = { format ->
@@ -67,11 +67,11 @@ fun AppNavigation() {
                 },
                 onRescan = {
                     homeViewModel.setShouldAutoStartScanner(true)
-                    navController.navigateResettingToHome(AppScreen.Home.route)
+                    navController.navigateResettingToHome(AppNavigationContract.homeRoute)
                 },
                 onDiscardSession = {
                     homeViewModel.setShouldAutoStartScanner(false)
-                    navController.navigateResettingToHome(AppScreen.Home.route)
+                    navController.navigateResettingToHome(AppNavigationContract.homeRoute)
                 }
             )
         }
@@ -80,7 +80,7 @@ fun AppNavigation() {
 
 private fun NavHostController.navigateResettingToHome(route: String) {
     navigate(route) {
-        popUpTo(AppScreen.Home.route) {
+        popUpTo(AppNavigationContract.homeRoute) {
             inclusive = false
         }
         launchSingleTop = true
