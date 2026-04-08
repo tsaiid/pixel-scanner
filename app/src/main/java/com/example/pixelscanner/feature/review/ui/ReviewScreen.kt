@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
 import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
@@ -73,6 +74,7 @@ fun ReviewScreen(
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val selectedPage = uiState.selectedPage
     val pagerState = rememberPagerState(
         initialPage = uiState.currentPage,
         pageCount = { uiState.pages.size }
@@ -197,9 +199,9 @@ fun ReviewScreen(
                                     )
                                 )
                             },
-                            enabled = !uiState.isProcessing
+                            enabled = selectedPage?.processingState != ProcessingState.PROCESSING
                         ) {
-                            if (uiState.isProcessing) {
+                            if (selectedPage?.processingState == ProcessingState.PROCESSING) {
                                 CircularProgressIndicator(
                                     modifier = Modifier
                                         .padding(8.dp)
@@ -256,6 +258,13 @@ fun ReviewScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Fit
                                 )
+                                if (page.processingState == ProcessingState.PROCESSING) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(36.dp),
+                                        color = Color.White,
+                                        strokeWidth = 3.dp
+                                    )
+                                }
                             }
                         }
                     }

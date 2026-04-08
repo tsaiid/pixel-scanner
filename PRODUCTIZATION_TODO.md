@@ -96,7 +96,7 @@
   - [x] 設計 `ScannedPage` 欄位。
   - [x] 設計 `PageVariant` 結構，區分 `original`, `previewEnhanced`, `exportEnhanced`。
   - [x] 設計 `ExportRequest` 與 `ExportResult`。
-  - [ ] 設計頁級 `ProcessingState`。
+  - [x] 設計頁級 `ProcessingState`。
   - [x] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
   - [~] 定義 domain model 與 UI model 的映射方式。
     - 已落地 review 畫面的 `ScannedPage -> ReviewPageUiModel` 映射；其餘首頁 / export flow 尚待補齊。

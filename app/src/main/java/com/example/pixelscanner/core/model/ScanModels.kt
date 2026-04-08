@@ -7,6 +7,11 @@ data class ScanResultPayload(
     val pdfUri: Uri? = null,
 )
 
+enum class ProcessingState {
+    IDLE,
+    PROCESSING,
+}
+
 data class SessionDirtyFlags(
     val hasEnhancedPages: Boolean = false,
     val hasDeletedPages: Boolean = false,
@@ -38,6 +43,7 @@ data class ScannedPage(
     val originalSourceUri: Uri,
     val enhancedUri: Uri? = null,
     val activeVariant: PageVariant = PageVariant.ORIGINAL,
+    val processingState: ProcessingState = ProcessingState.IDLE,
     val isDeleted: Boolean = false,
 ) {
     fun displayUri(): Uri {
@@ -51,6 +57,10 @@ data class ScannedPage(
     fun isEnhanced(): Boolean {
         return activeVariant == PageVariant.PREVIEW_ENHANCED && enhancedUri != null
     }
+
+    fun isProcessing(): Boolean {
+        return processingState == ProcessingState.PROCESSING
+    }
 }
 
 data class ScanSession(
@@ -60,6 +70,18 @@ data class ScanSession(
     val dirtyFlags: SessionDirtyFlags = SessionDirtyFlags(),
 ) {
     fun activePages(): List<ScannedPage> = pages.filterNot { it.isDeleted }
+
+    fun withPageProcessing(pageId: String, processingState: ProcessingState): ScanSession {
+        return withPages(
+            pages.map { page ->
+                if (page.id == pageId) {
+                    page.copy(processingState = processingState)
+                } else {
+                    page
+                }
+            }
+        )
+    }
 
     fun withPages(updatedPages: List<ScannedPage>): ScanSession {
         return copy(

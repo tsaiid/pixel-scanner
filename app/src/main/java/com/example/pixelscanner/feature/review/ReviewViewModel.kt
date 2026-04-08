@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
@@ -98,22 +99,26 @@ class ReviewViewModel(
         val session = _scanSession.value ?: return
         val page = session.activePages().getOrNull(index) ?: return
 
+        applySessionUpdate(session.withPageProcessing(page.id, ProcessingState.PROCESSING))
+
         viewModelScope.launch {
-            updateUiState { it.copy(isProcessing = true) }
             try {
                 val result = toggleEnhancementUseCase(page, context)
-                val updatedPages = session.pages.map { existingPage ->
+                val currentSession = _scanSession.value ?: return@launch
+                val updatedPages = currentSession.pages.map { existingPage ->
                     if (existingPage.id == result.updatedPage.id) {
-                        result.updatedPage
+                        result.updatedPage.copy(processingState = ProcessingState.IDLE)
                     } else {
                         existingPage
                     }
                 }
-                applySessionUpdate(session.withPages(updatedPages))
+                applySessionUpdate(currentSession.withPages(updatedPages))
             } catch (e: Exception) {
                 e.printStackTrace() // Handle error appropriately
-            } finally {
-                updateUiState { it.copy(isProcessing = false) }
+                val currentSession = _scanSession.value ?: return@launch
+                if (currentSession.pages.any { it.id == page.id }) {
+                    applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
+                }
             }
         }
     }
@@ -227,6 +232,7 @@ private fun ScannedPage.toUiModel(): ReviewPageUiModel {
         id = id,
         displayUri = displayUri(),
         isEnhanced = isEnhanced(),
+        processingState = processingState,
     )
 }
 
