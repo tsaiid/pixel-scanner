@@ -71,12 +71,16 @@
   - [ ] 記錄單頁增強耗時。
   - [ ] 記錄多頁 PDF 匯出耗時。
   - [ ] 記錄記憶體峰值與可能的 OOM 風險。
-- [ ] 建立產品化關鍵 ADR。
+- [x] 建立產品化關鍵 ADR。
   - 驗收標準：session ingestion、export decision tree、背景匯出策略、preview/export 雙 pipeline 有正式決策文件。
-  - [ ] 撰寫 session ownership ADR。
-  - [ ] 撰寫 export strategy ADR。
-  - [ ] 撰寫 background export ADR。
-  - [ ] 撰寫 image pipeline ADR。
+  - [x] 撰寫 session ownership ADR。
+  - [x] 撰寫 export strategy ADR。
+  - [x] 撰寫 background export ADR。
+  - [x] 撰寫 image pipeline ADR。
+    - 參考文件：[`docs/adr-session-ownership.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-session-ownership.md)
+    - 參考文件：[`docs/adr-export-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-export-strategy.md)
+    - 參考文件：[`docs/adr-background-export.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-background-export.md)
+    - 參考文件：[`docs/adr-image-pipeline.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-image-pipeline.md)
 
 ## Phase 1: Architecture Refactor
 
