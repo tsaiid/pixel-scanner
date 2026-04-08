@@ -10,6 +10,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.PixelScannerApp
@@ -20,8 +24,8 @@ import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
 
 @Composable
 fun AppNavigation() {
-    var currentScreen by rememberSaveable { mutableStateOf(AppScreen.Home) }
     var shouldAutoStartScanner by rememberSaveable { mutableStateOf(false) }
+    val navController = rememberNavController()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val appContainer = (context.applicationContext as PixelScannerApp).appContainer
@@ -29,15 +33,17 @@ fun AppNavigation() {
         owner = context as SavedStateRegistryOwner,
     )
     val reviewViewModel: ReviewViewModel = viewModel(factory = reviewViewModelFactory)
-    val homeUiState = HomeUiState(shouldAutoStartScanner = shouldAutoStartScanner)
 
-    when (currentScreen) {
-        AppScreen.Home -> {
+    NavHost(
+        navController = navController,
+        startDestination = AppScreen.Home.route,
+    ) {
+        composable(AppScreen.Home.route) {
             ScannerScreen(
-                homeUiState = homeUiState,
+                homeUiState = HomeUiState(shouldAutoStartScanner = shouldAutoStartScanner),
                 onScanResult = { scanResult ->
                     reviewViewModel.setScanResult(scanResult)
-                    currentScreen = AppScreen.Review
+                    navController.navigateResettingToHome(AppScreen.Review.route)
                 },
                 onScanCancelled = {
                     shouldAutoStartScanner = false
@@ -45,7 +51,7 @@ fun AppNavigation() {
             )
         }
 
-        AppScreen.Review -> {
+        composable(AppScreen.Review.route) {
             ReviewScreen(
                 viewModel = reviewViewModel,
                 onExportSuccess = { format ->
@@ -59,13 +65,22 @@ fun AppNavigation() {
                 },
                 onRescan = {
                     shouldAutoStartScanner = true
-                    currentScreen = AppScreen.Home
+                    navController.navigateResettingToHome(AppScreen.Home.route)
                 },
                 onDiscardSession = {
                     shouldAutoStartScanner = false
-                    currentScreen = AppScreen.Home
+                    navController.navigateResettingToHome(AppScreen.Home.route)
                 }
             )
         }
+    }
+}
+
+private fun NavHostController.navigateResettingToHome(route: String) {
+    navigate(route) {
+        popUpTo(AppScreen.Home.route) {
+            inclusive = false
+        }
+        launchSingleTop = true
     }
 }
