@@ -344,11 +344,12 @@
   - [x] 實作 fast-track copy path。
   - [x] 驗證結果檔可正常開啟與分享。
     - 匯出成功後會提示使用者開啟或分享輸出檔，並以 `ACTION_VIEW` / `ACTION_SEND`（多檔時為 `ACTION_SEND_MULTIPLE`）走實際 intent 路徑。
-- [ ] 評估刪頁 / 排序場景的增量 PDF 重組方案。
+- [x] 評估刪頁 / 排序場景的增量 PDF 重組方案。
   - 驗收標準：先完成可研究、可比較、可決策，不預設採用特定庫。
-  - [ ] 列出可行方案，例如重建 PDF、增量操作 PDF、延後到 v2。
-  - [ ] 評估第三方庫的體積、效能、授權與維護成本。
-  - [ ] 若不採用增量重組，記錄以重建 PDF 為 v1 決策的理由。
+  - [x] 列出可行方案，例如重建 PDF、增量操作 PDF、延後到 v2。
+  - [x] 評估第三方庫的體積、效能、授權與維護成本。
+  - [x] 若不採用增量重組，記錄以重建 PDF 為 v1 決策的理由。
+    - 參考文件：[`docs/incremental-pdf-reassembly-evaluation.md`](/Users/tsaiid/git/pixel-scanner/docs/incremental-pdf-reassembly-evaluation.md)
 - [ ] 若需重建 PDF，加入輸出尺寸策略。
   - 建議支援：原始尺寸、A4、Letter、壓縮等級。
   - 驗收標準：輸出檔案大小、品質與效能可控。
