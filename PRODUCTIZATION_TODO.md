@@ -172,7 +172,7 @@
   - 驗收標準：後續匯出時可根據是否修改過內容決定是否重用原始 PDF。
   - [ ] 研究 ML Kit result 中需要持久化的欄位。
   - [x] 擴充 session model 接住 page URIs 與 pdf URI。
-  - [ ] 定義 `session dirty` 的判斷規則。
+  - [x] 定義 `session dirty` 的判斷規則。
   - [ ] 驗證未修改 session 可直接重用 PDF。
 - [ ] 導入掃描結果 eager ingestion。
   - 驗收標準：掃描完成後，review 與後續處理都以 app 內部 session 檔案為主，不直接依賴外部短生命週期 URI。

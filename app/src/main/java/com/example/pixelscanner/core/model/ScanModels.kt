@@ -19,6 +19,11 @@ data class SessionDirtyFlags(
     val hasRotatedPages: Boolean = false,
     val hasCroppedPages: Boolean = false,
 ) {
+    /**
+     * Dirty means the exported document can no longer be treated as the untouched
+     * scanner output. Today that is driven by enhancement and delete operations.
+     * Reorder/rotate/crop remain reserved for the corresponding future actions.
+     */
     fun isDirty(): Boolean {
         return hasEnhancedPages || hasDeletedPages || hasReorderedPages || hasRotatedPages || hasCroppedPages
     }
@@ -70,6 +75,18 @@ data class ScanSession(
     val dirtyFlags: SessionDirtyFlags = SessionDirtyFlags(),
 ) {
     fun activePages(): List<ScannedPage> = pages.filterNot { it.isDeleted }
+
+    fun isDirty(): Boolean {
+        return dirtyFlags.isDirty()
+    }
+
+    fun canReuseOriginalPdfForExport(): Boolean {
+        return originalPdfUri != null && !isDirty()
+    }
+
+    fun originalPdfExportSource(): Uri? {
+        return if (canReuseOriginalPdfForExport()) originalPdfUri else null
+    }
 
     fun withPageProcessing(pageId: String, processingState: ProcessingState): ScanSession {
         return withPages(

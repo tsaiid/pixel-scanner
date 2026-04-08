@@ -25,23 +25,18 @@ class ExportSessionUseCase(
 
         return when (request.format) {
             ExportFormat.PDF -> {
-                val outputUri = when (val decision = decidePdfExport(session)) {
-                    is PdfExportDecision.ReuseOriginalPdf -> {
-                        exportRepository.copyPdfToDocuments(
-                            context = context,
-                            sourceUri = decision.originalPdfUri,
-                            fileName = "PixelScanner_$timestamp.pdf",
-                        )
-                    }
+                val outputUri = session.originalPdfExportSource()?.let { originalPdfUri ->
+                    exportRepository.copyPdfToDocuments(
+                        context = context,
+                        sourceUri = originalPdfUri,
+                        fileName = "PixelScanner_$timestamp.pdf",
+                    )
+                } ?: exportRepository.saveUrisToPdf(
+                    context = context,
+                    sourceUris = urisToSave,
+                    fileName = "PixelScanner_$timestamp.pdf",
+                )
 
-                    PdfExportDecision.RebuildPdf -> {
-                        exportRepository.saveUrisToPdf(
-                            context = context,
-                            sourceUris = urisToSave,
-                            fileName = "PixelScanner_$timestamp.pdf",
-                        )
-                    }
-                }
                 if (outputUri != null) {
                     ExportResult.Success(outputUri)
                 } else {
@@ -67,17 +62,4 @@ class ExportSessionUseCase(
         }
     }
 
-    private fun decidePdfExport(session: ScanSession): PdfExportDecision {
-        val originalPdfUri = session.originalPdfUri
-        return if (originalPdfUri != null && !session.dirtyFlags.isDirty()) {
-            PdfExportDecision.ReuseOriginalPdf(originalPdfUri)
-        } else {
-            PdfExportDecision.RebuildPdf
-        }
-    }
-}
-
-private sealed interface PdfExportDecision {
-    data class ReuseOriginalPdf(val originalPdfUri: android.net.Uri) : PdfExportDecision
-    data object RebuildPdf : PdfExportDecision
 }
