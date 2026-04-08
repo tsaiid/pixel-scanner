@@ -9,7 +9,7 @@
     <string name="start_recover_session_restore_action">Restore</string>
     <string name="start_recover_session_discard_action">Discard</string>
     <string name="review_action_scan_more">Scan More</string>
-    <string name="review_action_rescan">Rescan</string>
+    <string name="review_action_rescan">Discard &amp; Rescan</string>
     <string name="review_action_discard_session">Discard Session</string>
     <string name="review_deleted_page_message">Page deleted</string>
     <string name="review_deleted_page_undo_action">Undo</string>
@@ -23,9 +23,9 @@
     <string name="review_thumbnail_selected_content_description">Page %1$d of %2$d, selected</string>
     <string name="review_empty_state_message">No images to review</string>
     <string name="review_empty_session_message">All pages removed. Add more scans or start a new session.</string>
-    <string name="review_rescan_confirm_title">Rescan and discard current pages?</string>
+    <string name="review_rescan_confirm_title">Discard current pages and rescan?</string>
     <string name="review_rescan_confirm_message">This will discard the current session and restart scanning from scratch.</string>
-    <string name="review_rescan_confirm_action">Rescan</string>
+    <string name="review_rescan_confirm_action">Discard &amp; Rescan</string>
     <string name="review_discard_confirm_title">Discard current session?</string>
     <string name="review_discard_confirm_message">This will discard the current pages and return to the home screen.</string>
     <string name="review_discard_confirm_action">Discard</string>
@@ -33,6 +33,11 @@
     <string name="export_post_action_title">Export saved</string>
     <string name="export_post_action_message">Open or share the exported file now?</string>
     <string name="export_post_action_continue">Continue Scanning</string>
+    <string name="export_save_button_saving">Saving...</string>
+    <string name="export_save_button_jpeg">Save as JPEG</string>
+    <string name="export_save_button_pdf">Save as PDF</string>
+    <string name="export_format_jpeg">JPEG</string>
+    <string name="export_format_pdf">PDF</string>
     <string name="export_post_action_open">Open</string>
     <string name="export_post_action_share">Share</string>
     <string name="export_post_action_open_failed">Unable to open the exported file.</string>

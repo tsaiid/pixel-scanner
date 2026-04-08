@@ -424,7 +424,7 @@
   - [x] 重設刪除最後一頁的行為。
   - [x] 決定空 session 時顯示空狀態或離開流程。
   - [x] 改善 snackbar undo 與 pager 同步問題。
-- [ ] 重新命名與拆分掃描相關按鈕文案。
+- [~] 重新命名與拆分掃描相關按鈕文案。
   - 驗收標準：`Scan More`、`Discard & Rescan`、`Save as JPEG`、`Save as PDF` 等語意明確。
   - [x] 建立文案表。
     - review action strings 已集中在 `strings.xml`。

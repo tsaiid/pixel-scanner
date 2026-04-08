@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ExportSaveButton(
@@ -26,10 +28,14 @@ fun ExportSaveButton(
         Text(
             when {
                 exportState.isExporting -> {
-                    exportState.progressText ?: "Saving..."
+                    exportState.progressText ?: stringResource(id = R.string.export_save_button_saving)
                 }
 
-                else -> "Save All"
+                exportState.format == ExportFormat.IMAGE ->
+                    stringResource(id = R.string.export_save_button_jpeg)
+
+                else ->
+                    stringResource(id = R.string.export_save_button_pdf)
             }
         )
     }
@@ -52,12 +58,12 @@ fun ExportFormatTabs(
         Tab(
             selected = selectedFormat == ExportFormat.IMAGE,
             onClick = { onSelectFormat(ExportFormat.IMAGE) },
-            text = { Text("JPEG") },
+            text = { Text(stringResource(id = R.string.export_format_jpeg)) },
         )
         Tab(
             selected = selectedFormat == ExportFormat.PDF,
             onClick = { onSelectFormat(ExportFormat.PDF) },
-            text = { Text("PDF") },
+            text = { Text(stringResource(id = R.string.export_format_pdf)) },
         )
     }
 }
