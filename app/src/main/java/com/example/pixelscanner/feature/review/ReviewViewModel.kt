@@ -12,6 +12,7 @@ import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
+import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
 
 class ReviewViewModel(
     private val createSessionFromScanResultUseCase: CreateSessionFromScanResultUseCase,
+    private val eagerSessionIngestionUseCase: EagerSessionIngestionUseCase,
     private val toggleEnhancementUseCase: ToggleEnhancementUseCase,
     private val deletePageUseCase: DeletePageUseCase,
     private val restorePageUseCase: RestorePageUseCase,
@@ -81,6 +83,21 @@ class ReviewViewModel(
     fun setScanResult(scanResult: ScanResultPayload) {
         val session = createSessionFromScanResultUseCase(scanResult)
         applySessionUpdate(resumeSessionUseCase(session).session)
+        startEagerIngestion(session, scanResult)
+    }
+
+    private fun startEagerIngestion(
+        session: ScanSession,
+        scanResult: ScanResultPayload,
+    ) {
+        // Kick ingestion off after the session exists so review can render immediately.
+        viewModelScope.launch {
+            runCatching {
+                eagerSessionIngestionUseCase(session, scanResult)
+            }.onFailure { error ->
+                error.printStackTrace()
+            }
+        }
     }
 
     private fun setExportFormat(format: ExportFormat) {
@@ -245,6 +262,7 @@ private const val KEY_EXPORT_FORMAT = "review_export_format"
 
 class ReviewViewModelFactory(
     private val createSessionFromScanResultUseCase: CreateSessionFromScanResultUseCase,
+    private val eagerSessionIngestionUseCase: EagerSessionIngestionUseCase,
     private val toggleEnhancementUseCase: ToggleEnhancementUseCase,
     private val deletePageUseCase: DeletePageUseCase,
     private val restorePageUseCase: RestorePageUseCase,
@@ -265,6 +283,7 @@ class ReviewViewModelFactory(
         }
         return ReviewViewModel(
             createSessionFromScanResultUseCase = createSessionFromScanResultUseCase,
+            eagerSessionIngestionUseCase = eagerSessionIngestionUseCase,
             toggleEnhancementUseCase = toggleEnhancementUseCase,
             deletePageUseCase = deletePageUseCase,
             restorePageUseCase = restorePageUseCase,

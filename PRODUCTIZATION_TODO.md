@@ -176,7 +176,8 @@
   - [ ] 驗證未修改 session 可直接重用 PDF。
 - [ ] 導入掃描結果 eager ingestion。
   - 驗收標準：掃描完成後，review 與後續處理都以 app 內部 session 檔案為主，不直接依賴外部短生命週期 URI。
-  - [ ] 定義 ingestion 的觸發點與執行緒模型。
+  - [x] 定義 ingestion 的觸發點與執行緒模型。
+    - 目前由 `ReviewViewModel.setScanResult()` 在建立 session 後立刻觸發背景 eager ingestion，並透過 use case 內的 `Dispatchers.IO` 邊界執行。
   - [ ] 將 page JPEG 拷貝到 `cacheDir/sessions/{sessionId}/original/`。
   - [ ] 若有原始 PDF，拷貝到 session 目錄並記錄 metadata。
   - [ ] 建立 source URI 到 session file 的映射資訊。
@@ -660,7 +661,8 @@
 ## Sprint-Ready Candidate Tasks
 
 - [x] 建立 domain model 初稿並補對應 mapper。
-- [~] 建立 `CreateSessionFromScanResultUseCase`，先做 eager ingestion 最小版。
+- [x] 建立 `CreateSessionFromScanResultUseCase`，先做 eager ingestion 最小版。
+  - 目前掃描結果會先建立 session，接著由背景 eager ingestion use case 接手入口邊界。
 - [x] 將現有 `ReviewViewModel` 拆出 `ToggleEnhancementUseCase`。
 - [x] 將現有 `saveAll` 拆出 `ExportSessionUseCase`。
 - [x] 擴充 scanner result，保留原始 PDF URI。

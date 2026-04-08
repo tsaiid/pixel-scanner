@@ -3,7 +3,9 @@ package com.example.pixelscanner.app
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.core.image.AndroidImageProcessingRepository
 import com.example.pixelscanner.core.storage.AndroidExportRepository
+import com.example.pixelscanner.core.storage.AndroidSessionIngestionRepository
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
+import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
@@ -17,7 +19,9 @@ import com.example.pixelscanner.feature.review.ReviewViewModelFactory
 class AppContainer {
     val imageProcessingRepository = AndroidImageProcessingRepository()
     val exportRepository = AndroidExportRepository()
+    val sessionIngestionRepository = AndroidSessionIngestionRepository()
     val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
+    val eagerSessionIngestionUseCase = EagerSessionIngestionUseCase(sessionIngestionRepository)
     val toggleEnhancementUseCase = ToggleEnhancementUseCase(imageProcessingRepository)
     val deletePageUseCase = DeletePageUseCase()
     val discardSessionUseCase = DiscardSessionUseCase()
@@ -29,6 +33,7 @@ class AppContainer {
     fun createReviewViewModelFactory(owner: SavedStateRegistryOwner): ReviewViewModelFactory {
         return ReviewViewModelFactory(
             createSessionFromScanResultUseCase = createSessionFromScanResultUseCase,
+            eagerSessionIngestionUseCase = eagerSessionIngestionUseCase,
             toggleEnhancementUseCase = toggleEnhancementUseCase,
             deletePageUseCase = deletePageUseCase,
             discardSessionUseCase = discardSessionUseCase,
