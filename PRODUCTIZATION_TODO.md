@@ -367,12 +367,14 @@
   - [x] UI 呈現 overall progress。
     - export 按鈕會顯示目前進度數字，而不是只有通用 loading 文案。
   - [x] 失敗時保留已完成頁面的處理資訊。
-- [ ] 為大型匯出建立背景執行策略。
+- [!] 為大型匯出建立背景執行策略。
   - 驗收標準：長時間 PDF 匯出在 app 進入背景時仍能穩定執行，且不把短任務複雜化。
-  - [ ] 定義何種條件下切換到 `WorkManager`。
+  - [x] 定義何種條件下切換到 `WorkManager`。
   - [ ] 定義 worker 與前台通知的責任邊界。
   - [ ] 實作大型匯出走 background worker。
   - [ ] 驗證取消、重試、app 重啟後狀態恢復。
+  - [!] 目前阻塞：ADR 已明確決定先不導入 `WorkManager`，而現有程式仍維持前景 export flow，尚未具備背景 worker 或前台通知實作。
+    - 參考文件：[`docs/adr-background-export.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-background-export.md)
 - [x] 補齊錯誤分類與前置檢查。
   - 類型：讀取失敗、decode 失敗、寫入失敗、儲存空間不足、權限或 `ContentResolver` 異常、來源檔失效。
   - 驗收標準：不同錯誤能映射成可理解的使用者訊息，且可區分可重試與不可重試。
