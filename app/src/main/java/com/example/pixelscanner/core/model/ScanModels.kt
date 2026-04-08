@@ -80,7 +80,7 @@ data class ScannedPage(
     val activeVariant: PageVariant = PageVariant.ORIGINAL,
     val processingState: ProcessingState = ProcessingState.IDLE,
     val isDeleted: Boolean = false,
-    val enhancementErrorMessage: String? = null,
+    val enhancementErrorMessage: UiText? = null,
 ) {
     fun displayUri(): Uri {
         return if (activeVariant == PageVariant.PREVIEW_ENHANCED && enhancedUri != null) {
@@ -147,7 +147,7 @@ data class ScanSession(
         )
     }
 
-    fun withPageEnhancementFailure(pageId: String, errorMessage: String?): ScanSession {
+    fun withPageEnhancementFailure(pageId: String, errorMessage: UiText?): ScanSession {
         return withPages(
             pages.map { page ->
                 if (page.id == pageId) {
@@ -279,13 +279,13 @@ sealed interface ExportResult {
     data class PartialSuccess(
         val completedPages: List<CompletedExportPage>,
         val failures: List<ExportFailure> = emptyList(),
-        val warningMessage: String? = null,
+        val warningMessage: UiText? = null,
     ) : ExportResult {
         val outputUris: List<Uri>
             get() = completedPages.map { it.outputUri }
     }
     data class Failure(val error: ExportFailure) : ExportResult {
-        val errorMessage: String
+        val errorMessage: UiText
             get() = error.userMessage
     }
     data object Cancelled : ExportResult

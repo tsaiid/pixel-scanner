@@ -9,12 +9,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.core.model.asString
 import com.example.pixelscanner.ui.theme.PixelScannerColorTokens
 import com.example.pixelscanner.ui.theme.PixelScannerSpacingTokens
 import com.example.pixelscanner.ui.theme.rememberPixelScannerTypographyTokens
-import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ExportSaveButton(
@@ -23,6 +25,7 @@ fun ExportSaveButton(
     modifier: Modifier = Modifier,
 ) {
     val typography = rememberPixelScannerTypographyTokens()
+    val context = LocalContext.current
     Button(
         onClick = onSaveAll,
         enabled = !exportState.isExporting,
@@ -31,7 +34,8 @@ fun ExportSaveButton(
         Text(
             text = when {
                 exportState.isExporting -> {
-                    exportState.progressText ?: stringResource(id = R.string.export_save_button_saving)
+                    exportState.progressText?.asString(context)
+                        ?: stringResource(id = R.string.export_save_button_saving)
                 }
 
                 exportState.format == ExportFormat.IMAGE ->

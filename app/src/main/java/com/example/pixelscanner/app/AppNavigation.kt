@@ -108,7 +108,7 @@ fun AppNavigation() {
                                 if (outcome.result.isPartial) {
                                     Toast.makeText(
                                         context,
-                                        "Recovered session with some missing files",
+                                        R.string.restore_session_partial_success_toast,
                                         Toast.LENGTH_LONG,
                                     ).show()
                                 }
@@ -118,7 +118,7 @@ fun AppNavigation() {
                             RestoreSessionOutcome.Unavailable -> {
                                 Toast.makeText(
                                     context,
-                                    "No recoverable session found",
+                                    R.string.restore_session_unavailable_toast,
                                     Toast.LENGTH_SHORT,
                                 ).show()
                             }
@@ -142,9 +142,9 @@ fun AppNavigation() {
                 onExportSuccess = { format, target ->
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     val message = if (format == ExportFormat.PDF) {
-                        "Saved as PDF to Documents"
+                        R.string.export_saved_pdf_toast
                     } else {
-                        "Saved to Gallery"
+                        R.string.export_saved_gallery_toast
                     }
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     appFlowViewModel.setPendingExportAction(target)

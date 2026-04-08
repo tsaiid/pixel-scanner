@@ -6,6 +6,7 @@ import android.net.Uri
 import com.example.pixelscanner.core.model.ExportInsufficientSpaceFailure
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.core.model.asString
 import com.example.pixelscanner.domain.DiskSpacePreflightRepository
 import com.example.pixelscanner.domain.DiskSpacePreflightResult
 import com.example.pixelscanner.domain.SessionMetadataRepository
@@ -45,7 +46,7 @@ class AndroidSessionIngestionRepository(
                             } else {
                                 SessionIngestionAssetType.PAGE_JPEG
                             },
-                            message = ExportInsufficientSpaceFailure.userMessage,
+                            message = ExportInsufficientSpaceFailure.userMessage.asString(context),
                             typedFailure = ExportInsufficientSpaceFailure,
                         ),
                     ),

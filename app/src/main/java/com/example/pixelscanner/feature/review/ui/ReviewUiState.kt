@@ -1,6 +1,7 @@
 package com.example.pixelscanner.feature.review.ui
 
 import android.net.Uri
+import com.example.pixelscanner.core.model.UiText
 import com.example.pixelscanner.feature.export.ui.ExportUiState
 import com.example.pixelscanner.core.model.ProcessingState
 
@@ -24,7 +25,7 @@ data class ReviewUiState(
 
 data class ReviewStatusMessage(
     val id: Long,
-    val text: String,
+    val text: UiText,
 )
 
 data class ReviewPageUiModel(
@@ -32,5 +33,5 @@ data class ReviewPageUiModel(
     val displayUri: Uri,
     val isEnhanced: Boolean,
     val processingState: ProcessingState = ProcessingState.IDLE,
-    val enhancementErrorMessage: String? = null,
+    val enhancementErrorMessage: UiText? = null,
 )

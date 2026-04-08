@@ -522,12 +522,12 @@
   - [x] 導入 edge-to-edge。
   - [x] 驗證首頁與 review 頁的 inset 行為。
     - Scanner resume/loading flow now uses the same safe-drawing inset policy as the other entry surfaces.
-- [ ] 將所有硬編碼文案移入 string resources。
+- [x] 將所有硬編碼文案移入 string resources。
   - 驗收標準：所有使用者可見文案都集中管理，為在地化做好準備。
-  - [ ] 盤點所有 hardcoded strings。
-  - [ ] 移入 `strings.xml`。
-  - [ ] 按功能分類資源 key。
-  - [ ] 檢查 content description 與錯誤訊息也已資源化。
+  - [x] 盤點所有 hardcoded strings。
+  - [x] 移入 `strings.xml`。
+  - [x] 按功能分類資源 key。
+  - [x] 檢查 content description 與錯誤訊息也已資源化。
 
 ## Phase 7: State, Errors, And User Feedback
 

@@ -2,6 +2,7 @@ package com.example.pixelscanner.feature.export.ui
 
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportState
+import com.example.pixelscanner.core.model.UiText
 
 data class ExportUiState(
     val format: ExportFormat = ExportFormat.IMAGE,
@@ -10,7 +11,7 @@ data class ExportUiState(
     val isExporting: Boolean
         get() = state is ExportState.InProgress
 
-    val progressText: String?
+    val progressText: UiText?
         get() = (state as? ExportState.InProgress)?.progress?.displayLabel()
 
     val lastResult: ExportState.Finished?

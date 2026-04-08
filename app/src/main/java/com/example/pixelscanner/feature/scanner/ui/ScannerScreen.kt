@@ -20,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.feature.home.ui.StartScreen
 import com.example.pixelscanner.feature.home.ui.HomeUiState
@@ -75,18 +77,26 @@ fun ScannerScreen(
                         error.printStackTrace()
                         Toast.makeText(
                             context,
-                            "Error starting scanner: ${error.message}",
+                            context.getString(R.string.scanner_start_error, error.message ?: ""),
                             Toast.LENGTH_LONG
                         ).show()
                         onScanCancelled()
                     }
             } else {
-                Toast.makeText(context, "Activity not found", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    R.string.scanner_activity_not_found,
+                    Toast.LENGTH_SHORT,
+                ).show()
                 onScanCancelled()
             }
         } catch (error: Exception) {
             error.printStackTrace()
-            Toast.makeText(context, "Crash: ${error.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                context.getString(R.string.scanner_crash, error.message ?: ""),
+                Toast.LENGTH_LONG,
+            ).show()
             onScanCancelled()
         }
     }
@@ -106,7 +116,7 @@ fun ScannerScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Resuming Scanner...",
+                text = stringResource(id = R.string.scanner_resuming_scanner),
                 style = MaterialTheme.typography.headlineSmall
             )
         }

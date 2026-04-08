@@ -2,6 +2,7 @@ package com.example.pixelscanner.domain
 
 import android.content.Context
 import android.net.Uri
+import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportDecision
 import com.example.pixelscanner.core.model.ExportDecodeFailure
@@ -20,6 +21,7 @@ import com.example.pixelscanner.core.model.ExportUnknownFailure
 import com.example.pixelscanner.core.model.ExportWriteFailure
 import com.example.pixelscanner.core.model.resolveDecision
 import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.core.model.uiTextResource
 
 class ExportSessionUseCase(
     private val exportRepository: ExportRepository,
@@ -203,7 +205,7 @@ class ExportSessionUseCase(
                     successfulUris.isEmpty() -> {
                         ExportResult.Failure(
                             failures.firstOrNull() ?: ExportUnknownFailure(
-                                details = "Failed to export one or more images",
+                                details = context.getString(R.string.export_error_image_export_failed),
                             ),
                         )
                     }
@@ -216,7 +218,11 @@ class ExportSessionUseCase(
                         ExportResult.PartialSuccess(
                             completedPages = completedPages,
                             failures = failures,
-                            warningMessage = "Exported ${successfulUris.size}/${results.size} images",
+                            warningMessage = uiTextResource(
+                                R.string.export_warning_partial_success,
+                                successfulUris.size,
+                                results.size,
+                            ),
                         )
                     }
                 }

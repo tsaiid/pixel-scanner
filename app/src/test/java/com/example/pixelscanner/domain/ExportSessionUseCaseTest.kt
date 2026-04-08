@@ -8,6 +8,8 @@ import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
 import com.example.pixelscanner.core.model.ExportUnknownFailure
+import com.example.pixelscanner.core.model.UiText
+import com.example.pixelscanner.core.model.asString
 import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.SessionDirtyFlags
@@ -118,7 +120,16 @@ class ExportSessionUseCaseTest {
         assertEquals(firstOutputUri, partialSuccess.completedPages.single().outputUri)
         assertEquals(listOf(firstOutputUri), partialSuccess.outputUris)
         assertEquals(1, partialSuccess.failures.size)
-        assertEquals("second page failed", partialSuccess.failures.single().userMessage)
+        assertEquals(UiText.DynamicString("second page failed"), partialSuccess.failures.single().userMessage)
+        assertTrue(partialSuccess.warningMessage is UiText.StringResource)
+        assertEquals(
+            RuntimeEnvironment.getApplication().getString(
+                com.example.pixelscanner.R.string.export_warning_partial_success,
+                1,
+                2,
+            ),
+            partialSuccess.warningMessage?.asString(RuntimeEnvironment.getApplication()),
+        )
         assertEquals(2, exportRepository.savedUriRequests.size)
         assertEquals(1, artifactCacheRepository.storedImageRequests.size)
     }

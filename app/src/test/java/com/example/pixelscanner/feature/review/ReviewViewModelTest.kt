@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Looper
 import androidx.lifecycle.SavedStateHandle
+import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportOperationResult
@@ -15,6 +16,8 @@ import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
+import com.example.pixelscanner.core.model.asString
+import com.example.pixelscanner.core.model.uiTextResource
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
@@ -318,12 +321,13 @@ class ReviewViewModelTest {
 
         viewModel.setRestoredSession(session)
         viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
-        viewModel.onEvent(ReviewUiEvent.SaveAll(RuntimeEnvironment.getApplication()))
+        val context = RuntimeEnvironment.getApplication()
+        viewModel.onEvent(ReviewUiEvent.SaveAll(context))
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(
             "Failed to write review export",
-            viewModel.uiState.value.statusMessage?.text,
+            viewModel.uiState.value.statusMessage?.text?.asString(context),
         )
         assertTrue(viewModel.uiState.value.export.lastResult is ExportState.Finished)
 
@@ -428,11 +432,11 @@ class ReviewViewModelTest {
 
         assertEquals(1, imageProcessingRepository.invocationCount.get())
         assertEquals(
-            "Enhancement failed",
-            viewModel.uiState.value.statusMessage?.text,
+            uiTextResource(R.string.review_page_enhancement_failed).asString(context),
+            viewModel.uiState.value.statusMessage?.text?.asString(context),
         )
         assertEquals(
-            "Enhancement failed",
+            uiTextResource(R.string.review_page_enhancement_failed),
             viewModel.uiState.value.selectedPage?.enhancementErrorMessage,
         )
 

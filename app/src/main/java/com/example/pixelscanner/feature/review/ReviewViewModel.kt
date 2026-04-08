@@ -15,6 +15,8 @@ import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.ScannedPage
+import com.example.pixelscanner.core.model.UiText
+import com.example.pixelscanner.core.model.uiTextResource
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
@@ -34,6 +36,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
 import com.example.pixelscanner.feature.review.ui.ReviewStatusMessage
 import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
+import com.example.pixelscanner.R
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -151,13 +154,13 @@ class ReviewViewModel(
                         applySessionUpdate(currentSession.withIngestedAssets(ingestionResult))
                     }
                 }
-                if (ingestionResult.hasFailures()) {
-                    ingestionResult.failures.forEach { failure ->
-                        println("Session ingestion warning: ${failure.typedFailure?.userMessage ?: failure.message}")
-                    }
-                    ingestionResult.failures.firstOrNull { it.typedFailure != null }?.typedFailure?.let { typedFailure ->
-                        setStatusMessage(typedFailure.userMessage)
-                    }
+                    if (ingestionResult.hasFailures()) {
+                        ingestionResult.failures.forEach { failure ->
+                            println("Session ingestion warning: ${failure.message}")
+                        }
+                        ingestionResult.failures.firstOrNull { it.typedFailure != null }?.typedFailure?.let { typedFailure ->
+                            setStatusMessage(typedFailure.userMessage)
+                        }
                 }
             }.onFailure { error ->
                 error.printStackTrace()
@@ -206,17 +209,22 @@ class ReviewViewModel(
                     applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
                 }
                 throw e
-            } catch (e: Exception) {
-                e.printStackTrace() // Handle error appropriately
-                val currentSession = _scanSession.value ?: return@launch
-                if (currentSession.pages.any { it.id == page.id }) {
-                    applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
+                } catch (e: Exception) {
+                    e.printStackTrace() // Handle error appropriately
+                    val currentSession = _scanSession.value ?: return@launch
+                    if (currentSession.pages.any { it.id == page.id }) {
+                        applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
+                    }
+                    applySessionUpdate(
+                        currentSession.withPageEnhancementFailure(
+                            page.id,
+                            uiTextResource(R.string.review_page_enhancement_failed),
+                        ),
+                    )
+                    setStatusMessage(uiTextResource(R.string.review_page_enhancement_failed))
+                } finally {
+                    enhancementJobs.remove(page.id)
                 }
-                applySessionUpdate(currentSession.withPageEnhancementFailure(page.id, "Enhancement failed"))
-                setStatusMessage("Enhancement failed")
-            } finally {
-                enhancementJobs.remove(page.id)
-            }
         }
         enhancementJobs[page.id] = job
     }
@@ -359,7 +367,10 @@ class ReviewViewModel(
                         result.toPostActionTarget(request.format)?.let { target ->
                             _effects.emit(ReviewUiEffect.ExportSucceeded(request.format, target))
                         }
-                        setStatusMessage(result.warningMessage ?: "Export completed with some skipped items")
+                        setStatusMessage(
+                            result.warningMessage
+                                ?: uiTextResource(R.string.review_status_export_completed_with_skips),
+                        )
                     }
 
                     is ExportResult.Failure -> {
@@ -367,7 +378,7 @@ class ReviewViewModel(
                     }
 
                     ExportResult.Cancelled -> {
-                        setStatusMessage("Export cancelled")
+                        setStatusMessage(uiTextResource(R.string.review_status_export_cancelled))
                     }
                 }
             } finally {
@@ -376,10 +387,10 @@ class ReviewViewModel(
                         export = currentState.export.copy(
                             state = exportResult?.let(ExportState::Finished) ?: ExportState.Idle,
                         ),
-                )
+                    )
+                }
             }
         }
-    }
     }
 
     private fun applySessionUpdate(
@@ -433,7 +444,7 @@ class ReviewViewModel(
         enhancementJobs.clear()
     }
 
-    private fun setStatusMessage(message: String) {
+    private fun setStatusMessage(message: UiText) {
         updateUiState { currentState ->
             currentState.copy(
                 statusMessage = ReviewStatusMessage(

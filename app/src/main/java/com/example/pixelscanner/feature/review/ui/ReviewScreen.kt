@@ -71,6 +71,7 @@ import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
 import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
+import com.example.pixelscanner.core.model.asString
 import com.example.pixelscanner.ui.theme.PixelScannerColorTokens
 import com.example.pixelscanner.ui.theme.PixelScannerElevationTokens
 import com.example.pixelscanner.ui.theme.PixelScannerShapeTokens
@@ -140,7 +141,7 @@ fun ReviewScreen(
     LaunchedEffect(uiState.statusMessage?.id) {
         val statusMessage = uiState.statusMessage ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(
-            message = statusMessage.text,
+            message = statusMessage.text.asString(context),
             duration = SnackbarDuration.Short,
         )
         viewModel.onEvent(ClearStatusMessage)

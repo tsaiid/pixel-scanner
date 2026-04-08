@@ -1,6 +1,7 @@
 package com.example.pixelscanner.core.model
 
 import android.net.Uri
+import com.example.pixelscanner.R
 
 enum class ExportRetryability {
     RETRYABLE,
@@ -9,7 +10,7 @@ enum class ExportRetryability {
 
 sealed interface ExportFailure {
     val retryability: ExportRetryability
-    val userMessage: String
+    val userMessage: UiText
 
     val isRetryable: Boolean
         get() = retryability == ExportRetryability.RETRYABLE
@@ -17,7 +18,7 @@ sealed interface ExportFailure {
 
 data object ExportNoPagesFailure : ExportFailure {
     override val retryability: ExportRetryability = ExportRetryability.NON_RETRYABLE
-    override val userMessage: String = "No pages to export"
+    override val userMessage: UiText = uiTextResource(R.string.export_error_no_pages)
 }
 
 data class ExportSourceInvalidFailure(
@@ -25,7 +26,8 @@ data class ExportSourceInvalidFailure(
     val details: String? = null,
 ) : ExportFailure {
     override val retryability: ExportRetryability = ExportRetryability.NON_RETRYABLE
-    override val userMessage: String = details ?: "Source file is no longer available"
+    override val userMessage: UiText = details?.let(UiText::DynamicString)
+        ?: uiTextResource(R.string.export_error_source_missing)
 }
 
 data class ExportReadFailure(
@@ -33,7 +35,8 @@ data class ExportReadFailure(
     val details: String? = null,
 ) : ExportFailure {
     override val retryability: ExportRetryability = ExportRetryability.RETRYABLE
-    override val userMessage: String = details ?: "Failed to read source file"
+    override val userMessage: UiText = details?.let(UiText::DynamicString)
+        ?: uiTextResource(R.string.export_error_read)
 }
 
 data class ExportDecodeFailure(
@@ -41,7 +44,8 @@ data class ExportDecodeFailure(
     val details: String? = null,
 ) : ExportFailure {
     override val retryability: ExportRetryability = ExportRetryability.RETRYABLE
-    override val userMessage: String = details ?: "Failed to decode image"
+    override val userMessage: UiText = details?.let(UiText::DynamicString)
+        ?: uiTextResource(R.string.export_error_decode)
 }
 
 data class ExportWriteFailure(
@@ -49,24 +53,26 @@ data class ExportWriteFailure(
     val details: String? = null,
 ) : ExportFailure {
     override val retryability: ExportRetryability = ExportRetryability.RETRYABLE
-    override val userMessage: String = details ?: "Failed to write exported file"
+    override val userMessage: UiText = details?.let(UiText::DynamicString)
+        ?: uiTextResource(R.string.export_error_write)
 }
 
 data object ExportInsufficientSpaceFailure : ExportFailure {
     override val retryability: ExportRetryability = ExportRetryability.RETRYABLE
-    override val userMessage: String = "Not enough storage space"
+    override val userMessage: UiText = uiTextResource(R.string.export_error_space)
 }
 
 data object ExportPermissionDeniedFailure : ExportFailure {
     override val retryability: ExportRetryability = ExportRetryability.NON_RETRYABLE
-    override val userMessage: String = "Export permission denied"
+    override val userMessage: UiText = uiTextResource(R.string.export_error_permission)
 }
 
 data class ExportUnknownFailure(
     val details: String? = null,
     override val retryability: ExportRetryability = ExportRetryability.RETRYABLE,
 ) : ExportFailure {
-    override val userMessage: String = details ?: "Export failed"
+    override val userMessage: UiText = details?.let(UiText::DynamicString)
+        ?: uiTextResource(R.string.export_error_unknown)
 }
 
 sealed interface ExportOperationResult {
