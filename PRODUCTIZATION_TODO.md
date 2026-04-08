@@ -304,12 +304,13 @@
   - [x] 離開畫面時取消過時任務。
   - [x] 重複點擊時取消前一個同頁任務。
   - [x] 驗證取消後狀態回復。
-- [ ] 評估進階硬體加速方案。
+- [x] 評估進階硬體加速方案。
   - 驗收標準：只有在 CPU 路徑無法達標時，才進入更高成本的技術路線。
-  - [ ] 定義目前 CPU 路徑的可接受性能門檻。
-  - [ ] 評估 `ColorMatrix` 是否能覆蓋部分簡化增強情境。
-  - [ ] 若 benchmark 未達標，再開 spike 評估 GPU / NDK / 其他方案。
-  - [ ] 記錄不採用過時或高維護成本方案的理由。
+  - [x] 定義目前 CPU 路徑的可接受性能門檻。
+  - [x] 評估 `ColorMatrix` 是否能覆蓋部分簡化增強情境。
+  - [x] 若 benchmark 未達標，再開 spike 評估 GPU / NDK / 其他方案。
+  - [x] 記錄不採用過時或高維護成本方案的理由。
+    - 參考文件：[`docs/advanced-hardware-acceleration-evaluation.md`](/Users/tsaiid/git/pixel-scanner/docs/advanced-hardware-acceleration-evaluation.md)
 - [ ] 建立影像處理 benchmark。
   - 驗收標準：至少有基準測試覆蓋 1 頁、10 頁與不同解析度樣本。
   - [ ] 定義 benchmark 樣本集。
