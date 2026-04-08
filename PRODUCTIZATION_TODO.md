@@ -109,8 +109,8 @@
   - [x] 抽出增強流程 use case。
   - [x] 抽出刪除 / 復原 use case。
   - [x] 抽出 export use case。
-  - [~] 抽出 discard / resume / scan-more use case。
-    - discard/rescan back flow 已改由 ReviewViewModel 事件與 effect 驅動；resume / scan-more 仍待補齊。
+  - [x] 抽出 discard / resume / scan-more use case。
+    - discard/rescan back flow 已改由 ReviewViewModel 事件與 effect 驅動；resume boundary 目前先維持 session passthrough，scan-more 沿用現有清理後返回 scanner 的流程。
 - [~] 引入 repository 邊界。
   - 建議 repositories：`ScanSessionRepository`, `ImageProcessingRepository`, `ExportRepository`, `TempFileRepository`, `StorageRepository`。
   - 驗收標準：Android framework 依賴集中在 data layer。

@@ -7,7 +7,9 @@ import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
+import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
+import com.example.pixelscanner.domain.ScanMoreUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ReviewViewModelFactory
 
@@ -18,6 +20,8 @@ class AppContainer {
     val toggleEnhancementUseCase = ToggleEnhancementUseCase(imageProcessingRepository)
     val deletePageUseCase = DeletePageUseCase()
     val discardSessionUseCase = DiscardSessionUseCase()
+    val resumeSessionUseCase = ResumeSessionUseCase()
+    val scanMoreUseCase = ScanMoreUseCase(discardSessionUseCase)
     val restorePageUseCase = RestorePageUseCase()
     val exportSessionUseCase = ExportSessionUseCase(exportRepository)
 
@@ -27,6 +31,8 @@ class AppContainer {
             toggleEnhancementUseCase = toggleEnhancementUseCase,
             deletePageUseCase = deletePageUseCase,
             discardSessionUseCase = discardSessionUseCase,
+            resumeSessionUseCase = resumeSessionUseCase,
+            scanMoreUseCase = scanMoreUseCase,
             restorePageUseCase = restorePageUseCase,
             exportSessionUseCase = exportSessionUseCase,
             owner = owner,

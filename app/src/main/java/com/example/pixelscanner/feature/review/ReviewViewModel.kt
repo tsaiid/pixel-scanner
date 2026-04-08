@@ -15,7 +15,9 @@ import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
+import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
+import com.example.pixelscanner.domain.ScanMoreUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.export.ui.ExportUiState
 import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
@@ -37,6 +39,8 @@ class ReviewViewModel(
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
+    private val resumeSessionUseCase: ResumeSessionUseCase,
+    private val scanMoreUseCase: ScanMoreUseCase,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -76,7 +80,7 @@ class ReviewViewModel(
 
     fun setScanResult(scanResult: ScanResultPayload) {
         val session = createSessionFromScanResultUseCase(scanResult)
-        applySessionUpdate(session)
+        applySessionUpdate(resumeSessionUseCase(session).session)
     }
 
     private fun setExportFormat(format: ExportFormat) {
@@ -148,7 +152,7 @@ class ReviewViewModel(
     private fun discardAndReturnToScanner() {
         val session = _scanSession.value ?: return
         viewModelScope.launch {
-            discardSessionUseCase(session)
+            scanMoreUseCase(session)
             clearSessionState()
             _effects.emit(ReviewUiEffect.NavigateBackToScanner)
         }
@@ -246,6 +250,8 @@ class ReviewViewModelFactory(
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
+    private val resumeSessionUseCase: ResumeSessionUseCase,
+    private val scanMoreUseCase: ScanMoreUseCase,
     owner: androidx.savedstate.SavedStateRegistryOwner,
 ) : androidx.lifecycle.AbstractSavedStateViewModelFactory(owner, null) {
     @Suppress("UNCHECKED_CAST")
@@ -264,6 +270,8 @@ class ReviewViewModelFactory(
             restorePageUseCase = restorePageUseCase,
             exportSessionUseCase = exportSessionUseCase,
             discardSessionUseCase = discardSessionUseCase,
+            resumeSessionUseCase = resumeSessionUseCase,
+            scanMoreUseCase = scanMoreUseCase,
             savedStateHandle = handle,
         ) as T
     }
