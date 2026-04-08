@@ -718,7 +718,8 @@
 - [x] 設計 review 新版 wireframe 與互動流程。
 - [x] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
   - 受影響檔案：`app/src/main/java/com/example/pixelscanner/feature/review/ui/ReviewScreen.kt`, `app/src/main/java/com/example/pixelscanner/feature/home/ui/StartScreen.kt`, `app/src/main/res/values/strings.xml`
-- [ ] 為增強流程加入頁級 processing state。
+- [x] 為增強流程加入頁級 processing state。
+  - 追溯：對應 Phase 3 已完成的「為每頁增強建立獨立處理狀態」與「在 page model 加入 processing state」。
 - [x] 建立單頁與多頁效能基線測試樣本。
   - 參考文件：[`docs/performance-baseline-measurement-and-samples.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-measurement-and-samples.md)
 - [x] 建立第一批 ViewModel 與 use case 單元測試骨架。
