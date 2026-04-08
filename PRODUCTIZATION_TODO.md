@@ -111,16 +111,16 @@
   - [x] 抽出 export use case。
   - [x] 抽出 discard / resume / scan-more use case。
     - discard/rescan back flow 已改由 ReviewViewModel 事件與 effect 驅動；resume boundary 目前先維持 session passthrough，scan-more 沿用現有清理後返回 scanner 的流程。
-- [~] 引入 repository 邊界。
+- [x] 引入 repository 邊界。
   - 建議 repositories：`ScanSessionRepository`, `ImageProcessingRepository`, `ExportRepository`, `TempFileRepository`, `StorageRepository`。
   - 驗收標準：Android framework 依賴集中在 data layer。
-  - [~] 定義 repository interface。
-    - `ImageProcessingRepository` 與 `ExportRepository` 已導入，並由 review use case 注入使用。
-  - [~] 提供 Android / file-system 實作。
-    - enhancement 與 export 先以 Android repository wrapper 包住既有 `ImageEnhancer` 與 `StorageManager`。
+  - [x] 定義 repository interface。
+    - `ImageProcessingRepository`、`ExportRepository`、`TempFileRepository`、`SessionMetadataRepository`、`SessionCleanupRepository`、`SessionRecoveryRepository`、`SessionIngestionRepository` 都已導入，並由 use case 或 app container 注入使用；`TempFileRepository` contract now takes `cacheDir: File`, so `Context` stays in the Android implementation.
+  - [x] 提供 Android / file-system 實作。
+    - enhancement 與 export 以 Android repository wrapper 包住既有 `ImageEnhancer` 與 `StorageManager`；session metadata、recovery、ingestion、cleanup 也都有對應的 Android 實作。
   - [x] 將 `ContentResolver` 相關程式集中到 data layer。
-  - [~] 將 temp file、session file、stale cleanup 集中到 repository。
-    - temp file creation 已集中到 `TempFileRepository`；session metadata 與 stale cleanup 仍待補齊。
+  - [x] 將 temp file、session file、stale cleanup 集中到 repository。
+    - temp file creation 已集中到 `TempFileRepository`；session metadata 已由 `AndroidSessionMetadataRepository` 管理，stale cleanup 由 `AndroidSessionCleanupRepository` 在 `PixelScannerApp.onCreate()` 觸發。
   - [x] 為 repository 設計測試替身。
   - [~] 建立單向資料流的 UI state 結構。
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
