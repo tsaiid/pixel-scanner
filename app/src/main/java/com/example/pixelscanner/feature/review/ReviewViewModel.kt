@@ -30,6 +30,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewPageUiMapper
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
+import com.example.pixelscanner.feature.review.ui.ReviewStatusMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +58,7 @@ class ReviewViewModel(
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
     private val enhancementJobs = mutableMapOf<String, Job>()
+    private var statusMessageSequence = 0L
 
     private val _uiState = MutableStateFlow(
         ReviewUiState(
@@ -90,6 +92,7 @@ class ReviewViewModel(
             is ReviewUiEvent.RequestScanMore -> startScanMore()
             is ReviewUiEvent.RequestRescan -> discardAndReturnToScanner()
             is ReviewUiEvent.RequestDiscardSession -> discardAndReturnToHome()
+            is ReviewUiEvent.ClearStatusMessage -> clearStatusMessage()
             is ReviewUiEvent.SaveAll -> saveAll(event.context)
         }
     }
@@ -145,7 +148,7 @@ class ReviewViewModel(
                         println("Session ingestion warning: ${failure.typedFailure?.userMessage ?: failure.message}")
                     }
                     ingestionResult.failures.firstOrNull { it.typedFailure != null }?.typedFailure?.let { typedFailure ->
-                        _effects.emit(ReviewUiEffect.ShowMessage(typedFailure.userMessage))
+                        setStatusMessage(typedFailure.userMessage)
                     }
                 }
             }.onFailure { error ->
@@ -201,6 +204,7 @@ class ReviewViewModel(
                 if (currentSession.pages.any { it.id == page.id }) {
                     applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
                 }
+                setStatusMessage("Enhancement failed")
             } finally {
                 enhancementJobs.remove(page.id)
             }
@@ -320,24 +324,15 @@ class ReviewViewModel(
                         result.toPostActionTarget(request.format)?.let { target ->
                             _effects.emit(ReviewUiEffect.ExportSucceeded(request.format, target))
                         }
-                        _effects.emit(
-                            ReviewUiEffect.ShowMessage(
-                                result.warningMessage
-                                    ?: "Export completed with some skipped items"
-                            )
-                        )
+                        setStatusMessage(result.warningMessage ?: "Export completed with some skipped items")
                     }
 
                     is ExportResult.Failure -> {
-                        _effects.emit(
-                            ReviewUiEffect.ShowMessage(
-                                result.error.userMessage
-                            )
-                        )
+                        setStatusMessage(result.error.userMessage)
                     }
 
                     ExportResult.Cancelled -> {
-                        _effects.emit(ReviewUiEffect.ShowMessage("Export cancelled"))
+                        setStatusMessage("Export cancelled")
                     }
                 }
             } finally {
@@ -346,10 +341,10 @@ class ReviewViewModel(
                         export = currentState.export.copy(
                             state = exportResult?.let(ExportState::Finished) ?: ExportState.Idle,
                         ),
-                    )
-                }
+                )
             }
         }
+    }
     }
 
     private fun applySessionUpdate(session: ScanSession) {
@@ -377,6 +372,7 @@ class ReviewViewModel(
             export = ExportUiState(
                 state = ExportState.Idle,
             ),
+            statusMessage = null,
         )
     }
 
@@ -392,6 +388,23 @@ class ReviewViewModel(
     private fun cancelEnhancementJobs() {
         enhancementJobs.values.forEach { job -> job.cancel() }
         enhancementJobs.clear()
+    }
+
+    private fun setStatusMessage(message: String) {
+        updateUiState { currentState ->
+            currentState.copy(
+                statusMessage = ReviewStatusMessage(
+                    id = ++statusMessageSequence,
+                    text = message,
+                ),
+            )
+        }
+    }
+
+    private fun clearStatusMessage() {
+        updateUiState { currentState ->
+            currentState.copy(statusMessage = null)
+        }
     }
 }
 

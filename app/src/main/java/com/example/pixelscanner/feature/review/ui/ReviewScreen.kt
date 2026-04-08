@@ -57,6 +57,7 @@ import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
 import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ClearStatusMessage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
@@ -93,8 +94,8 @@ fun ReviewScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel, snackbarHostState) {
-            viewModel.effects.collect { effect ->
-                when (effect) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
                 is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format, effect.target)
                 is ReviewUiEffect.NavigateBackToScanner -> onRescan()
                 is ReviewUiEffect.NavigateBackToHome -> onDiscardSession()
@@ -108,15 +109,17 @@ fun ReviewScreen(
                         viewModel.onEvent(RestorePage(effect.pageId))
                     }
                 }
-
-                is ReviewUiEffect.ShowMessage -> {
-                    snackbarHostState.showSnackbar(
-                        message = effect.message,
-                        duration = SnackbarDuration.Short
-                    )
-                }
             }
         }
+    }
+
+    LaunchedEffect(uiState.statusMessage?.id) {
+        val statusMessage = uiState.statusMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(
+            message = statusMessage.text,
+            duration = SnackbarDuration.Short,
+        )
+        viewModel.onEvent(ClearStatusMessage)
     }
 
     LaunchedEffect(pagerState) {

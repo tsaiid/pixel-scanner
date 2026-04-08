@@ -6,6 +6,9 @@ import android.os.Looper
 import androidx.lifecycle.SavedStateHandle
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
+import com.example.pixelscanner.core.model.ExportOperationResult
+import com.example.pixelscanner.core.model.ExportState
+import com.example.pixelscanner.core.model.ExportWriteFailure
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineResult
 import com.example.pixelscanner.core.model.ProcessingState
@@ -164,6 +167,32 @@ class ReviewViewModelTest {
     }
 
     @Test
+    fun `export failure is surfaced in review state and can be cleared explicitly`() = runBlocking {
+        val exportRepository = FakeExportRepository(
+            saveUrisToPdfResult = ExportOperationResult.Failure(
+                ExportWriteFailure(details = "Failed to write review export"),
+            ),
+        )
+        val viewModel = createViewModel(exportRepository = exportRepository)
+        val session = loadedSession(sessionId = "session_review_export_failure")
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+        viewModel.onEvent(ReviewUiEvent.SaveAll(RuntimeEnvironment.getApplication()))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(
+            "Failed to write review export",
+            viewModel.uiState.value.statusMessage?.text,
+        )
+        assertTrue(viewModel.uiState.value.export.lastResult is ExportState.Finished)
+
+        viewModel.onEvent(ReviewUiEvent.ClearStatusMessage)
+
+        assertNull(viewModel.uiState.value.statusMessage)
+    }
+
+    @Test
     fun `restores saveable state across configuration change style recreation`() {
         val savedStateHandle = SavedStateHandle()
         savedStateHandle[KEY_CURRENT_PAGE] = 1
@@ -241,6 +270,7 @@ class ReviewViewModelTest {
     private fun createViewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         previewCacheCleanupRepository: RecordingPreviewCacheCleanupRepository = RecordingPreviewCacheCleanupRepository(),
+        exportRepository: com.example.pixelscanner.domain.ExportRepository = FakeExportRepository(),
         imageProcessingRepository: ImageProcessingRepository = object : ImageProcessingRepository {
             override suspend fun enhance(
                 context: Context,
@@ -268,7 +298,7 @@ class ReviewViewModelTest {
             deletePageUseCase = DeletePageUseCase(),
             restorePageUseCase = RestorePageUseCase(),
             exportSessionUseCase = ExportSessionUseCase(
-                exportRepository = FakeExportRepository(),
+                exportRepository = exportRepository,
                 exportArtifactCacheRepository = NoOpExportArtifactCacheRepository(),
             ),
             discardSessionUseCase = DiscardSessionUseCase(),

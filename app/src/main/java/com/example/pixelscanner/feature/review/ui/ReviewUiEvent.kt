@@ -12,5 +12,6 @@ sealed interface ReviewUiEvent {
     data object RequestScanMore : ReviewUiEvent
     data object RequestRescan : ReviewUiEvent
     data object RequestDiscardSession : ReviewUiEvent
+    data object ClearStatusMessage : ReviewUiEvent
     data class SaveAll(val context: Context) : ReviewUiEvent
 }

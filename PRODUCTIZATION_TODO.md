@@ -124,7 +124,7 @@
   - [x] 將 temp file、session file、stale cleanup 集中到 repository。
     - temp file creation 已集中到 `TempFileRepository`；session metadata 已由 `AndroidSessionMetadataRepository` 管理，stale cleanup 由 `AndroidSessionCleanupRepository` 在 `PixelScannerApp.onCreate()` 觸發。
   - [x] 為 repository 設計測試替身。
-- [~] 建立單向資料流的 UI state 結構。
+- [x] 建立單向資料流的 UI state 結構。
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
   - [x] 為首頁定義 `HomeUiState`。
   - [x] 為 review 定義 `ReviewUiState`。
@@ -140,8 +140,8 @@
   - [x] 為 export 定義 `ExportUiState` 或等效 effect/state。
   - [x] 定義 `ReviewUiEvent`。
   - [x] 定義 `ReviewUiEffect`。
-  - [~] 整理 loading、error、selection、pager、batch progress 的責任邊界。
-    - selection / pager 已回到 `ReviewUiState` 與 `SavedStateHandle`；batch progress 目前由 `ExportUiState` / `ExportState.InProgress` 承接，但 review 仍以 effect + snackbar 呈現錯誤，尚未拆成獨立 error state。
+  - [x] 整理 loading、error、selection、pager、batch progress 的責任邊界。
+    - selection / pager 已回到 `ReviewUiState` 與 `SavedStateHandle`；batch progress 由 `ExportUiState` / `ExportState.InProgress` 承接，而 review 的可見錯誤訊息已收斂到 state-backed `ReviewStatusMessage`，不再只靠 transient effect。
 - [x] 導入依賴注入方案。
   - 建議可選：先用簡單 constructor injection，必要時再導入 Hilt。
   - 驗收標準：ViewModel 與 use case 可被測試替換，不需在測試中直接建立 Android `Context`。
