@@ -459,12 +459,13 @@
   - [x] 加入處理中 spinner 或 inline progress。
   - [x] 加入失敗提示與重試。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
-- [ ] 規劃批量操作 UX。
+- [x] 規劃批量操作 UX。
   - 驗收標準：大文件流程可用，但不在基礎狀態機不穩定時提早上線複雜互動。
-  - [ ] 將 `Apply to All` 定義為 should-have 或 milestone gated 功能。
-  - [ ] 若要支援全部增強，先定義背景佇列與全域進度模型。
-  - [ ] 評估是否加入 grid view 以支援大頁數快速跳轉與批量刪除。
-  - [ ] 以前置條件方式記錄依賴：頁級 processing state、非阻塞 queue、排序 state 穩定。
+  - [x] 將 `Apply to All` 定義為 should-have 或 milestone gated 功能。
+  - [x] 若要支援全部增強，先定義背景佇列與全域進度模型。
+  - [x] 評估是否加入 grid view 以支援大頁數快速跳轉與批量刪除。
+  - [x] 以前置條件方式記錄依賴：頁級 processing state、非阻塞 queue、排序 state 穩定。
+    - 參考文件：[`docs/phase5-batch-ops-ux-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/phase5-batch-ops-ux-plan.md)
 - [ ] 設計空狀態與錯誤狀態。
   - 驗收標準：無頁面、頁面讀取失敗、處理失敗、匯出失敗時都有合理 UI。
   - [ ] 定義無頁面狀態。
