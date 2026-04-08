@@ -466,12 +466,13 @@
   - [x] 評估是否加入 grid view 以支援大頁數快速跳轉與批量刪除。
   - [x] 以前置條件方式記錄依賴：頁級 processing state、非阻塞 queue、排序 state 穩定。
     - 參考文件：[`docs/phase5-batch-ops-ux-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/phase5-batch-ops-ux-plan.md)
-- [ ] 設計空狀態與錯誤狀態。
+- [x] 設計空狀態與錯誤狀態。
   - 驗收標準：無頁面、頁面讀取失敗、處理失敗、匯出失敗時都有合理 UI。
-  - [ ] 定義無頁面狀態。
-  - [ ] 定義單頁讀取失敗狀態。
-  - [ ] 定義整體匯出失敗狀態。
-  - [ ] 定義部分頁失敗狀態。
+  - [x] 定義無頁面狀態。
+  - [x] 定義單頁讀取失敗狀態。
+  - [x] 定義整體匯出失敗狀態。
+  - [x] 定義部分頁失敗狀態。
+    - 參考文件：[`docs/review-empty-error-state-design.md`](/Users/tsaiid/git/pixel-scanner/docs/review-empty-error-state-design.md)
 - [ ] 補齊 accessibility。
   - 驗收標準：content description、可聚焦順序、色彩對比與觸控目標符合基本標準。
   - [ ] 為所有 icon button 加上語意。
