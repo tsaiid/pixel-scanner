@@ -31,7 +31,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -62,10 +61,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pixelscanner.R
@@ -75,6 +71,11 @@ import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
 import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
+import com.example.pixelscanner.ui.theme.PixelScannerColorTokens
+import com.example.pixelscanner.ui.theme.PixelScannerElevationTokens
+import com.example.pixelscanner.ui.theme.PixelScannerShapeTokens
+import com.example.pixelscanner.ui.theme.PixelScannerSpacingTokens
+import com.example.pixelscanner.ui.theme.rememberPixelScannerTypographyTokens
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ClearStatusMessage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
@@ -113,6 +114,7 @@ fun ReviewScreen(
         pageCount = { uiState.pages.size }
     )
     val snackbarHostState = remember { SnackbarHostState() }
+    val typography = rememberPixelScannerTypographyTokens()
 
     LaunchedEffect(viewModel, snackbarHostState) {
         viewModel.effects.collect { effect ->
@@ -159,19 +161,22 @@ fun ReviewScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color.Black
+        containerColor = PixelScannerColorTokens.reviewSurface
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color.Black)
+                .background(PixelScannerColorTokens.reviewSurface)
         ) {
             // 1. Navigation Row (Rescan & Save All)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(
+                        horizontal = PixelScannerSpacingTokens.lg,
+                        vertical = PixelScannerSpacingTokens.sm,
+                    )
             ) {
                 Row(
                     modifier = Modifier.align(Alignment.CenterStart),
@@ -181,20 +186,20 @@ fun ReviewScreen(
                         onClick = { viewModel.onEvent(RequestScanMore) },
                         enabled = uiState.hasPages && !uiState.export.isExporting && !uiState.isProcessing,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color(0xFF541765)
+                            containerColor = PixelScannerColorTokens.reviewActionContainer,
+                            contentColor = PixelScannerColorTokens.reviewActionContent
                         )
                     ) {
                         Text(stringResource(id = R.string.review_action_scan_more))
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
                     TextButton(
                         onClick = { showRescanConfirmDialog = true },
                         enabled = !uiState.export.isExporting && !uiState.isProcessing,
                     ) {
                         Text(stringResource(id = R.string.review_action_rescan))
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
                     TextButton(
                         onClick = { showDiscardConfirmDialog = true },
                         enabled = !uiState.export.isExporting && !uiState.isProcessing,
@@ -220,8 +225,8 @@ fun ReviewScreen(
                 ) {
                     Text(
                         text = stringResource(id = R.string.review_screen_title),
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium,
+                        color = PixelScannerColorTokens.reviewTextPrimary,
+                        style = typography.title,
                         modifier = Modifier.semantics { heading() }
                     )
                     Text(
@@ -230,9 +235,9 @@ fun ReviewScreen(
                             uiState.currentPage + 1,
                             uiState.pages.size
                         ),
-                        color = Color.LightGray,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 4.dp)
+                        color = PixelScannerColorTokens.reviewTextSecondary,
+                        style = typography.body,
+                        modifier = Modifier.padding(top = PixelScannerSpacingTokens.xxs)
                     )
 
                     ReviewPageStatusChip(
@@ -248,11 +253,11 @@ fun ReviewScreen(
                                 )
                             }
                         },
-                        modifier = Modifier.padding(top = 10.dp),
+                        modifier = Modifier.padding(top = PixelScannerSpacingTokens.reviewThumbnailSpacing),
                     )
 
                     Row(
-                        modifier = Modifier.padding(top = 8.dp),
+                        modifier = Modifier.padding(top = PixelScannerSpacingTokens.sm),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -267,36 +272,46 @@ fun ReviewScreen(
                                 )
                             },
                             enabled = selectedPage?.processingState != ProcessingState.PROCESSING,
-                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                            modifier = Modifier.sizeIn(
+                                minWidth = PixelScannerSpacingTokens.touchTarget,
+                                minHeight = PixelScannerSpacingTokens.touchTarget,
+                            ),
                         ) {
                             if (selectedPage?.processingState == ProcessingState.PROCESSING) {
                                 CircularProgressIndicator(
                                     modifier = Modifier
-                                        .padding(8.dp)
-                                        .size(24.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
+                                        .padding(PixelScannerSpacingTokens.sm)
+                                        .size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
+                                    color = PixelScannerColorTokens.reviewTextPrimary,
+                                    strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke
                                 )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Default.AutoAwesome,
                                         contentDescription = stringResource(id = R.string.review_enhance_content_description),
-                                        tint = if (uiState.selectedPage?.isEnhanced == true) Color.Yellow else Color.White
+                                        tint = if (uiState.selectedPage?.isEnhanced == true) {
+                                            PixelScannerColorTokens.brandAccent
+                                        } else {
+                                            PixelScannerColorTokens.reviewTextPrimary
+                                        }
                                     )
                                 }
                         }
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
 
                         IconButton(
                             onClick = { viewModel.onEvent(MovePageLeft) },
                             enabled = uiState.currentPage > 0 && !uiState.export.isExporting && !uiState.isProcessing,
-                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                            modifier = Modifier.sizeIn(
+                                minWidth = PixelScannerSpacingTokens.touchTarget,
+                                minHeight = PixelScannerSpacingTokens.touchTarget,
+                            ),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowLeft,
                                 contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
-                                tint = Color.White,
+                                tint = PixelScannerColorTokens.reviewTextPrimary,
                             )
                         }
 
@@ -306,16 +321,19 @@ fun ReviewScreen(
                                 uiState.currentPage < uiState.pages.lastIndex &&
                                 !uiState.export.isExporting &&
                                 !uiState.isProcessing,
-                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                            modifier = Modifier.sizeIn(
+                                minWidth = PixelScannerSpacingTokens.touchTarget,
+                                minHeight = PixelScannerSpacingTokens.touchTarget,
+                            ),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowRight,
                                 contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
-                                tint = Color.White,
+                                tint = PixelScannerColorTokens.reviewTextPrimary,
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(32.dp))
+                        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.xxl))
 
                         // Delete
                         IconButton(
@@ -326,12 +344,15 @@ fun ReviewScreen(
                                     viewModel.onEvent(DeletePage(indexToDelete))
                                 }
                             },
-                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                            modifier = Modifier.sizeIn(
+                                minWidth = PixelScannerSpacingTokens.touchTarget,
+                                minHeight = PixelScannerSpacingTokens.touchTarget,
+                            ),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = stringResource(id = R.string.review_delete_page_content_description),
-                                tint = Color.Red
+                                tint = PixelScannerColorTokens.reviewDelete
                             )
                         }
                     }
@@ -375,9 +396,9 @@ fun ReviewScreen(
                                     )
                                     if (page.processingState == ProcessingState.PROCESSING) {
                                         CircularProgressIndicator(
-                                            modifier = Modifier.size(36.dp),
-                                            color = Color.White,
-                                            strokeWidth = 3.dp
+                                            modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
+                                            color = PixelScannerColorTokens.reviewTextPrimary,
+                                            strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke
                                         )
                                     }
                                 }
@@ -408,7 +429,7 @@ fun ReviewScreen(
             }
             Text(
                 stringResource(id = emptyStateMessage),
-                color = Color.White,
+                color = PixelScannerColorTokens.reviewTextPrimary,
             )
         }
     }
@@ -469,26 +490,30 @@ private fun ReviewThumbnailStrip(
     listState: androidx.compose.foundation.lazy.LazyListState,
     onPageSelected: (Int) -> Unit,
 ) {
+    val typography = rememberPixelScannerTypographyTokens()
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF111111))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .background(PixelScannerColorTokens.reviewSurfaceRaised)
+            .padding(
+                horizontal = PixelScannerSpacingTokens.lg,
+                vertical = PixelScannerSpacingTokens.md,
+            ),
     ) {
         Text(
             text = stringResource(id = R.string.review_thumbnail_strip_title),
-            color = Color.LightGray,
-            style = MaterialTheme.typography.labelMedium,
+            color = PixelScannerColorTokens.reviewTextSecondary,
+            style = typography.label,
             modifier = Modifier.semantics { heading() },
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.sm))
         LazyRow(
             state = listState,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("review_thumbnail_strip"),
-            contentPadding = PaddingValues(end = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(end = PixelScannerSpacingTokens.lg),
+            horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.reviewThumbnailSpacing),
         ) {
             itemsIndexed(
                 items = pages,
@@ -514,8 +539,13 @@ private fun ReviewThumbnailItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val thumbnailShape = RoundedCornerShape(12.dp)
-    val borderColor = if (selected) Color(0xFF9B82FF) else Color(0xFF3A3A3A)
+    val typography = rememberPixelScannerTypographyTokens()
+    val thumbnailShape = PixelScannerShapeTokens.thumbnail
+    val borderColor = if (selected) {
+        PixelScannerColorTokens.brandAccent
+    } else {
+        PixelScannerColorTokens.reviewThumbnailBorder
+    }
     val contentDescription = if (selected) {
         stringResource(
             id = R.string.review_thumbnail_selected_content_description,
@@ -532,10 +562,17 @@ private fun ReviewThumbnailItem(
 
     Box(
         modifier = Modifier
-            .size(width = 64.dp, height = 86.dp)
+            .size(
+                width = PixelScannerSpacingTokens.reviewThumbnailWidth,
+                height = PixelScannerSpacingTokens.reviewThumbnailHeight,
+            )
             .clip(thumbnailShape)
-            .border(width = 2.dp, color = borderColor, shape = thumbnailShape)
-            .background(Color(0xFF1A1A1A))
+            .border(
+                width = PixelScannerSpacingTokens.reviewThumbnailBorderWidth,
+                color = borderColor,
+                shape = thumbnailShape,
+            )
+            .background(PixelScannerColorTokens.reviewThumbnailSurface)
             .clickable(role = Role.Button, onClick = onClick)
             .testTag("review_thumbnail_$pageIndex"),
         contentAlignment = Alignment.Center,
@@ -549,16 +586,22 @@ private fun ReviewThumbnailItem(
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(6.dp)
-                .size(20.dp)
-                .clip(CircleShape)
-                .background(if (selected) Color(0xFF9B82FF) else Color(0xAA000000)),
+                .padding(PixelScannerSpacingTokens.reviewThumbnailBadgeInset)
+                .size(PixelScannerSpacingTokens.reviewThumbnailBadgeSize)
+                .clip(PixelScannerShapeTokens.pill)
+                .background(
+                    if (selected) {
+                        PixelScannerColorTokens.brandAccent
+                    } else {
+                        PixelScannerColorTokens.reviewThumbnailBadge
+                    }
+                ),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = (pageIndex + 1).toString(),
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
+                color = PixelScannerColorTokens.reviewTextPrimary,
+                style = typography.labelSmall,
             )
         }
     }
@@ -572,40 +615,41 @@ private fun ReviewPageStatusChip(
     modifier: Modifier = Modifier,
 ) {
     if (page == null) return
+    val typography = rememberPixelScannerTypographyTokens()
 
     val statusStyle = when {
         page.enhancementErrorMessage != null -> {
             ReviewPageStatusStyle(
                 labelRes = R.string.review_page_status_failed,
-                containerColor = Color(0xFF351A1A),
-                contentColor = Color(0xFFFFC7C7),
-                borderColor = Color(0xFFFF6B6B),
+                containerColor = PixelScannerColorTokens.reviewFailedContainer,
+                contentColor = PixelScannerColorTokens.reviewFailedContent,
+                borderColor = PixelScannerColorTokens.reviewFailedBorder,
             )
         }
         page.processingState == ProcessingState.PROCESSING -> {
             ReviewPageStatusStyle(
                 labelRes = R.string.review_page_status_processing,
-                containerColor = Color(0xFF3A2B00),
-                contentColor = Color(0xFFFFE08A),
-                borderColor = Color(0xFFFFC94D),
+                containerColor = PixelScannerColorTokens.reviewProcessingContainer,
+                contentColor = PixelScannerColorTokens.reviewProcessingContent,
+                borderColor = PixelScannerColorTokens.reviewProcessingBorder,
             )
         }
 
         page.isEnhanced -> {
             ReviewPageStatusStyle(
                 labelRes = R.string.review_page_status_enhanced,
-                containerColor = Color(0xFF1E1735),
-                contentColor = Color(0xFFE0D2FF),
-                borderColor = Color(0xFF9B82FF),
+                containerColor = PixelScannerColorTokens.reviewEnhancedContainer,
+                contentColor = PixelScannerColorTokens.reviewEnhancedContent,
+                borderColor = PixelScannerColorTokens.reviewEnhancedBorder,
             )
         }
 
         else -> {
             ReviewPageStatusStyle(
                 labelRes = R.string.review_page_status_original,
-                containerColor = Color(0xFF222222),
-                contentColor = Color(0xFFD0D0D0),
-                borderColor = Color(0xFF4A4A4A),
+                containerColor = PixelScannerColorTokens.reviewOriginalContainer,
+                contentColor = PixelScannerColorTokens.reviewOriginalContent,
+                borderColor = PixelScannerColorTokens.reviewOriginalBorder,
             )
         }
     }
@@ -613,16 +657,22 @@ private fun ReviewPageStatusChip(
     Surface(
         color = statusStyle.containerColor,
         contentColor = statusStyle.contentColor,
-        shape = RoundedCornerShape(999.dp),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-        border = androidx.compose.foundation.BorderStroke(1.dp, statusStyle.borderColor),
+        shape = PixelScannerShapeTokens.pill,
+        tonalElevation = PixelScannerElevationTokens.none,
+        shadowElevation = PixelScannerElevationTokens.none,
+        border = androidx.compose.foundation.BorderStroke(
+            PixelScannerSpacingTokens.reviewStatusBorderWidth,
+            statusStyle.borderColor,
+        ),
         modifier = modifier.testTag("review_page_status"),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
+            modifier = Modifier.padding(
+                horizontal = PixelScannerSpacingTokens.md,
+                vertical = PixelScannerSpacingTokens.xs,
+            ),
         ) {
             if (page.enhancementErrorMessage != null) {
                 Text(
@@ -630,7 +680,7 @@ private fun ReviewPageStatusChip(
                         id = R.string.review_page_status_failed_with_page,
                         pageIndex + 1,
                     ),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = typography.label,
                 )
                 if (onRetryEnhancement != null) {
                     TextButton(onClick = onRetryEnhancement) {
@@ -639,15 +689,15 @@ private fun ReviewPageStatusChip(
                 }
             } else if (page.processingState == ProcessingState.PROCESSING) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusChipIndicatorSize),
                     color = statusStyle.contentColor,
-                    strokeWidth = 2.dp,
+                    strokeWidth = PixelScannerSpacingTokens.reviewPageStatusChipIndicatorStroke,
                 )
             }
             else {
                 Text(
                     text = stringResource(id = statusStyle.labelRes),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = typography.label,
                 )
             }
         }

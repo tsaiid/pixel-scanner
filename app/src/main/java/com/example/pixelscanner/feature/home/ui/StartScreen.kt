@@ -1,8 +1,6 @@
 package com.example.pixelscanner.feature.home.ui
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,12 +25,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.example.pixelscanner.R
+import com.example.pixelscanner.ui.theme.PixelScannerColorTokens
+import com.example.pixelscanner.ui.theme.PixelScannerMotionTokens
+import com.example.pixelscanner.ui.theme.PixelScannerSpacingTokens
+import com.example.pixelscanner.ui.theme.rememberPixelScannerTypographyTokens
 
 @Composable
 fun StartScreen(
@@ -42,14 +40,11 @@ fun StartScreen(
     onRestoreRecoverableSession: (String) -> Unit = {},
     onDiscardRecoverableSession: (String) -> Unit = {},
 ) {
-    val brandPurple = Color(0xFF541765) // Updated to match icon background #541765
+    val typography = rememberPixelScannerTypographyTokens()
     var startAnimation by rememberSaveable { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0.8f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
+        animationSpec = PixelScannerMotionTokens.logoScaleIn,
         label = "LogoScale"
     )
 
@@ -59,7 +54,7 @@ fun StartScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = brandPurple
+        containerColor = PixelScannerColorTokens.homeSurface
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -70,27 +65,26 @@ fun StartScreen(
             Column(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .padding(bottom = 80.dp), // Slightly adjusted offset
+                    .padding(bottom = PixelScannerSpacingTokens.heroOffset),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
                     painter = painterResource(id = R.mipmap.ic_launcher_foreground),
                     contentDescription = stringResource(id = R.string.start_logo_content_description),
                     modifier = Modifier
-                        .size(280.dp) // Increased from 192dp
+                        .size(PixelScannerSpacingTokens.heroLogoSize)
                         .scale(scale)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.lg))
                 Text(
                     text = stringResource(id = R.string.app_name),
-                    style = MaterialTheme.typography.displayMedium, // Larger typography
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
+                    style = typography.display,
+                    color = PixelScannerColorTokens.homeOnSurface
                 )
                 Text(
                     text = stringResource(id = R.string.start_tagline),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White.copy(alpha = 0.7f)
+                    style = typography.title,
+                    color = PixelScannerColorTokens.homeOnSurface.copy(alpha = 0.7f)
                 )
             }
 
@@ -99,18 +93,20 @@ fun StartScreen(
                 onClick = onStartScanClicked,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 32.dp, vertical = 48.dp)
+                    .padding(
+                        horizontal = PixelScannerSpacingTokens.xxl,
+                        vertical = PixelScannerSpacingTokens.xxxl,
+                    )
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(PixelScannerSpacingTokens.primaryButtonHeight),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = brandPurple
+                    containerColor = PixelScannerColorTokens.homeButtonContainer,
+                    contentColor = PixelScannerColorTokens.homeButtonContent
                 )
             ) {
                 Text(
                     text = stringResource(id = R.string.start_primary_action),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = typography.title,
                 )
             }
         }

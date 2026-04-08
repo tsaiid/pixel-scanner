@@ -506,14 +506,16 @@
   - [x] 記錄決策理由。
     - 參考文件：[`docs/dynamic-color-policy.md`](/Users/tsaiid/git/pixel-scanner/docs/dynamic-color-policy.md)
   - [x] 驗證深淺色模式一致性。
-- [ ] 建立 design tokens。
+- [x] 建立 design tokens。
   - 類型：color, spacing, radius, elevation, typography, motion。
   - 驗收標準：畫面不再直接硬編碼大量顏色與尺寸。
-  - [ ] 建立 color tokens。
-  - [ ] 建立 spacing tokens。
-  - [ ] 建立 radius tokens。
-  - [ ] 建立 typography tokens。
-  - [ ] 建立 motion tokens。
+  - [x] 建立 color tokens。
+  - [x] 建立 spacing tokens。
+  - [x] 建立 radius tokens。
+  - [x] 建立 typography tokens。
+  - [x] 建立 motion tokens。
+  - [x] 將 home / review / export surface 的主要常數改為共享 token。
+    - 參考文件：[`docs/design-tokens.md`](/Users/tsaiid/git/pixel-scanner/docs/design-tokens.md)
 - [ ] 修正系統列與 edge-to-edge 行為。
   - 驗收標準：狀態列與導覽列在深淺色模式下都可讀、沉浸且一致。
   - [ ] 修正 status bar icon appearance 邏輯。

@@ -9,9 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.R
+import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.ui.theme.PixelScannerColorTokens
+import com.example.pixelscanner.ui.theme.PixelScannerSpacingTokens
+import com.example.pixelscanner.ui.theme.rememberPixelScannerTypographyTokens
 import androidx.compose.ui.res.stringResource
 
 @Composable
@@ -20,13 +22,14 @@ fun ExportSaveButton(
     onSaveAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val typography = rememberPixelScannerTypographyTokens()
     Button(
         onClick = onSaveAll,
         enabled = !exportState.isExporting,
         modifier = modifier,
     ) {
         Text(
-            when {
+            text = when {
                 exportState.isExporting -> {
                     exportState.progressText ?: stringResource(id = R.string.export_save_button_saving)
                 }
@@ -36,7 +39,8 @@ fun ExportSaveButton(
 
                 else ->
                     stringResource(id = R.string.export_save_button_pdf)
-            }
+            },
+            style = typography.label,
         )
     }
 }
@@ -47,23 +51,27 @@ fun ExportFormatTabs(
     onSelectFormat: (ExportFormat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val typography = rememberPixelScannerTypographyTokens()
     TabRow(
         selectedTabIndex = if (selectedFormat == ExportFormat.IMAGE) 0 else 1,
         containerColor = Color.Transparent,
-        contentColor = Color.White,
+        contentColor = PixelScannerColorTokens.reviewTextPrimary,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(
+                horizontal = PixelScannerSpacingTokens.lg,
+                vertical = PixelScannerSpacingTokens.sm,
+            ),
     ) {
         Tab(
             selected = selectedFormat == ExportFormat.IMAGE,
             onClick = { onSelectFormat(ExportFormat.IMAGE) },
-            text = { Text(stringResource(id = R.string.export_format_jpeg)) },
+            text = { Text(stringResource(id = R.string.export_format_jpeg), style = typography.label) },
         )
         Tab(
             selected = selectedFormat == ExportFormat.PDF,
             onClick = { onSelectFormat(ExportFormat.PDF) },
-            text = { Text(stringResource(id = R.string.export_format_pdf)) },
+            text = { Text(stringResource(id = R.string.export_format_pdf), style = typography.label) },
         )
     }
 }
