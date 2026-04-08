@@ -3,8 +3,11 @@ package com.example.pixelscanner.core.storage
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import com.example.pixelscanner.core.model.ExportInsufficientSpaceFailure
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.domain.DiskSpacePreflightRepository
+import com.example.pixelscanner.domain.DiskSpacePreflightResult
 import com.example.pixelscanner.domain.SessionMetadataRepository
 import com.example.pixelscanner.domain.SessionIngestionAssetType
 import com.example.pixelscanner.domain.SessionIngestionFailure
@@ -18,12 +21,39 @@ import java.io.FileOutputStream
 class AndroidSessionIngestionRepository(
     private val context: Context,
     private val sessionMetadataRepository: SessionMetadataRepository,
+    private val diskSpacePreflightRepository: DiskSpacePreflightRepository = AndroidDiskSpacePreflightRepository(),
 ) : SessionIngestionRepository {
 
     override suspend fun ingest(
         session: ScanSession,
         scanResult: ScanResultPayload,
     ): SessionIngestionResult {
+        when (diskSpacePreflightRepository.check(
+            targetPath = context.cacheDir,
+            requiredBytes = estimateRequiredBytes(scanResult),
+        )) {
+            is DiskSpacePreflightResult.Sufficient -> Unit
+            is DiskSpacePreflightResult.Insufficient -> {
+                return SessionIngestionResult(
+                    status = SessionIngestionStatus.FAILURE,
+                    failures = listOf(
+                        SessionIngestionFailure(
+                            sourceUri = scanResult.pageUris.firstOrNull() ?: scanResult.pdfUri,
+                            destinationPath = SessionStoragePaths.sessionRoot(context.cacheDir, session.id).absolutePath,
+                            assetType = if (scanResult.pdfUri != null) {
+                                SessionIngestionAssetType.ORIGINAL_PDF
+                            } else {
+                                SessionIngestionAssetType.PAGE_JPEG
+                            },
+                            message = ExportInsufficientSpaceFailure.userMessage,
+                            typedFailure = ExportInsufficientSpaceFailure,
+                        ),
+                    ),
+                )
+            }
+
+            is DiskSpacePreflightResult.Unknown -> Unit
+        }
         val sessionOriginalDir = SessionStoragePaths.originalPagesDir(context.cacheDir, session.id)
         sessionOriginalDir.mkdirs()
         val pageMappings = mutableListOf<SessionIngestionMapping>()
@@ -116,5 +146,11 @@ class AndroidSessionIngestionRepository(
                 input.copyTo(output)
             }
         } ?: error("Unable to open input stream for $sourceUri")
+    }
+
+    private fun estimateRequiredBytes(scanResult: ScanResultPayload): Long {
+        val pagesBytes = ContentUriSizeEstimator.estimateBytes(context, scanResult.pageUris)
+        val pdfBytes = scanResult.pdfUri?.let { ContentUriSizeEstimator.estimateBytes(context, it) } ?: 0L
+        return pagesBytes + pdfBytes
     }
 }

@@ -1,6 +1,7 @@
 package com.example.pixelscanner.domain
 
 import android.net.Uri
+import com.example.pixelscanner.core.model.ExportFailure
 
 enum class SessionIngestionStatus {
     SUCCESS,
@@ -25,6 +26,7 @@ data class SessionIngestionFailure(
     val destinationPath: String?,
     val assetType: SessionIngestionAssetType,
     val message: String,
+    val typedFailure: ExportFailure? = null,
 )
 
 data class SessionIngestionResult(

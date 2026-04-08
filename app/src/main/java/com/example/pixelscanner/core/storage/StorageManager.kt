@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import com.example.pixelscanner.core.model.ExportDecodeFailure
+import com.example.pixelscanner.core.model.ExportFailure
 import com.example.pixelscanner.core.model.ExportInsufficientSpaceFailure
 import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.core.model.ExportPermissionDeniedFailure
@@ -17,14 +18,30 @@ import com.example.pixelscanner.core.model.ExportReadFailure
 import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
 import com.example.pixelscanner.core.model.ExportUnknownFailure
 import com.example.pixelscanner.core.model.ExportWriteFailure
+import com.example.pixelscanner.domain.DiskSpacePreflightRepository
+import com.example.pixelscanner.domain.DiskSpacePreflightResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.io.File
 
-class StorageManager(private val context: Context) {
+class StorageManager(
+    private val context: Context,
+    private val diskSpacePreflightRepository: DiskSpacePreflightRepository = AndroidDiskSpacePreflightRepository(),
+) {
 
     suspend fun copyPdfToDocuments(sourceUri: Uri, fileName: String): ExportOperationResult = withContext(Dispatchers.IO) {
+        when (preflightSharedStorage(
+            requiredBytes = estimateBytesForSource(sourceUri),
+        )) {
+            is DiskSpacePreflightResult.Sufficient -> Unit
+            is DiskSpacePreflightResult.Insufficient -> {
+                return@withContext ExportOperationResult.Failure(ExportInsufficientSpaceFailure)
+            }
+
+            is DiskSpacePreflightResult.Unknown -> Unit
+        }
         copyUriToMediaStore(
             sourceUri = sourceUri,
             fileName = fileName,
@@ -39,6 +56,16 @@ class StorageManager(private val context: Context) {
     }
 
     suspend fun saveUriToGallery(sourceUri: Uri, fileName: String): ExportOperationResult = withContext(Dispatchers.IO) {
+        when (preflightSharedStorage(
+            requiredBytes = estimateBytesForSource(sourceUri),
+        )) {
+            is DiskSpacePreflightResult.Sufficient -> Unit
+            is DiskSpacePreflightResult.Insufficient -> {
+                return@withContext ExportOperationResult.Failure(ExportInsufficientSpaceFailure)
+            }
+
+            is DiskSpacePreflightResult.Unknown -> Unit
+        }
         copyUriToMediaStore(
             sourceUri = sourceUri,
             fileName = fileName,
@@ -49,6 +76,16 @@ class StorageManager(private val context: Context) {
     }
 
     suspend fun saveUrisToPdf(sourceUris: List<Uri>, fileName: String): ExportOperationResult = withContext(Dispatchers.IO) {
+        when (preflightSharedStorage(
+            requiredBytes = estimateBytesForSources(sourceUris),
+        )) {
+            is DiskSpacePreflightResult.Sufficient -> Unit
+            is DiskSpacePreflightResult.Insufficient -> {
+                return@withContext ExportOperationResult.Failure(ExportInsufficientSpaceFailure)
+            }
+
+            is DiskSpacePreflightResult.Unknown -> Unit
+        }
         val pdfDocument = PdfDocument()
         val resolver = context.contentResolver
 
@@ -223,7 +260,7 @@ class StorageManager(private val context: Context) {
         sourceUri: Uri?,
         fileName: String,
         phase: String,
-    ): com.example.pixelscanner.core.model.ExportFailure {
+    ): ExportFailure {
         val message = exception.message?.takeIf { it.isNotBlank() }
         return when (exception) {
             is SecurityException -> ExportPermissionDeniedFailure
@@ -271,5 +308,24 @@ class StorageManager(private val context: Context) {
                 }
             }
         }
+    }
+
+    private fun preflightSharedStorage(requiredBytes: Long): DiskSpacePreflightResult {
+        return diskSpacePreflightRepository.check(
+            targetPath = sharedStorageRoot(),
+            requiredBytes = requiredBytes,
+        )
+    }
+
+    private fun sharedStorageRoot(): File {
+        return Environment.getExternalStorageDirectory()
+    }
+
+    private fun estimateBytesForSource(sourceUri: Uri): Long {
+        return ContentUriSizeEstimator.estimateBytes(context, sourceUri)
+    }
+
+    private fun estimateBytesForSources(sourceUris: List<Uri>): Long {
+        return ContentUriSizeEstimator.estimateBytes(context, sourceUris)
     }
 }

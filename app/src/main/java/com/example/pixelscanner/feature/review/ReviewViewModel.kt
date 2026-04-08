@@ -138,7 +138,10 @@ class ReviewViewModel(
                 }
                 if (ingestionResult.hasFailures()) {
                     ingestionResult.failures.forEach { failure ->
-                        println("Session ingestion warning: ${failure.message}")
+                        println("Session ingestion warning: ${failure.typedFailure?.userMessage ?: failure.message}")
+                    }
+                    ingestionResult.failures.firstOrNull { it.typedFailure != null }?.typedFailure?.let { typedFailure ->
+                        _effects.emit(ReviewUiEffect.ShowMessage(typedFailure.userMessage))
                     }
                 }
             }.onFailure { error ->
