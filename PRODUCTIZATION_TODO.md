@@ -372,7 +372,8 @@
     - `StorageManager.copyPdfToDocuments()` 以 `RELATIVE_PATH` 指向 `Documents/PixelScanner`。
   - [x] 驗證檔名重複時行為。
     - 匯出前會先查詢既有檔名，若同名則自動加上遞增序號避免覆蓋。
-  - [ ] 驗證 Android 版本差異。
+  - [x] 驗證 Android 版本差異。
+    - Android Q+ 走 `RELATIVE_PATH` / `IS_PENDING` 的 MediaStore 寫入路徑，pre-Q 則走 legacy MediaStore insert；相同檔名仍會先做查詢避免覆蓋。
   - [x] 明確記錄哪些情況需要 `MediaScannerConnection`，哪些情況不需要。
     - 目前採用 MediaStore insert/update 的寫入路徑，不需要另外呼叫 `MediaScannerConnection`。
 
