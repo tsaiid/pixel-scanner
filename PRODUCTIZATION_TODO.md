@@ -185,7 +185,7 @@
   - 驗收標準：單次掃描的原圖、增強圖、排序資訊、刪除狀態、匯出狀態都有可追蹤 metadata。
   - [x] 定義 session id 生成規則。
   - [x] 定義 session metadata schema。
-  - [ ] 建立 session 目錄命名規則。
+  - [x] 建立 session 目錄命名規則。
   - [ ] 決定 metadata 存放格式，例如 JSON 或 Room。
   - [ ] 實作 metadata 讀寫。
 - [ ] 定義 session 清理策略。
