@@ -47,12 +47,13 @@
   - [x] 比對 `todo.md` 與目前實作，移除已失真的完成標記。
   - [x] 對齊 `compileSdk`、`targetSdk`、README 中的環境描述。
   - [x] 將已完成、進行中、規劃中三種功能狀態寫清楚。
-- [ ] 建立產品化重構分支策略與里程碑規劃。
+- [x] 建立產品化重構分支策略與里程碑規劃。
   - 驗收標準：定義 milestone，例如 `architecture`, `session-lifecycle`, `performance`, `ux`, `quality`, `release-prep`。
-  - [ ] 定義分支命名規則。
-  - [ ] 定義 milestone 與對應輸出物。
-  - [ ] 定義每個 milestone 的完成條件。
-  - [ ] 建立簡易 roadmap 文件或看板欄位。
+  - [x] 定義分支命名規則。
+  - [x] 定義 milestone 與對應輸出物。
+  - [x] 定義每個 milestone 的完成條件。
+  - [x] 建立簡易 roadmap 文件或看板欄位。
+    - 參考文件：[`docs/productization-roadmap-and-branching.md`](/Users/tsaiid/git/pixel-scanner/docs/productization-roadmap-and-branching.md)
 - [ ] 釐清產品範圍與非目標。
   - 驗收標準：明確標記第一版是否包含歷史紀錄、頁面排序、分享流程、OCR、雲端同步、批量操作。
   - [ ] 列出 v1 must-have 功能。
