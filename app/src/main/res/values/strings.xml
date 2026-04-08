@@ -28,6 +28,9 @@
     <string name="review_page_status_original">Original</string>
     <string name="review_page_status_enhanced">Enhanced</string>
     <string name="review_page_status_processing">Processing</string>
+    <string name="review_page_status_failed">Enhancement failed on page %1$d</string>
+    <string name="review_page_status_failed_with_page">Page %1$d failed</string>
+    <string name="review_retry_enhancement_action">Retry</string>
     <string name="review_rescan_confirm_title">Discard current pages and rescan?</string>
     <string name="review_rescan_confirm_message">This will discard the current session and restart scanning from scratch.</string>
     <string name="review_rescan_confirm_action">Discard &amp; Rescan</string>

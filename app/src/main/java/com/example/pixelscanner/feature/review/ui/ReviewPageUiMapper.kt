@@ -9,6 +9,7 @@ object ReviewPageUiMapper {
             displayUri = page.displayUri(),
             isEnhanced = page.isEnhanced(),
             processingState = page.processingState,
+            enhancementErrorMessage = page.enhancementErrorMessage,
         )
     }
 }

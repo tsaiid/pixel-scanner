@@ -32,4 +32,5 @@ data class ReviewPageUiModel(
     val displayUri: Uri,
     val isEnhanced: Boolean,
     val processingState: ProcessingState = ProcessingState.IDLE,
+    val enhancementErrorMessage: String? = null,
 )

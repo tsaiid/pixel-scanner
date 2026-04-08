@@ -78,6 +78,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.MovePageLeft
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.MovePageRight
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RetryEnhancement
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestDiscardSession
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestRescan
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestScanMore
@@ -232,6 +233,17 @@ fun ReviewScreen(
 
                     ReviewPageStatusChip(
                         page = selectedPage,
+                        pageIndex = uiState.currentPage,
+                        onRetryEnhancement = selectedPage?.let { currentPage ->
+                            {
+                                viewModel.onEvent(
+                                    RetryEnhancement(
+                                        pageId = currentPage.id,
+                                        context = context,
+                                    ),
+                                )
+                            }
+                        },
                         modifier = Modifier.padding(top = 10.dp),
                     )
 
@@ -546,11 +558,21 @@ private fun ReviewThumbnailItem(
 @Composable
 private fun ReviewPageStatusChip(
     page: ReviewPageUiModel?,
+    pageIndex: Int,
+    onRetryEnhancement: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     if (page == null) return
 
     val statusStyle = when {
+        page.enhancementErrorMessage != null -> {
+            ReviewPageStatusStyle(
+                labelRes = R.string.review_page_status_failed,
+                containerColor = Color(0xFF351A1A),
+                contentColor = Color(0xFFFFC7C7),
+                borderColor = Color(0xFFFF6B6B),
+            )
+        }
         page.processingState == ProcessingState.PROCESSING -> {
             ReviewPageStatusStyle(
                 labelRes = R.string.review_page_status_processing,
@@ -593,17 +615,32 @@ private fun ReviewPageStatusChip(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
-            if (page.processingState == ProcessingState.PROCESSING) {
+            if (page.enhancementErrorMessage != null) {
+                Text(
+                    text = stringResource(
+                        id = R.string.review_page_status_failed_with_page,
+                        pageIndex + 1,
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                if (onRetryEnhancement != null) {
+                    TextButton(onClick = onRetryEnhancement) {
+                        Text(stringResource(id = R.string.review_retry_enhancement_action))
+                    }
+                }
+            } else if (page.processingState == ProcessingState.PROCESSING) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(14.dp),
                     color = statusStyle.contentColor,
                     strokeWidth = 2.dp,
                 )
             }
-            Text(
-                text = stringResource(id = statusStyle.labelRes),
-                style = MaterialTheme.typography.labelMedium,
-            )
+            else {
+                Text(
+                    text = stringResource(id = statusStyle.labelRes),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
         }
     }
 }

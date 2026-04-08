@@ -408,6 +408,49 @@ class ReviewViewModelTest {
     }
 
     @Test
+    fun `shows enhancement failure on the page and retries successfully`() {
+        val imageProcessingRepository = FailingThenSucceedingImageProcessingRepository()
+        val viewModel = createViewModel(imageProcessingRepository = imageProcessingRepository)
+        val context = RuntimeEnvironment.getApplication()
+        val session = ScanSession(
+            id = "session_review_enhancement_retry",
+            pages = listOf(
+                ScannedPage(
+                    id = "session_review_enhancement_retry_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-0.jpg"),
+                ),
+            ),
+        )
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.ToggleEnhancement(pageIndex = 0, context = context))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(1, imageProcessingRepository.invocationCount.get())
+        assertEquals(
+            "Enhancement failed",
+            viewModel.uiState.value.statusMessage?.text,
+        )
+        assertEquals(
+            "Enhancement failed",
+            viewModel.uiState.value.selectedPage?.enhancementErrorMessage,
+        )
+
+        viewModel.onEvent(
+            ReviewUiEvent.RetryEnhancement(
+                pageId = session.pages.single().id,
+                context = context,
+            ),
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(2, imageProcessingRepository.invocationCount.get())
+        assertNull(viewModel.uiState.value.selectedPage?.enhancementErrorMessage)
+        assertEquals(ProcessingState.IDLE, viewModel.uiState.value.selectedPage?.processingState)
+        assertTrue(viewModel.uiState.value.selectedPage?.isEnhanced == true)
+    }
+
+    @Test
     fun `reordering a page keeps delete undo order and selected page in sync`() {
         val viewModel = createViewModel()
         val session = ScanSession(
@@ -533,6 +576,24 @@ class ReviewViewModelTest {
             }
             return PreviewImagePipelineResult(
                 cacheKey = request.cacheKey,
+                outputUri = Uri.parse("content://scanner/enhanced-${request.pageId}.jpg"),
+            )
+        }
+    }
+
+    private class FailingThenSucceedingImageProcessingRepository : ImageProcessingRepository {
+        val invocationCount = AtomicInteger(0)
+
+        override suspend fun enhance(
+            context: Context,
+            request: PreviewImagePipelineRequest,
+        ): PreviewImagePipelineResult {
+            val invocation = invocationCount.incrementAndGet()
+            if (invocation == 1) {
+                throw IllegalStateException("Enhancement failed")
+            }
+            return PreviewImagePipelineResult(
+                cacheKey = com.example.pixelscanner.core.model.PipelineCacheKey("retry-${request.pageId}"),
                 outputUri = Uri.parse("content://scanner/enhanced-${request.pageId}.jpg"),
             )
         }

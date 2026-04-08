@@ -452,12 +452,13 @@
   - [x] 驗證英文與中文文案長度。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt)
-- [~] 加入頁級 enhancement toggle 與狀態提示。
+- [x] 加入頁級 enhancement toggle 與狀態提示。
   - 驗收標準：使用者知道當前頁是原圖或增強圖，處理中有明確 feedback。
   - [x] 加入頁級狀態標示。
   - [x] 加入 enhancement 前後的明確 label。
   - [x] 加入處理中 spinner 或 inline progress。
-  - [ ] 加入失敗提示與重試。
+  - [x] 加入失敗提示與重試。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
 - [ ] 規劃批量操作 UX。
   - 驗收標準：大文件流程可用，但不在基礎狀態機不穩定時提早上線複雜互動。
   - [ ] 將 `Apply to All` 定義為 should-have 或 milestone gated 功能。

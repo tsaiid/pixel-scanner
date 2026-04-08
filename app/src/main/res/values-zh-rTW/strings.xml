@@ -19,6 +19,9 @@
     <string name="review_page_status_original">原圖</string>
     <string name="review_page_status_enhanced">已增強</string>
     <string name="review_page_status_processing">處理中</string>
+    <string name="review_page_status_failed">第 %1$d 頁增強失敗</string>
+    <string name="review_page_status_failed_with_page">第 %1$d 頁失敗</string>
+    <string name="review_retry_enhancement_action">重試</string>
     <string name="review_rescan_confirm_title">捨棄目前頁面並重新掃描？</string>
     <string name="review_rescan_confirm_message">這會捨棄目前的工作階段，並從頭開始重新掃描。</string>
     <string name="review_rescan_confirm_action">捨棄並重新掃描</string>

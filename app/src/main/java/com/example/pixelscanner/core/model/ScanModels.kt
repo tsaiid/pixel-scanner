@@ -80,6 +80,7 @@ data class ScannedPage(
     val activeVariant: PageVariant = PageVariant.ORIGINAL,
     val processingState: ProcessingState = ProcessingState.IDLE,
     val isDeleted: Boolean = false,
+    val enhancementErrorMessage: String? = null,
 ) {
     fun displayUri(): Uri {
         return if (activeVariant == PageVariant.PREVIEW_ENHANCED && enhancedUri != null) {
@@ -135,7 +136,25 @@ data class ScanSession(
         return withPages(
             pages.map { page ->
                 if (page.id == pageId) {
-                    page.copy(processingState = processingState)
+                    page.copy(
+                        processingState = processingState,
+                        enhancementErrorMessage = if (processingState == ProcessingState.PROCESSING) null else page.enhancementErrorMessage,
+                    )
+                } else {
+                    page
+                }
+            }
+        )
+    }
+
+    fun withPageEnhancementFailure(pageId: String, errorMessage: String?): ScanSession {
+        return withPages(
+            pages.map { page ->
+                if (page.id == pageId) {
+                    page.copy(
+                        processingState = ProcessingState.IDLE,
+                        enhancementErrorMessage = errorMessage,
+                    )
                 } else {
                     page
                 }

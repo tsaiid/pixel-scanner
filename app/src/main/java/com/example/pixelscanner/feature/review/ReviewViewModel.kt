@@ -96,6 +96,7 @@ class ReviewViewModel(
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
             is ReviewUiEvent.MovePageLeft -> movePage(-1)
             is ReviewUiEvent.MovePageRight -> movePage(1)
+            is ReviewUiEvent.RetryEnhancement -> retryEnhancement(event.pageId, event.context)
             is ReviewUiEvent.RequestScanMore -> startScanMore()
             is ReviewUiEvent.RequestRescan -> discardAndReturnToScanner()
             is ReviewUiEvent.RequestDiscardSession -> discardAndReturnToHome()
@@ -211,12 +212,27 @@ class ReviewViewModel(
                 if (currentSession.pages.any { it.id == page.id }) {
                     applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
                 }
+                applySessionUpdate(currentSession.withPageEnhancementFailure(page.id, "Enhancement failed"))
                 setStatusMessage("Enhancement failed")
             } finally {
                 enhancementJobs.remove(page.id)
             }
         }
         enhancementJobs[page.id] = job
+    }
+
+    private fun retryEnhancement(
+        pageId: String,
+        context: Context,
+    ) {
+        val session = _scanSession.value ?: return
+        val activePageIndex = session.activePages().indexOfFirst { it.id == pageId }
+        if (activePageIndex < 0) return
+        if (session.activePages()[activePageIndex].enhancementErrorMessage == null) return
+        viewModelScope.launch {
+            applySessionUpdate(session.withPageEnhancementFailure(pageId, null))
+            toggleEnhancement(activePageIndex, context)
+        }
     }
 
     private fun deletePage(index: Int) {

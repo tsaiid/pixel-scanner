@@ -11,6 +11,7 @@ sealed interface ReviewUiEvent {
     data class RestorePage(val pageId: String) : ReviewUiEvent
     data object MovePageLeft : ReviewUiEvent
     data object MovePageRight : ReviewUiEvent
+    data class RetryEnhancement(val pageId: String, val context: Context) : ReviewUiEvent
     data object RequestScanMore : ReviewUiEvent
     data object RequestRescan : ReviewUiEvent
     data object RequestDiscardSession : ReviewUiEvent
