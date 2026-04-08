@@ -428,12 +428,16 @@
   - [x] 顯示目前頁選中狀態。
   - [x] 驗證大量頁數捲動效能。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt)
-- [ ] 加入頁面排序能力。
+- [x] 加入頁面排序能力。
   - 驗收標準：可拖曳排序或透過明確操作重新排列頁序。
-  - [ ] 選擇拖曳方案。
-  - [ ] 實作頁序更新 state。
-  - [ ] 排序後同步更新匯出順序。
-  - [ ] 驗證排序後 undo / export 行為。
+  - [x] 選擇拖曳方案。
+    - v1 方案：以 selected page 的左右移動控制實作 bounded reorder，不引入自由拖曳手勢。
+  - [x] 實作頁序更新 state。
+  - [x] 排序後同步更新匯出順序。
+  - [x] 驗證排序後 undo / export 行為。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ReorderPageUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ReorderPageUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
 - [x] 讓刪除、復原與頁數更新更穩定。
   - 驗收標準：刪除最後一頁時不會立刻誤觸發重掃流程，undo 行為可靠。
   - [x] 重設刪除最後一頁的行為。

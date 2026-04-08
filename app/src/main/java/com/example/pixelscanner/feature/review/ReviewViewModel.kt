@@ -21,6 +21,7 @@ import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.PreviewCacheCleanupRepository
+import com.example.pixelscanner.domain.ReorderPageUseCase
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
@@ -49,6 +50,7 @@ class ReviewViewModel(
     private val toggleEnhancementUseCase: ToggleEnhancementUseCase,
     private val deletePageUseCase: DeletePageUseCase,
     private val restorePageUseCase: RestorePageUseCase,
+    private val reorderPageUseCase: ReorderPageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
     private val previewCacheCleanupRepository: PreviewCacheCleanupRepository,
@@ -92,6 +94,8 @@ class ReviewViewModel(
             )
             is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
+            is ReviewUiEvent.MovePageLeft -> movePage(-1)
+            is ReviewUiEvent.MovePageRight -> movePage(1)
             is ReviewUiEvent.RequestScanMore -> startScanMore()
             is ReviewUiEvent.RequestRescan -> discardAndReturnToScanner()
             is ReviewUiEvent.RequestDiscardSession -> discardAndReturnToHome()
@@ -230,6 +234,17 @@ class ReviewViewModel(
         applySessionUpdate(
             restorePageUseCase(session, page),
             preferredPageId = pageId,
+        )
+    }
+
+    private fun movePage(offset: Int) {
+        val session = _scanSession.value ?: return
+        val currentPageIndex = _uiState.value.currentPage
+        val targetPageIndex = currentPageIndex + offset
+        val result = reorderPageUseCase(session, currentPageIndex, targetPageIndex) ?: return
+        applySessionUpdate(
+            result.updatedSession,
+            preferredPageId = result.movedPage.id,
         )
     }
 
@@ -430,6 +445,7 @@ class ReviewViewModelFactory(
     private val toggleEnhancementUseCase: ToggleEnhancementUseCase,
     private val deletePageUseCase: DeletePageUseCase,
     private val restorePageUseCase: RestorePageUseCase,
+    private val reorderPageUseCase: ReorderPageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
     private val previewCacheCleanupRepository: PreviewCacheCleanupRepository,
@@ -452,6 +468,7 @@ class ReviewViewModelFactory(
             toggleEnhancementUseCase = toggleEnhancementUseCase,
             deletePageUseCase = deletePageUseCase,
             restorePageUseCase = restorePageUseCase,
+            reorderPageUseCase = reorderPageUseCase,
             exportSessionUseCase = exportSessionUseCase,
             discardSessionUseCase = discardSessionUseCase,
             previewCacheCleanupRepository = previewCacheCleanupRepository,

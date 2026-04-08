@@ -23,6 +23,7 @@ import com.example.pixelscanner.domain.ExportRepository
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.ImageProcessingRepository
 import com.example.pixelscanner.domain.PreviewCacheCleanupRepository
+import com.example.pixelscanner.domain.ReorderPageUseCase
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
@@ -100,6 +101,7 @@ class ReviewThumbnailStripLargePageCountTest {
             ),
             deletePageUseCase = DeletePageUseCase(),
             restorePageUseCase = RestorePageUseCase(),
+            reorderPageUseCase = ReorderPageUseCase(),
             exportSessionUseCase = ExportSessionUseCase(
                 exportRepository = FakeExportRepository(),
                 exportArtifactCacheRepository = object : ExportArtifactCacheRepository {

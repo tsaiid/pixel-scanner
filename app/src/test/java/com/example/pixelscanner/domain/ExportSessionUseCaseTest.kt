@@ -123,6 +123,65 @@ class ExportSessionUseCaseTest {
         assertEquals(1, artifactCacheRepository.storedImageRequests.size)
     }
 
+    @Test
+    fun `exports pages in the reordered session order`() {
+        val exportRepository = RecordingExportRepository(
+            copyPdfResult = ExportOperationResult.Failure(
+                ExportUnknownFailure(details = "PDF export not expected in this test"),
+            ),
+            imageResults = mutableListOf(
+                ExportOperationResult.Success(Uri.parse("file:///documents/page-b.jpg")),
+                ExportOperationResult.Success(Uri.parse("file:///documents/page-a.jpg")),
+                ExportOperationResult.Success(Uri.parse("file:///documents/page-c.jpg")),
+            ),
+        )
+        val artifactCacheRepository = RecordingExportArtifactCacheRepository()
+        val useCase = ExportSessionUseCase(
+            exportRepository = exportRepository,
+            exportArtifactCacheRepository = artifactCacheRepository,
+        )
+        val originalSession = ScanSession(
+            id = "session_reordered_export",
+            pages = listOf(
+                ScannedPage(
+                    id = "page-a",
+                    originalSourceUri = Uri.parse("content://scanner/page-a.jpg"),
+                ),
+                ScannedPage(
+                    id = "page-b",
+                    originalSourceUri = Uri.parse("content://scanner/page-b.jpg"),
+                ),
+                ScannedPage(
+                    id = "page-c",
+                    originalSourceUri = Uri.parse("content://scanner/page-c.jpg"),
+                ),
+            ),
+        )
+        val reorderedSession = ReorderPageUseCase().invoke(
+            session = originalSession,
+            fromActivePageIndex = 1,
+            toActivePageIndex = 0,
+        )!!.updatedSession
+
+        val result = runBlocking {
+            useCase(
+                session = reorderedSession,
+                request = ExportRequest(sessionId = reorderedSession.id, format = ExportFormat.IMAGE),
+                context = RuntimeEnvironment.getApplication(),
+            )
+        }
+
+        assertTrue(result is ExportResult.Success)
+        assertEquals(
+            listOf(
+                Uri.parse("content://scanner/page-b.jpg"),
+                Uri.parse("content://scanner/page-a.jpg"),
+                Uri.parse("content://scanner/page-c.jpg"),
+            ),
+            exportRepository.savedUriRequests.map { it.sourceUri },
+        )
+    }
+
     private class RecordingExportRepository(
         private val copyPdfResult: ExportOperationResult,
         private val imageResults: MutableList<ExportOperationResult> = mutableListOf(),

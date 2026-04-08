@@ -17,6 +17,8 @@
     <string name="review_screen_page_counter">(%1$d/%2$d)</string>
     <string name="review_thumbnail_strip_title">Pages</string>
     <string name="review_enhance_content_description">Enhance</string>
+    <string name="review_move_page_left_content_description">Move page left</string>
+    <string name="review_move_page_right_content_description">Move page right</string>
     <string name="review_delete_page_content_description">Delete Page</string>
     <string name="review_scanned_page_content_description">Scanned Page %1$d</string>
     <string name="review_thumbnail_content_description">Page %1$d of %2$d</string>

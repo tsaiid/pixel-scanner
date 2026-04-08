@@ -23,6 +23,7 @@ import com.example.pixelscanner.domain.ExportArtifactCacheRepository
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.ImageProcessingRepository
 import com.example.pixelscanner.domain.PreviewCacheCleanupRepository
+import com.example.pixelscanner.domain.ReorderPageUseCase
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
@@ -406,6 +407,68 @@ class ReviewViewModelTest {
         )
     }
 
+    @Test
+    fun `reordering a page keeps delete undo order and selected page in sync`() {
+        val viewModel = createViewModel()
+        val session = ScanSession(
+            id = "session_review_reorder_undo",
+            pages = listOf(
+                ScannedPage(
+                    id = "session_review_reorder_undo_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-0.jpg"),
+                ),
+                ScannedPage(
+                    id = "session_review_reorder_undo_page_1",
+                    originalSourceUri = Uri.parse("content://scanner/page-1.jpg"),
+                ),
+                ScannedPage(
+                    id = "session_review_reorder_undo_page_2",
+                    originalSourceUri = Uri.parse("content://scanner/page-2.jpg"),
+                ),
+            ),
+        )
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.PageChanged(pageIndex = 1))
+        viewModel.onEvent(ReviewUiEvent.MovePageLeft)
+
+        assertEquals("session_review_reorder_undo_page_1", viewModel.uiState.value.selectedPage?.id)
+        assertEquals(
+            listOf(
+                "session_review_reorder_undo_page_1",
+                "session_review_reorder_undo_page_0",
+                "session_review_reorder_undo_page_2",
+            ),
+            viewModel.uiState.value.pages.map { it.id },
+        )
+        assertTrue(viewModel.scanSession.value?.dirtyFlags?.hasReorderedPages == true)
+
+        viewModel.onEvent(ReviewUiEvent.DeletePage(pageIndex = 0))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(
+            listOf(
+                "session_review_reorder_undo_page_0",
+                "session_review_reorder_undo_page_2",
+            ),
+            viewModel.uiState.value.pages.map { it.id },
+        )
+
+        viewModel.onEvent(ReviewUiEvent.RestorePage(pageId = "session_review_reorder_undo_page_1"))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(
+            listOf(
+                "session_review_reorder_undo_page_1",
+                "session_review_reorder_undo_page_0",
+                "session_review_reorder_undo_page_2",
+            ),
+            viewModel.uiState.value.pages.map { it.id },
+        )
+        assertEquals("session_review_reorder_undo_page_1", viewModel.uiState.value.selectedPage?.id)
+        assertTrue(viewModel.scanSession.value?.dirtyFlags?.hasReorderedPages == true)
+    }
+
     private fun createViewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         previewCacheCleanupRepository: RecordingPreviewCacheCleanupRepository = RecordingPreviewCacheCleanupRepository(),
@@ -436,6 +499,7 @@ class ReviewViewModelTest {
             ),
             deletePageUseCase = DeletePageUseCase(),
             restorePageUseCase = RestorePageUseCase(),
+            reorderPageUseCase = ReorderPageUseCase(),
             exportSessionUseCase = ExportSessionUseCase(
                 exportRepository = exportRepository,
                 exportArtifactCacheRepository = NoOpExportArtifactCacheRepository(),

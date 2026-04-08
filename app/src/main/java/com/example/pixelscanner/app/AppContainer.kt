@@ -18,6 +18,7 @@ import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.PreviewCacheCleanupRepository
+import com.example.pixelscanner.domain.ReorderPageUseCase
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.RestoreSessionUseCase
@@ -56,6 +57,7 @@ class AppContainer(
     val discardSessionUseCase = DiscardSessionUseCase()
     val resumeSessionUseCase = ResumeSessionUseCase()
     val scanMoreUseCase = ScanMoreUseCase()
+    val reorderPageUseCase = ReorderPageUseCase()
     val restoreSessionUseCase = RestoreSessionUseCase(sessionRecoveryRepository)
     val getRecoverableSessionUseCase = GetRecoverableSessionUseCase(sessionRecoveryRepository)
     val discardRecoverableSessionUseCase = DiscardRecoverableSessionUseCase(sessionRecoveryRepository)
@@ -74,6 +76,7 @@ class AppContainer(
             discardSessionUseCase = discardSessionUseCase,
             previewCacheCleanupRepository = previewCacheCleanupRepository,
             resumeSessionUseCase = resumeSessionUseCase,
+            reorderPageUseCase = reorderPageUseCase,
             scanMoreUseCase = scanMoreUseCase,
             restorePageUseCase = restorePageUseCase,
             exportSessionUseCase = exportSessionUseCase,

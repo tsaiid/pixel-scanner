@@ -24,6 +24,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -74,6 +76,8 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ClearStatusMessa
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.MovePageLeft
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.MovePageRight
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestDiscardSession
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestRescan
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestScanMore
@@ -263,6 +267,33 @@ fun ReviewScreen(
                                         tint = if (uiState.selectedPage?.isEnhanced == true) Color.Yellow else Color.White
                                     )
                                 }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        IconButton(
+                            onClick = { viewModel.onEvent(MovePageLeft) },
+                            enabled = uiState.currentPage > 0 && !uiState.export.isExporting && !uiState.isProcessing,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowLeft,
+                                contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
+                                tint = Color.White,
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { viewModel.onEvent(MovePageRight) },
+                            enabled = uiState.hasPages &&
+                                uiState.currentPage < uiState.pages.lastIndex &&
+                                !uiState.export.isExporting &&
+                                !uiState.isProcessing,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowRight,
+                                contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
+                                tint = Color.White,
+                            )
                         }
 
                         Spacer(modifier = Modifier.width(32.dp))

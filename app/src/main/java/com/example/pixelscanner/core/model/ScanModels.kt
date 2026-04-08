@@ -163,6 +163,9 @@ data class ScanSession(
             originalPdfUri = updatedOriginalPdfUri,
             dirtyFlags = SessionDirtyFlags.fromPages(updatedPages).copy(
                 hasAddedPages = dirtyFlags.hasAddedPages,
+                hasReorderedPages = dirtyFlags.hasReorderedPages,
+                hasRotatedPages = dirtyFlags.hasRotatedPages,
+                hasCroppedPages = dirtyFlags.hasCroppedPages,
             ),
         )
     }
@@ -187,6 +190,21 @@ data class ScanSession(
             pages = updatedPages,
             dirtyFlags = SessionDirtyFlags.fromPages(updatedPages).copy(
                 hasAddedPages = dirtyFlags.hasAddedPages,
+                hasReorderedPages = dirtyFlags.hasReorderedPages,
+                hasRotatedPages = dirtyFlags.hasRotatedPages,
+                hasCroppedPages = dirtyFlags.hasCroppedPages,
+            ),
+        )
+    }
+
+    fun withReorderedPages(updatedPages: List<ScannedPage>): ScanSession {
+        return copy(
+            pages = updatedPages,
+            dirtyFlags = SessionDirtyFlags.fromPages(updatedPages).copy(
+                hasAddedPages = dirtyFlags.hasAddedPages,
+                hasReorderedPages = true,
+                hasRotatedPages = dirtyFlags.hasRotatedPages,
+                hasCroppedPages = dirtyFlags.hasCroppedPages,
             ),
         )
     }

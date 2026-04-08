@@ -9,6 +9,8 @@ sealed interface ReviewUiEvent {
     data class ToggleEnhancement(val pageIndex: Int, val context: Context) : ReviewUiEvent
     data class DeletePage(val pageIndex: Int) : ReviewUiEvent
     data class RestorePage(val pageId: String) : ReviewUiEvent
+    data object MovePageLeft : ReviewUiEvent
+    data object MovePageRight : ReviewUiEvent
     data object RequestScanMore : ReviewUiEvent
     data object RequestRescan : ReviewUiEvent
     data object RequestDiscardSession : ReviewUiEvent
