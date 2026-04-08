@@ -341,7 +341,7 @@
     - image export 會在每頁完成後回報 page progress 與 overall progress。
   - [x] UI 呈現 overall progress。
     - export 按鈕會顯示目前進度數字，而不是只有通用 loading 文案。
-  - [ ] 失敗時保留已完成頁面的處理資訊。
+  - [x] 失敗時保留已完成頁面的處理資訊。
 - [ ] 為大型匯出建立背景執行策略。
   - 驗收標準：長時間 PDF 匯出在 app 進入背景時仍能穩定執行，且不把短任務複雜化。
   - [ ] 定義何種條件下切換到 `WorkManager`。

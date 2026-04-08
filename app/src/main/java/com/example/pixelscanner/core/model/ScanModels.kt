@@ -235,11 +235,18 @@ fun ExportRequest.resolveDecision(
 
 sealed interface ExportResult {
     data class Success(val outputUri: Uri?) : ExportResult
+    data class CompletedExportPage(
+        val pageId: String,
+        val outputUri: Uri,
+    )
     data class PartialSuccess(
-        val outputUris: List<Uri>,
+        val completedPages: List<CompletedExportPage>,
         val failures: List<ExportFailure> = emptyList(),
         val warningMessage: String? = null,
-    ) : ExportResult
+    ) : ExportResult {
+        val outputUris: List<Uri>
+            get() = completedPages.map { it.outputUri }
+    }
     data class Failure(val error: ExportFailure) : ExportResult {
         val errorMessage: String
             get() = error.userMessage

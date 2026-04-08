@@ -141,6 +141,8 @@ class ExportSessionUseCase(
                 )
                 val sourceUrisForExport = cachedArtifacts?.map(Uri::fromFile) ?: urisToSave
                 val totalPages = sourceUrisForExport.size
+                val completedPages = mutableListOf<ExportResult.CompletedExportPage>()
+                val failures = mutableListOf<ExportFailure>()
                 onProgress(
                     ExportProgress(
                         overall = ExportOverallProgress(
@@ -163,10 +165,17 @@ class ExportSessionUseCase(
                                 pageIndex = index,
                                 sourceUri = result.outputUri,
                             )
+                            completedPages += ExportResult.CompletedExportPage(
+                                pageId = pagesToExport[index].id,
+                                outputUri = result.outputUri,
+                            )
                             result
                         }
 
-                        is ExportOperationResult.Failure -> result
+                        is ExportOperationResult.Failure -> {
+                            failures += result.error
+                            result
+                        }
                     }
                     onProgress(
                         ExportProgress(
@@ -189,12 +198,7 @@ class ExportSessionUseCase(
                     reusedOriginalPdf = false,
                 )
 
-                val successfulUris = results.mapNotNull { result ->
-                    (result as? ExportOperationResult.Success)?.outputUri
-                }
-                val failures = results.mapNotNull { result ->
-                    (result as? ExportOperationResult.Failure)?.error
-                }
+                val successfulUris = completedPages.map { it.outputUri }
                 when {
                     successfulUris.isEmpty() -> {
                         ExportResult.Failure(
@@ -210,7 +214,7 @@ class ExportSessionUseCase(
 
                     else -> {
                         ExportResult.PartialSuccess(
-                            outputUris = successfulUris,
+                            completedPages = completedPages,
                             failures = failures,
                             warningMessage = "Exported ${successfulUris.size}/${results.size} images",
                         )

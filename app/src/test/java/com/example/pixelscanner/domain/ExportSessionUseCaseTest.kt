@@ -7,6 +7,7 @@ import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ExportUnknownFailure
 import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.SessionDirtyFlags
@@ -68,8 +69,63 @@ class ExportSessionUseCaseTest {
         assertEquals(expectedExportUri, (result as ExportResult.Success).outputUri)
     }
 
+    @Test
+    fun `preserves completed page mapping when image export partially fails`() {
+        val firstOutputUri = Uri.parse("file:///documents/page-1.jpg")
+        val exportRepository = RecordingExportRepository(
+            copyPdfResult = ExportOperationResult.Failure(
+                ExportUnknownFailure(details = "PDF export not expected in this test"),
+            ),
+            imageResults = mutableListOf(
+                ExportOperationResult.Success(firstOutputUri),
+                ExportOperationResult.Failure(
+                    ExportUnknownFailure(details = "second page failed"),
+                ),
+            ),
+        )
+        val artifactCacheRepository = RecordingExportArtifactCacheRepository()
+        val useCase = ExportSessionUseCase(
+            exportRepository = exportRepository,
+            exportArtifactCacheRepository = artifactCacheRepository,
+        )
+        val session = ScanSession(
+            id = "session_image_partial",
+            pages = listOf(
+                ScannedPage(
+                    id = "session_image_partial_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-1.jpg"),
+                ),
+                ScannedPage(
+                    id = "session_image_partial_page_1",
+                    originalSourceUri = Uri.parse("content://scanner/page-2.jpg"),
+                ),
+            ),
+            dirtyFlags = SessionDirtyFlags(hasAddedPages = true),
+        )
+
+        val result = runBlocking {
+            useCase(
+                session = session,
+                request = ExportRequest(sessionId = session.id, format = ExportFormat.IMAGE),
+                context = RuntimeEnvironment.getApplication(),
+            )
+        }
+
+        assertTrue(result is ExportResult.PartialSuccess)
+        val partialSuccess = result as ExportResult.PartialSuccess
+        assertEquals(1, partialSuccess.completedPages.size)
+        assertEquals(session.pages.first().id, partialSuccess.completedPages.single().pageId)
+        assertEquals(firstOutputUri, partialSuccess.completedPages.single().outputUri)
+        assertEquals(listOf(firstOutputUri), partialSuccess.outputUris)
+        assertEquals(1, partialSuccess.failures.size)
+        assertEquals("second page failed", partialSuccess.failures.single().userMessage)
+        assertEquals(2, exportRepository.savedUriRequests.size)
+        assertEquals(1, artifactCacheRepository.storedImageRequests.size)
+    }
+
     private class RecordingExportRepository(
         private val copyPdfResult: ExportOperationResult,
+        private val imageResults: MutableList<ExportOperationResult> = mutableListOf(),
     ) : ExportRepository {
         val copiedPdfRequests = mutableListOf<ExportPdfRequest>()
         val savedUriRequests = mutableListOf<ExportImageRequest>()
@@ -90,11 +146,15 @@ class ExportSessionUseCaseTest {
             fileName: String,
         ): ExportOperationResult {
             savedUriRequests += ExportImageRequest(sourceUri = sourceUri, fileName = fileName)
-            return ExportOperationResult.Failure(
-                com.example.pixelscanner.core.model.ExportUnknownFailure(
-                    details = "Image export not expected in this test",
-                ),
-            )
+            return if (imageResults.isNotEmpty()) {
+                imageResults.removeAt(0)
+            } else {
+                ExportOperationResult.Failure(
+                    ExportUnknownFailure(
+                        details = "Image export not expected in this test",
+                    ),
+                )
+            }
         }
 
         override suspend fun saveUrisToPdf(
