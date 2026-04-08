@@ -421,12 +421,13 @@
   - [x] 定義資訊優先順序。
   - [x] 定義單頁與多頁時的版型差異。
   - [x] 定義 loading、error、empty 的版型。
-- [~] 加入縮圖帶與頁面快速切換。
+- [x] 加入縮圖帶與頁面快速切換。
   - 驗收標準：10 頁以上文件仍可有效管理，不需只靠左右滑動。
   - [x] 決定縮圖帶是水平列還是底部 filmstrip。
   - [x] 實作縮圖點選切頁。
   - [x] 顯示目前頁選中狀態。
-  - [ ] 驗證大量頁數捲動效能。
+  - [x] 驗證大量頁數捲動效能。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt)
 - [ ] 加入頁面排序能力。
   - 驗收標準：可拖曳排序或透過明確操作重新排列頁序。
   - [ ] 選擇拖曳方案。
