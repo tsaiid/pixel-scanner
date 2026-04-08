@@ -352,7 +352,8 @@
 - [ ] 建立匯出後動作。
   - 建議支援：開啟檔案、分享、回到首頁、繼續掃描。
   - 驗收標準：匯出成功後有明確 next step，而不只是 toast。
-  - [ ] 設計 export success sheet 或 dialog。
+  - [x] 設計 export success sheet 或 dialog。
+    - 匯出成功後會顯示 post-export dialog，讓使用者選擇 open 或 share。
   - [x] 加入 open/share action。
     - 匯出成功後提供 open / share post-action dialog。
   - [ ] 加入 continue scanning action。
