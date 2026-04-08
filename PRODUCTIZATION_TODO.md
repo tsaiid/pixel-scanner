@@ -157,13 +157,12 @@
     - scanner 完成後由 app 直接將 scan result 寫入 review ViewModel，並以 navigation route 明確切到 review。
   - [x] 定義 home -> scanner -> review -> export complete 的導航圖。
   - [ ] 驗證返回鍵行為與 deep restore 行為。
-- [ ] 將流程狀態從 composable `remember` 遷移到可保存狀態。
+- [x] 將流程狀態從 composable `remember` 遷移到可保存狀態。
   - 驗收標準：旋轉螢幕與 process recreation 時不會意外丟失流程狀態。
-  - [~] 盤點目前依賴 `remember` 的流程狀態。
-    - app-level current screen 已交由 Navigation Compose 管理；home auto-start flag 已移至 `HomeViewModel` / `SavedStateHandle`；home intro animation 也已改為 saveable；其餘畫面內流程狀態仍待盤點。
-  - [~] 將必要狀態移至 ViewModel / SavedStateHandle。
-    - review 的 current page 與 export format 已接入 SavedStateHandle；home auto-start flag 也已接入 `HomeViewModel` / `SavedStateHandle`，並補上 restore unit test；其餘需要保存的狀態仍待盤點。
-    - app-level pending export post-action flow state 已接入 `AppFlowViewModel` / `SavedStateHandle`，並補上 config change 與 process-death style restore test。
+  - [x] 盤點目前依賴 `remember` 的流程狀態。
+    - 已完成 `app/src/main/java/com/example/pixelscanner/**` 全量 audit：`StartScreen` 的 intro animation 已是 `rememberSaveable`，`ReviewScreen` 的 dialog flags 也已是 `rememberSaveable`，其餘 `remember` 僅為螢幕生命週期內的 helper / snackbar / pager state，未發現新的流程關鍵保存缺口。
+  - [x] 將必要狀態移至 ViewModel / SavedStateHandle。
+    - 流程關鍵 state 目前都已在 `HomeViewModel`、`ReviewViewModel`、`AppFlowViewModel` 的 `SavedStateHandle` 中處理，且既有 restore tests 已覆蓋 configuration change 與 process-death style recreation。
   - [x] 驗證 configuration change。
     - 相關測試：`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`
   - [x] 驗證 process death restore 策略。
