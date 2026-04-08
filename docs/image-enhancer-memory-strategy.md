@@ -17,3 +17,11 @@ Why row-based over tile-based for now:
 Residual work:
 
 - Add memory instrumentation / benchmark points before marking the full memory-strategy backlog item complete.
+
+Memory measurement notes:
+
+- Preview enhancement now emits debug logs under the `ImageEnhancerMem` tag.
+- Each run records stage snapshots for `start`, `decode-complete`, `background-build-complete`, `row-processing-complete`, and `final-write-complete`.
+- The log line includes used heap, free heap, total heap, max heap, native heap, and delta values relative to the start snapshot.
+- Read the delta values to compare stage-to-stage pressure; use the absolute values to compare different devices or input sizes.
+- If the tag is not visible yet, enable it locally with `adb shell setprop log.tag.ImageEnhancerMem DEBUG`.

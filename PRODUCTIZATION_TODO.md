@@ -273,7 +273,8 @@
   - [x] 選定實作方案並記錄設計理由。
     - 已採 row-based segmented processing，說明見 [`docs/image-enhancer-memory-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/image-enhancer-memory-strategy.md)。
   - [x] 實作分段處理。
-  - [ ] 加入記憶體量測點。
+  - [x] 加入記憶體量測點。
+    - preview enhancement 目前會以 `ImageEnhancerMem` debug logs 記錄 stage snapshots，涵蓋 `start`、`decode-complete`、`background-build-complete`、`row-processing-complete` 與 `final-write-complete`；12MP 峰值驗證仍需後續 benchmark 補證，因此 parent item 保持 in progress。
 - [ ] 建立增強結果快取索引。
   - 驗收標準：同頁面重複切換不重新運算，可命中快取。
   - [ ] 定義快取 key。
