@@ -5,14 +5,16 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
+import com.example.pixelscanner.core.storage.AndroidTempFileRepository
+import com.example.pixelscanner.domain.TempFileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.max
 import kotlin.math.min
 
 class ImageEnhancer {
+    private val tempFileRepository: TempFileRepository = AndroidTempFileRepository()
 
     suspend fun enhance(context: Context, uri: Uri): Uri = withContext(Dispatchers.IO) {
         val originalBitmap = context.contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -64,7 +66,11 @@ class ImageEnhancer {
 
         outputBitmap.setPixels(outputPixels, 0, width, 0, 0, width, height)
 
-        val file = File(context.cacheDir, "enhanced_${System.currentTimeMillis()}.jpg")
+        val file = tempFileRepository.createTempFile(
+            context = context,
+            prefix = "enhanced_${System.currentTimeMillis()}",
+            suffix = ".jpg",
+        )
         FileOutputStream(file).use { outputStream ->
             outputBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
         }

@@ -118,9 +118,10 @@
     - `ImageProcessingRepository` 與 `ExportRepository` 已導入，並由 review use case 注入使用。
   - [~] 提供 Android / file-system 實作。
     - enhancement 與 export 先以 Android repository wrapper 包住既有 `ImageEnhancer` 與 `StorageManager`。
-  - [ ] 將 `ContentResolver` 相關程式集中到 data layer。
-  - [ ] 將 temp file、session file、stale cleanup 集中到 repository。
-  - [ ] 為 repository 設計測試替身。
+  - [x] 將 `ContentResolver` 相關程式集中到 data layer。
+  - [~] 將 temp file、session file、stale cleanup 集中到 repository。
+    - temp file creation 已集中到 `TempFileRepository`；session metadata 與 stale cleanup 仍待補齊。
+  - [x] 為 repository 設計測試替身。
   - [~] 建立單向資料流的 UI state 結構。
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
   - [x] 為首頁定義 `HomeUiState`。
