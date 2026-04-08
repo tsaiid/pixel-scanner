@@ -700,8 +700,8 @@
 ## Immediate Next Slice
 
 - [x] 定義 `ScanSession`、`ScannedPage`、`ExportRequest`、`ExportResult`、`SessionDirtyFlags` 資料模型。
-- [~] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
-- [~] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
+- [x] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
+- [x] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
 - [x] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
 - [x] 設計 review 畫面新資訊架構草案。
 - [x] 建立效能基線量測方式與測試樣本。
