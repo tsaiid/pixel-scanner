@@ -1,6 +1,9 @@
 package com.example.pixelscanner.domain
 
 import android.content.Context
+import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
+import com.example.pixelscanner.core.model.PreviewImagePipelineResult
+import com.example.pixelscanner.core.model.PipelineCacheKey
 import com.example.pixelscanner.core.model.PageVariant
 import com.example.pixelscanner.core.model.ScannedPage
 
@@ -26,13 +29,22 @@ class ToggleEnhancementUseCase(
             )
         }
 
-        val enhancedUri = imageProcessingRepository.enhance(context, page.originalSourceUri)
+        val pipelineRequest = PreviewImagePipelineRequest(
+            pageId = page.id,
+            sourceUri = page.originalSourceUri,
+            sourceVariant = page.activeVariant,
+        )
+        val pipelineResult: PreviewImagePipelineResult = imageProcessingRepository.enhance(
+            context = context,
+            request = pipelineRequest,
+        )
         return ToggleEnhancementResult(
             updatedPage = page.copy(
-                enhancedUri = enhancedUri,
+                enhancedUri = pipelineResult.outputUri,
                 activeVariant = PageVariant.PREVIEW_ENHANCED,
             ),
             enabled = true,
+            previewCacheKey = pipelineResult.cacheKey,
         )
     }
 }
@@ -40,4 +52,5 @@ class ToggleEnhancementUseCase(
 data class ToggleEnhancementResult(
     val updatedPage: ScannedPage,
     val enabled: Boolean,
+    val previewCacheKey: PipelineCacheKey? = null,
 )

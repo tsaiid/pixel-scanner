@@ -227,9 +227,12 @@
 
 - [ ] 將影像增強拆成 preview pipeline 與 export pipeline。
   - 驗收標準：預覽切換速度以互動流暢為優先，匯出時才處理 full-resolution。
-  - [ ] 定義 preview pipeline 輸入 / 輸出。
-  - [ ] 定義 export pipeline 輸入 / 輸出。
-  - [ ] 定義兩條 pipeline 的 cache key。
+  - [x] 定義 preview pipeline 輸入 / 輸出。
+    - 目前以 `PreviewImagePipelineRequest` / `PreviewImagePipelineResult` 作為 preview contract。
+  - [x] 定義 export pipeline 輸入 / 輸出。
+    - 目前以 `ExportImagePipelineRequest` / `ExportImagePipelineResult` 作為 export contract。
+  - [x] 定義兩條 pipeline 的 cache key。
+    - 目前以 `PipelineCacheKeyStrategy` 統一定義 preview 與 export 的 cache key。
   - [ ] 實作 preview pipeline。
   - [ ] 實作 export pipeline。
 - [ ] 導入安全 decode 策略。

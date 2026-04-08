@@ -2,6 +2,8 @@ package com.example.pixelscanner.domain
 
 import android.content.Context
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.core.model.ExportImagePipelineRequest
+import com.example.pixelscanner.core.model.ExportImagePipelineResult
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
 import com.example.pixelscanner.core.model.ScanSession
@@ -20,25 +22,40 @@ class ExportSessionUseCase(
             return ExportResult.Failure("No pages to export")
         }
 
+        val pipelineRequest = ExportImagePipelineRequest(
+            sessionId = session.id,
+            format = request.format,
+            sourceUris = pagesToExport.map { it.displayUri() },
+            originalPdfUri = session.originalPdfExportSource(),
+            dirtyFlags = session.dirtyFlags,
+        )
         val timestamp = System.currentTimeMillis()
-        val urisToSave = pagesToExport.map { it.displayUri() }
+        val urisToSave = pipelineRequest.sourceUris
 
         return when (request.format) {
             ExportFormat.PDF -> {
-                val outputUri = session.originalPdfExportSource()?.let { originalPdfUri ->
+                val outputUri = if (pipelineRequest.canReuseOriginalPdf()) {
                     exportRepository.copyPdfToDocuments(
                         context = context,
-                        sourceUri = originalPdfUri,
+                        sourceUri = requireNotNull(pipelineRequest.originalPdfUri),
                         fileName = "PixelScanner_$timestamp.pdf",
                     )
-                } ?: exportRepository.saveUrisToPdf(
-                    context = context,
-                    sourceUris = urisToSave,
-                    fileName = "PixelScanner_$timestamp.pdf",
+                } else {
+                    exportRepository.saveUrisToPdf(
+                        context = context,
+                        sourceUris = urisToSave,
+                        fileName = "PixelScanner_$timestamp.pdf",
+                    )
+                }
+
+                val pipelineResult = ExportImagePipelineResult(
+                    cacheKey = pipelineRequest.cacheKey,
+                    outputUri = outputUri,
+                    reusedOriginalPdf = pipelineRequest.canReuseOriginalPdf() && outputUri != null,
                 )
 
-                if (outputUri != null) {
-                    ExportResult.Success(outputUri)
+                if (pipelineResult.outputUri != null) {
+                    ExportResult.Success(pipelineResult.outputUri)
                 } else {
                     ExportResult.Failure("Failed to export PDF")
                 }
@@ -53,8 +70,14 @@ class ExportSessionUseCase(
                     )
                 }
 
+                val pipelineResult = ExportImagePipelineResult(
+                    cacheKey = pipelineRequest.cacheKey,
+                    outputUri = null,
+                    reusedOriginalPdf = false,
+                )
+
                 if (savedUris.all { it != null }) {
-                    ExportResult.Success(null)
+                    ExportResult.Success(pipelineResult.outputUri)
                 } else {
                     ExportResult.Failure("Failed to export one or more images")
                 }

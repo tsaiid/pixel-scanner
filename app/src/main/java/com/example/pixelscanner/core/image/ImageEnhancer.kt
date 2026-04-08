@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
+import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
+import com.example.pixelscanner.core.model.PreviewImagePipelineResult
 import com.example.pixelscanner.core.storage.AndroidTempFileRepository
 import com.example.pixelscanner.domain.TempFileRepository
 import kotlinx.coroutines.Dispatchers
@@ -16,8 +18,12 @@ import kotlin.math.min
 class ImageEnhancer {
     private val tempFileRepository: TempFileRepository = AndroidTempFileRepository()
 
-    suspend fun enhance(context: Context, uri: Uri): Uri = withContext(Dispatchers.IO) {
-        val originalBitmap = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+    suspend fun enhance(
+        context: Context,
+        request: PreviewImagePipelineRequest,
+    ): PreviewImagePipelineResult = withContext(Dispatchers.IO) {
+        val sourceUri = request.sourceUri
+        val originalBitmap = context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
             BitmapFactory.decodeStream(inputStream)
         } ?: throw IllegalArgumentException("Could not decode bitmap from URI")
 
@@ -68,7 +74,7 @@ class ImageEnhancer {
 
         val file = tempFileRepository.createTempFile(
             context = context,
-            prefix = "enhanced_${System.currentTimeMillis()}",
+            prefix = "enhanced_${request.cacheKey.asFileToken()}_${System.currentTimeMillis()}",
             suffix = ".jpg",
         )
         FileOutputStream(file).use { outputStream ->
@@ -76,6 +82,9 @@ class ImageEnhancer {
         }
         outputBitmap.recycle()
 
-        Uri.fromFile(file)
+        PreviewImagePipelineResult(
+            cacheKey = request.cacheKey,
+            outputUri = Uri.fromFile(file),
+        )
     }
 }

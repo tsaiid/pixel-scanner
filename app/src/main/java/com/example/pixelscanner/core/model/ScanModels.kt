@@ -45,6 +45,19 @@ data class SessionDirtyFlags(
             hasAddedPages
     }
 
+    fun cacheSignature(): String {
+        return listOf(
+            hasEnhancedPages,
+            hasDeletedPages,
+            hasReorderedPages,
+            hasRotatedPages,
+            hasCroppedPages,
+            hasAddedPages,
+        ).joinToString(separator = ":") { flag ->
+            if (flag) "1" else "0"
+        }
+    }
+
     companion object {
         fun fromPages(pages: List<ScannedPage>): SessionDirtyFlags {
             return SessionDirtyFlags(
