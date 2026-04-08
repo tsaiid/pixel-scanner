@@ -28,12 +28,18 @@ import com.example.pixelscanner.domain.SessionIngestionResult
 import com.example.pixelscanner.domain.SessionIngestionStatus
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
+import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.testing.FakeExportRepository
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -79,6 +85,82 @@ class ReviewViewModelTest {
         viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
 
         assertEquals(ExportFormat.PDF, viewModel.uiState.value.export.format)
+    }
+
+    @Test
+    fun `request rescan clears review session state and emits navigate back to scanner`() = runBlocking {
+        val cleanupRepository = RecordingPreviewCacheCleanupRepository()
+        val viewModel = createViewModel(previewCacheCleanupRepository = cleanupRepository)
+        val session = loadedSession(sessionId = "session_review_rescan")
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.PageChanged(pageIndex = 1))
+        viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
+
+        try {
+            viewModel.onEvent(ReviewUiEvent.RequestRescan)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(
+                ReviewUiEffect.NavigateBackToScanner,
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertEquals(listOf(session.id), cleanupRepository.cleanedSessionIds)
+            assertNull(viewModel.scanSession.value)
+            assertTrue(viewModel.uiState.value.pages.isEmpty())
+            assertFalse(viewModel.uiState.value.hasPages)
+            assertEquals(0, viewModel.uiState.value.currentPage)
+            assertEquals(ExportFormat.IMAGE, viewModel.uiState.value.export.format)
+        } finally {
+            effectJob.cancel()
+        }
+    }
+
+    @Test
+    fun `request discard session clears review session state and emits navigate back to home`() = runBlocking {
+        val cleanupRepository = RecordingPreviewCacheCleanupRepository()
+        val viewModel = createViewModel(previewCacheCleanupRepository = cleanupRepository)
+        val session = loadedSession(sessionId = "session_review_discard")
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.PageChanged(pageIndex = 1))
+        viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
+
+        try {
+            viewModel.onEvent(ReviewUiEvent.RequestDiscardSession)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(
+                ReviewUiEffect.NavigateBackToHome,
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertEquals(listOf(session.id), cleanupRepository.cleanedSessionIds)
+            assertNull(viewModel.scanSession.value)
+            assertTrue(viewModel.uiState.value.pages.isEmpty())
+            assertFalse(viewModel.uiState.value.hasPages)
+            assertEquals(0, viewModel.uiState.value.currentPage)
+            assertEquals(ExportFormat.IMAGE, viewModel.uiState.value.export.format)
+        } finally {
+            effectJob.cancel()
+        }
     }
 
     @Test
@@ -257,6 +339,22 @@ class ReviewViewModelTest {
             pageIndex: Int,
             sourceUri: Uri,
         ): File = File(context.cacheDir, "review-test-$pageIndex.jpg")
+    }
+
+    private fun loadedSession(sessionId: String): ScanSession {
+        return ScanSession(
+            id = sessionId,
+            pages = listOf(
+                ScannedPage(
+                    id = "${sessionId}_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-0.jpg"),
+                ),
+                ScannedPage(
+                    id = "${sessionId}_page_1",
+                    originalSourceUri = Uri.parse("content://scanner/page-1.jpg"),
+                ),
+            ),
+        )
     }
 }
 

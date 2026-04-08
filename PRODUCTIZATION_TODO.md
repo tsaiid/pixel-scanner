@@ -158,7 +158,10 @@
   - [x] 決定 scanner return result 如何接回 app flow。
     - scanner 完成後由 app 直接將 scan result 寫入 review ViewModel，並以 navigation route 明確切到 review。
   - [x] 定義 home -> scanner -> review -> export complete 的導航圖。
-  - [ ] 驗證返回鍵行為與 deep restore 行為。
+  - [x] 驗證返回鍵行為與 deep restore 行為。
+    - Verified by `app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt` covering rescan/discard back effects, session cleanup, and review state process-death restoration.
+    - Verified by `app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt` covering process-death restoration of the navigation flags that gate restore prompt and auto-start behavior.
+    - Existing process-death coverage in `app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt` already covers pending export action restore.
 - [x] 將流程狀態從 composable `remember` 遷移到可保存狀態。
   - 驗收標準：旋轉螢幕與 process recreation 時不會意外丟失流程狀態。
   - [x] 盤點目前依賴 `remember` 的流程狀態。
