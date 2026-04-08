@@ -40,13 +40,13 @@
 
 ## Phase 0: Baseline And Alignment
 
-- [ ] 對齊 README、spec、Gradle 設定與實際實作，修正 target SDK、功能描述與已完成項目。
+- [x] 對齊 README、spec、Gradle 設定與實際實作，修正 target SDK、功能描述與已完成項目。
   - 驗收標準：README、`spec.md`、`todo.md`、build config 之間不再互相矛盾。
-  - [ ] 比對 README 與實際功能清單，列出不一致項目。
-  - [ ] 比對 `spec.md` 與目前程式碼行為，標記未落地功能。
-  - [ ] 比對 `todo.md` 與目前實作，移除已失真的完成標記。
-  - [ ] 對齊 `compileSdk`、`targetSdk`、README 中的環境描述。
-  - [ ] 將已完成、進行中、規劃中三種功能狀態寫清楚。
+  - [x] 比對 README 與實際功能清單，列出不一致項目。
+  - [x] 比對 `spec.md` 與目前程式碼行為，標記未落地功能。
+  - [x] 比對 `todo.md` 與目前實作，移除已失真的完成標記。
+  - [x] 對齊 `compileSdk`、`targetSdk`、README 中的環境描述。
+  - [x] 將已完成、進行中、規劃中三種功能狀態寫清楚。
 - [ ] 建立產品化重構分支策略與里程碑規劃。
   - 驗收標準：定義 milestone，例如 `architecture`, `session-lifecycle`, `performance`, `ux`, `quality`, `release-prep`。
   - [ ] 定義分支命名規則。

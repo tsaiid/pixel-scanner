@@ -1,64 +1,63 @@
 # Pixel Scanner
 
-![Android](https://img.shields.io/badge/Android-16-green?style=flat&logo=android)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.0-purple?style=flat&logo=kotlin)
+![Android](https://img.shields.io/badge/Android-34-green?style=flat&logo=android)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.2-purple?style=flat&logo=kotlin)
 ![Compose](https://img.shields.io/badge/Jetpack-Compose-4285F4?style=flat&logo=jetpackcompose)
-![Pixel Ready](https://img.shields.io/badge/Pixel-10%20Pro%20XL-blue?style=flat&logo=google)
 
-**Pixel Scanner** 是一款專為 Google Pixel 10 Pro XL (Android 16 / Tensor G5) 量身打造的原生文件掃描應用程式。
+**Pixel Scanner** is an Android document scanner built with Jetpack Compose and Google ML Kit. The current codebase focuses on a productized scan flow with session-owned files, review tools, and explicit export decisions.
 
-目標是復刻並超越 iOS "Evernote Scannable" 的流暢體驗，利用 Google ML Kit 的強大邊緣運算能力，實現極速啟動、自動邊緣偵測與高品質的文件數位化。
+## Current Status
 
-## ✨ 核心特色 (Features)
+### Completed
 
-*   **極速掃描 (Instant Capture)**: 深度整合 **Google ML Kit Document Scanner API**，提供毫秒級的自動文件偵測、透視校正 (Perspective Correction) 與自動裁切。
-*   **智慧影像增強 (Smart Enhancement)**:
-    *   內建自定義 **Simple Lightness Equalization** 演算法，有效移除文件上的陰影並平衡亮度。
-    *   提供「原圖」與「增強模式」的一鍵無縫切換預覽。
-*   **隱私優先 (Privacy First)**: 所有的影像處理與 AI 運算皆在 **裝置端 (On-device)** 完成，無需上傳雲端，確保醫療或個人敏感資料的安全。
-*   **批量處理 (Batch Mode)**: 支援連續拍攝多頁文件，並可事後自由排序或刪除。
-*   **靈活輸出 (Flexible Export)**: 支援高解析度 JPEG 儲存至系統相簿，或合併為 PDF 文件分享。
+* ML Kit Document Scanner integration with `FULL` mode, JPEG and PDF results, and gallery import enabled.
+* Session ingestion into app-owned storage, plus recovery for unfinished sessions.
+* Review flow with page thumbnails, delete/undo, scan more, discard/rescan, and per-page enhancement toggles.
+* Export flow for JPEG and PDF, including progress reporting, post-export open/share actions, and cache reuse.
+* On-device image enhancement with a preview/export pipeline split.
 
-## 🛠 技術架構 (Tech Stack)
+### In Progress
 
-本專案採用現代化 Android 開發規範 (MAD) 建構：
+* Page reordering.
+* Benchmarking and memory/performance validation for large documents.
+* Background export strategy for long-running jobs.
+* Accessibility polishing and large-page-count UX hardening.
 
-*   **語言**: Kotlin
-*   **UI 框架**: Jetpack Compose (Material 3 Design System)
-*   **核心引擎**: Google ML Kit Document Scanner API
-*   **非同步處理**: Kotlin Coroutines & Flow
-*   **圖片加載**: Coil (Memory-efficient image loading)
-*   **架構模式**: MVVM (Model-View-ViewModel) + Unidirectional Data Flow
-*   **儲存**: Android Scoped Storage (MediaStore API)
+### Planned
 
-## 📱 開發環境 (Development Environment)
+* OCR.
+* Cloud sync.
+* Scan history / recent scans.
+* Batch actions such as apply-to-all, grid selection, and bulk delete.
 
-*   **IDE**: Android Studio Ladybug (or newer)
-*   **Language**: Kotlin 2.0+
-*   **Min SDK**: 29 (Android 10)
-*   **Target SDK**: 35/36 (Android 16)
-*   **Build System**: Gradle (Kotlin DSL)
+## Tech Stack
 
-## 🚀 安裝與執行 (Build & Run)
+* Kotlin 2.2.x
+* Jetpack Compose Material 3
+* Google ML Kit Document Scanner API
+* Kotlin Coroutines and Flow
+* Coil for image loading
+* Scoped Storage via MediaStore
 
-1.  Clone 此專案到本地：
-    ```bash
-    git clone https://github.com/tsaiid/pixel-scanner.git
-    ```
-2.  使用 Android Studio 開啟專案資料夾。
-3.  等待 Gradle Sync 完成。
-4.  連接實體 Pixel 裝置或啟動 Android Emulator (建議 API 34+)。
-5.  點擊 **Run** (Shift+F10)。
+## Development Environment
 
-> **注意**: 由於使用了 ML Kit，初次執行時若使用模擬器，請確保模擬器已安裝 Google Play Services。
+* Android Studio with the current stable Android Gradle Plugin / Kotlin toolchain
+* `minSdk` 29
+* `compileSdk` 34
+* `targetSdk` 34
+* Gradle Kotlin DSL
 
-## 📅 開發路徑 (Roadmap)
+## Build & Run
 
-請參考 [todo.md](./todo.md) 查看詳細的開發進度與待辦事項。目前已完成核心 MVP 功能，包含相機掃描、自定義去陰影演算法與檔案儲存。
+1. Clone the repository.
+2. Open the project in Android Studio.
+3. Wait for Gradle sync to complete.
+4. Run on an Android 10+ device or emulator with Google Play Services available for ML Kit.
 
-## 📄 授權 (License)
+## Roadmap
 
-MIT License. See [LICENSE](./LICENSE) for more details.
+See [PRODUCTIZATION_TODO.md](./PRODUCTIZATION_TODO.md) for the active refactor backlog and [todo.md](./todo.md) for the older MVP-era checklist.
 
----
-Designed with ❤️ by [I-Ta Tsai (蔡依達)](https://github.com/tsaiid)
+## License
+
+MIT License. See [LICENSE](./LICENSE) for details.
