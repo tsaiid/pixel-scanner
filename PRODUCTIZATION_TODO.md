@@ -484,13 +484,14 @@
 
 ## Phase 6: Start Flow And Product Identity
 
-- [ ] 重構首頁，從單一 landing screen 升級為產品入口。
+- [x] 重構首頁，從單一 landing screen 升級為產品入口。
   - 可選內容：最近掃描、上次未完成 session、快速開始、匯出說明。
   - 驗收標準：首頁除了按鈕外，也能承接回訪情境。
-  - [ ] 定義首頁的主要任務。
-  - [ ] 決定是否顯示 recent scans。
-  - [ ] 決定是否顯示 resume session。
-  - [ ] 重畫首頁 wireframe。
+  - [x] 定義首頁的主要任務。
+  - [x] 決定是否顯示 recent scans。
+  - [x] 決定是否顯示 resume session。
+  - [x] 重畫首頁 wireframe。
+    - 參考文件：[`docs/home-product-entry-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/home-product-entry-plan.md)
 - [ ] 統一品牌色、字體、圖示與 Material 3 token。
   - 驗收標準：首頁與 review 頁視覺語言一致，不再混用品牌紫與 dynamic color 導致割裂。
   - [ ] 選定品牌主色與輔色。
