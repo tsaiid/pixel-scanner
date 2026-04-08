@@ -337,19 +337,24 @@ fun ReviewScreen(
                         },
                     )
                 }
+    } else {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            val emptyStateMessage = if (uiState.hasSession) {
+                R.string.review_empty_session_message
             } else {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        stringResource(id = R.string.review_empty_state_message),
-                        color = Color.White,
-                    )
-                }
+                R.string.review_empty_state_message
             }
+            Text(
+                stringResource(id = emptyStateMessage),
+                color = Color.White,
+            )
+        }
+    }
         }
     }
 

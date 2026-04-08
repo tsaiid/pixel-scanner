@@ -236,6 +236,7 @@ class ReviewViewModelTest {
             assertNotNull(viewModel.scanSession.value)
             assertTrue(viewModel.uiState.value.pages.isEmpty())
             assertFalse(viewModel.uiState.value.hasPages)
+            assertTrue(viewModel.uiState.value.hasSession)
             assertEquals(0, viewModel.uiState.value.currentPage)
 
             viewModel.onEvent(ReviewUiEvent.RestorePage(pageId = session.pages.single().id))

@@ -422,7 +422,7 @@
 - [~] 讓刪除、復原與頁數更新更穩定。
   - 驗收標準：刪除最後一頁時不會立刻誤觸發重掃流程，undo 行為可靠。
   - [x] 重設刪除最後一頁的行為。
-  - [ ] 決定空 session 時顯示空狀態或離開流程。
+  - [x] 決定空 session 時顯示空狀態或離開流程。
   - [ ] 改善 snackbar undo 與 pager 同步問題。
 - [ ] 重新命名與拆分掃描相關按鈕文案。
   - 驗收標準：`Scan More`、`Discard & Rescan`、`Save as JPEG`、`Save as PDF` 等語意明確。

@@ -74,6 +74,7 @@ class ReviewViewModel(
             isAwaitingScanMoreResult = savedStateHandle.get<Boolean>(
                 KEY_IS_AWAITING_SCAN_MORE_RESULT,
             ) ?: false,
+            hasSession = false,
         )
     )
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
@@ -357,6 +358,7 @@ class ReviewViewModel(
             currentState.copy(
                 pages = activePages,
                 currentPage = currentPage,
+                hasSession = true,
             )
         }
     }
@@ -369,6 +371,7 @@ class ReviewViewModel(
         clearScanMorePending()
         _uiState.value = ReviewUiState(
             isAwaitingScanMoreResult = false,
+            hasSession = false,
             export = ExportUiState(
                 state = ExportState.Idle,
             ),

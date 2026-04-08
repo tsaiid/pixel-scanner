@@ -9,6 +9,7 @@ data class ReviewUiState(
     val currentPage: Int = 0,
     val export: ExportUiState = ExportUiState(),
     val isAwaitingScanMoreResult: Boolean = false,
+    val hasSession: Boolean = false,
     val statusMessage: ReviewStatusMessage? = null,
 ) {
     val hasPages: Boolean
