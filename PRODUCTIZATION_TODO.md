@@ -358,7 +358,8 @@
     - 匯出成功後提供 open / share post-action dialog。
   - [x] 加入 continue scanning action。
     - 匯出成功對話框現在可直接回到 scanner flow，並沿用現有 scan-more append 行為。
-  - [ ] 驗證取消與返回後狀態。
+  - [x] 驗證取消與返回後狀態。
+    - dialog dismiss / back 只會清掉 post-export action，不會變更目前 review session 狀態。
 - [ ] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
   - 驗收標準：實機上可預期地出現在正確位置，命名規則一致。
   - [ ] 驗證 JPEG 寫入 `Pictures/PixelScanner`。
