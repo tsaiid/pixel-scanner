@@ -27,10 +27,12 @@ import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.PixelScannerApp
 import com.example.pixelscanner.domain.RestoreSessionOutcome
+import com.example.pixelscanner.feature.review.ui.HomeNavigationReason
 import com.example.pixelscanner.feature.home.HomeViewModel
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestScanMore
 import com.example.pixelscanner.feature.review.ui.ReviewScreen
+import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
 import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
 import kotlinx.coroutines.launch
 import java.util.ArrayList
@@ -147,17 +149,27 @@ fun AppNavigation() {
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     appFlowViewModel.setPendingExportAction(target)
                 },
-                onRescan = {
-                    homeViewModel.setShouldAutoStartScanner(true)
-                    homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
-                    homeViewModel.clearRecoverableSession()
-                    navController.navigateResettingToHome(AppNavigationContract.homeRoute)
+                onNavigateToScanner = { reason ->
+                    when (reason) {
+                        ScannerNavigationReason.RESCAN,
+                        ScannerNavigationReason.SCAN_MORE,
+                        ScannerNavigationReason.DELETE_LAST_PAGE -> {
+                            homeViewModel.setShouldAutoStartScanner(true)
+                            homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                            homeViewModel.clearRecoverableSession()
+                            navController.navigateResettingToHome(AppNavigationContract.homeRoute)
+                        }
+                    }
                 },
-                onDiscardSession = {
-                    homeViewModel.setShouldAutoStartScanner(false)
-                    homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
-                    homeViewModel.clearRecoverableSession()
-                    navController.navigateResettingToHome(AppNavigationContract.homeRoute)
+                onNavigateToHome = { reason ->
+                    when (reason) {
+                        HomeNavigationReason.DISCARD_SESSION -> {
+                            homeViewModel.setShouldAutoStartScanner(false)
+                            homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                            homeViewModel.clearRecoverableSession()
+                            navController.navigateResettingToHome(AppNavigationContract.homeRoute)
+                        }
+                    }
                 }
             )
         }

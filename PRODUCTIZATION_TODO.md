@@ -222,9 +222,9 @@
     - 目前 home/app flow 會在 prompt 允許後復原 latest recoverable session；若檔案不完整，會以可用檔案恢復並提示缺檔。
   - [x] 驗證部分檔案遺失時的 fallback。
     - restore flow 會以可用檔案恢復並提示缺檔；若可用資產不足以重建 session，則回傳 unavailable。
-- [~] 明確區分 `Rescan`、`Scan More`、`Discard Session` 三種動作。
+- [x] 明確區分 `Rescan`、`Scan More`、`Discard Session` 三種動作。
   - 驗收標準：使用者操作語意與實際行為一致，不再用模糊返回行為代替。
-  - [~] 定義三種動作的產品語意。
+  - [x] 定義三種動作的產品語意。
     - `Rescan` 會捨棄目前 review session 並回到 scanner flow。
     - `Discard Session` 會捨棄目前 review session 並回到 home/start screen，不會自動重啟 scanner。
     - `Scan More` 會保留目前頁面，並把下一次掃描結果 append 回同一個 session。

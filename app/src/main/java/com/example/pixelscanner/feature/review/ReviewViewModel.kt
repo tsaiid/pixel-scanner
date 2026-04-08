@@ -27,10 +27,12 @@ import com.example.pixelscanner.domain.ScanMoreUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.export.ui.ExportUiState
 import com.example.pixelscanner.feature.review.ui.ReviewPageUiMapper
+import com.example.pixelscanner.feature.review.ui.HomeNavigationReason
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
 import com.example.pixelscanner.feature.review.ui.ReviewStatusMessage
+import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -220,7 +222,9 @@ class ReviewViewModel(
             previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
             clearSessionState()
             viewModelScope.launch {
-                _effects.emit(ReviewUiEffect.NavigateBackToScanner)
+                _effects.emit(
+                    ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.DELETE_LAST_PAGE),
+                )
             }
             return
         }
@@ -246,7 +250,9 @@ class ReviewViewModel(
             updateUiState { currentState ->
                 currentState.copy(isAwaitingScanMoreResult = true)
             }
-            _effects.emit(ReviewUiEffect.NavigateBackToScanner)
+            _effects.emit(
+                ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.SCAN_MORE),
+            )
         }
     }
 
@@ -256,7 +262,9 @@ class ReviewViewModel(
             discardSessionUseCase(session)
             previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
             clearSessionState()
-            _effects.emit(ReviewUiEffect.NavigateBackToScanner)
+            _effects.emit(
+                ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.RESCAN),
+            )
         }
     }
 
@@ -266,7 +274,9 @@ class ReviewViewModel(
             discardSessionUseCase(session)
             previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
             clearSessionState()
-            _effects.emit(ReviewUiEffect.NavigateBackToHome)
+            _effects.emit(
+                ReviewUiEffect.NavigateToHome(HomeNavigationReason.DISCARD_SESSION),
+            )
         }
     }
 

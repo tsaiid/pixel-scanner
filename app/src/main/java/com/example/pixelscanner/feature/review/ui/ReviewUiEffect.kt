@@ -9,6 +9,16 @@ sealed interface ReviewUiEffect {
         val format: ExportFormat,
         val target: ExportPostActionTarget,
     ) : ReviewUiEffect
-    data object NavigateBackToScanner : ReviewUiEffect
-    data object NavigateBackToHome : ReviewUiEffect
+    data class NavigateToScanner(val reason: ScannerNavigationReason) : ReviewUiEffect
+    data class NavigateToHome(val reason: HomeNavigationReason) : ReviewUiEffect
+}
+
+enum class ScannerNavigationReason {
+    RESCAN,
+    SCAN_MORE,
+    DELETE_LAST_PAGE,
+}
+
+enum class HomeNavigationReason {
+    DISCARD_SESSION,
 }

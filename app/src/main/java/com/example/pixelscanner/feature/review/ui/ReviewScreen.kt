@@ -74,8 +74,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 fun ReviewScreen(
     viewModel: ReviewViewModel = viewModel(),
     onExportSuccess: (ExportFormat, ExportPostActionTarget) -> Unit,
-    onRescan: () -> Unit,
-    onDiscardSession: () -> Unit,
+    onNavigateToScanner: (ScannerNavigationReason) -> Unit,
+    onNavigateToHome: (HomeNavigationReason) -> Unit,
 ) {
     var showRescanConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showDiscardConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -97,8 +97,8 @@ fun ReviewScreen(
         viewModel.effects.collect { effect ->
             when (effect) {
                 is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format, effect.target)
-                is ReviewUiEffect.NavigateBackToScanner -> onRescan()
-                is ReviewUiEffect.NavigateBackToHome -> onDiscardSession()
+                is ReviewUiEffect.NavigateToScanner -> onNavigateToScanner(effect.reason)
+                is ReviewUiEffect.NavigateToHome -> onNavigateToHome(effect.reason)
                 is ReviewUiEffect.ShowDeletedPageUndo -> {
                     val result = snackbarHostState.showSnackbar(
                         message = context.getString(R.string.review_deleted_page_message),

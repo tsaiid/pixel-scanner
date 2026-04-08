@@ -30,8 +30,10 @@ import com.example.pixelscanner.domain.SessionIngestionRepository
 import com.example.pixelscanner.domain.SessionIngestionResult
 import com.example.pixelscanner.domain.SessionIngestionStatus
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
+import com.example.pixelscanner.feature.review.ui.HomeNavigationReason
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
+import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
 import com.example.pixelscanner.testing.FakeExportRepository
 import java.io.File
 import java.util.concurrent.CountDownLatch
@@ -114,7 +116,7 @@ class ReviewViewModelTest {
             shadowOf(Looper.getMainLooper()).idle()
 
             assertEquals(
-                ReviewUiEffect.NavigateBackToScanner,
+                ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.RESCAN),
                 withTimeout(1_000) { firstEffect.await() },
             )
             assertEquals(listOf(session.id), cleanupRepository.cleanedSessionIds)
@@ -152,7 +154,7 @@ class ReviewViewModelTest {
             shadowOf(Looper.getMainLooper()).idle()
 
             assertEquals(
-                ReviewUiEffect.NavigateBackToHome,
+                ReviewUiEffect.NavigateToHome(HomeNavigationReason.DISCARD_SESSION),
                 withTimeout(1_000) { firstEffect.await() },
             )
             assertEquals(listOf(session.id), cleanupRepository.cleanedSessionIds)
@@ -161,6 +163,79 @@ class ReviewViewModelTest {
             assertFalse(viewModel.uiState.value.hasPages)
             assertEquals(0, viewModel.uiState.value.currentPage)
             assertEquals(ExportFormat.IMAGE, viewModel.uiState.value.export.format)
+        } finally {
+            effectJob.cancel()
+        }
+    }
+
+    @Test
+    fun `request scan more marks append flow and emits navigate to scanner with scan more reason`() = runBlocking {
+        val viewModel = createViewModel()
+        val session = loadedSession(sessionId = "session_review_scan_more")
+
+        viewModel.setRestoredSession(session)
+
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
+
+        try {
+            viewModel.onEvent(ReviewUiEvent.RequestScanMore)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(
+                ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.SCAN_MORE),
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertTrue(viewModel.uiState.value.isAwaitingScanMoreResult)
+            assertEquals(session.pages.size, viewModel.uiState.value.pages.size)
+            assertEquals(session, viewModel.scanSession.value)
+        } finally {
+            effectJob.cancel()
+        }
+    }
+
+    @Test
+    fun `deleting the last page emits an explicit delete last page scanner navigation reason`() = runBlocking {
+        val cleanupRepository = RecordingPreviewCacheCleanupRepository()
+        val viewModel = createViewModel(previewCacheCleanupRepository = cleanupRepository)
+        val session = ScanSession(
+            id = "session_review_delete_last_page",
+            pages = listOf(
+                ScannedPage(
+                    id = "session_review_delete_last_page_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-0.jpg"),
+                ),
+            ),
+        )
+
+        viewModel.setRestoredSession(session)
+
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
+
+        try {
+            viewModel.onEvent(ReviewUiEvent.DeletePage(pageIndex = 0))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(
+                ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.DELETE_LAST_PAGE),
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertEquals(listOf(session.id), cleanupRepository.cleanedSessionIds)
+            assertNull(viewModel.scanSession.value)
+            assertTrue(viewModel.uiState.value.pages.isEmpty())
         } finally {
             effectJob.cancel()
         }
