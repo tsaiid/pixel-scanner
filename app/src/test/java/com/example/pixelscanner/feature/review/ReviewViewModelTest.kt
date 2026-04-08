@@ -67,6 +67,43 @@ class ReviewViewModelTest {
         assertEquals(ExportFormat.PDF, viewModel.uiState.value.export.format)
     }
 
+    @Test
+    fun `restores saveable state across configuration change style recreation`() {
+        val savedStateHandle = SavedStateHandle()
+        savedStateHandle[KEY_CURRENT_PAGE] = 1
+        savedStateHandle[KEY_EXPORT_FORMAT] = ExportFormat.PDF.name
+        savedStateHandle[KEY_IS_AWAITING_SCAN_MORE_RESULT] = true
+
+        val firstViewModel = createViewModel(savedStateHandle = savedStateHandle)
+
+        val recreatedViewModel = createViewModel(savedStateHandle = savedStateHandle)
+
+        assertEquals(1, recreatedViewModel.uiState.value.currentPage)
+        assertEquals(ExportFormat.PDF, recreatedViewModel.uiState.value.export.format)
+        assertTrue(recreatedViewModel.uiState.value.isAwaitingScanMoreResult)
+        assertEquals(firstViewModel.uiState.value.currentPage, recreatedViewModel.uiState.value.currentPage)
+    }
+
+    @Test
+    fun `restores saveable state from a snapshot after process death style recreation`() {
+        val savedStateHandle = SavedStateHandle()
+        savedStateHandle[KEY_CURRENT_PAGE] = 1
+        savedStateHandle[KEY_EXPORT_FORMAT] = ExportFormat.PDF.name
+        savedStateHandle[KEY_IS_AWAITING_SCAN_MORE_RESULT] = true
+
+        val firstViewModel = createViewModel(savedStateHandle = savedStateHandle)
+        val snapshot = savedStateHandle.keys().associateWith { key ->
+            savedStateHandle.get<Any?>(key)
+        }
+        val restoredViewModel = createViewModel(
+            savedStateHandle = SavedStateHandle(snapshot),
+        )
+
+        assertEquals(firstViewModel.uiState.value.currentPage, restoredViewModel.uiState.value.currentPage)
+        assertEquals(ExportFormat.PDF, restoredViewModel.uiState.value.export.format)
+        assertTrue(restoredViewModel.uiState.value.isAwaitingScanMoreResult)
+    }
+
     private fun createViewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         previewCacheCleanupRepository: RecordingPreviewCacheCleanupRepository = RecordingPreviewCacheCleanupRepository(),
@@ -143,3 +180,7 @@ class ReviewViewModelTest {
         ): File = File(context.cacheDir, "review-test-$pageIndex.jpg")
     }
 }
+
+private const val KEY_CURRENT_PAGE = "review_current_page"
+private const val KEY_EXPORT_FORMAT = "review_export_format"
+private const val KEY_IS_AWAITING_SCAN_MORE_RESULT = "review_is_awaiting_scan_more_result"
