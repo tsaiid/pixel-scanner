@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.domain.RecoverableSessionSnapshot
 import com.example.pixelscanner.feature.home.ui.HomeUiState
-import com.example.pixelscanner.feature.home.ui.RecoverableSessionUiState
+import com.example.pixelscanner.feature.home.ui.RecoverableSessionUiMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,7 +40,7 @@ class HomeViewModel(
 
     fun setRecoverableSession(recoverableSession: RecoverableSessionSnapshot?) {
         _uiState.value = _uiState.value.copy(
-            recoverableSession = recoverableSession?.toUiState(),
+            recoverableSession = recoverableSession?.let(RecoverableSessionUiMapper::map),
         )
     }
 
@@ -68,12 +68,3 @@ class HomeViewModelFactory(
 internal const val KEY_SHOULD_AUTO_START_SCANNER = "home_should_auto_start_scanner"
 internal const val KEY_SHOULD_ATTEMPT_RECOVERABLE_SESSION_RESTORE =
     "home_should_attempt_recoverable_session_restore"
-
-private fun RecoverableSessionSnapshot.toUiState(): RecoverableSessionUiState {
-    return RecoverableSessionUiState(
-        sessionId = metadata.sessionId,
-        pageCount = metadata.pageCount,
-        hasMissingAssets = isPartial,
-        missingAssetCount = missingPageFileNames.size + if (missingOriginalPdf) 1 else 0,
-    )
-}

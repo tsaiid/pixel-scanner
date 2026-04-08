@@ -26,7 +26,7 @@ import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.export.ui.ExportUiState
-import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
+import com.example.pixelscanner.feature.review.ui.ReviewPageUiMapper
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
@@ -355,7 +355,7 @@ class ReviewViewModel(
     private fun applySessionUpdate(session: ScanSession) {
         _scanSession.value = session
         updateUiState { currentState ->
-            val activePages = session.activePages().map { it.toUiModel() }
+            val activePages = session.activePages().map(ReviewPageUiMapper::map)
             val lastIndex = (activePages.size - 1).coerceAtLeast(0)
             val currentPage = currentState.currentPage.coerceIn(0, lastIndex)
             savedStateHandle[KEY_CURRENT_PAGE] = currentPage
@@ -393,15 +393,6 @@ class ReviewViewModel(
         enhancementJobs.values.forEach { job -> job.cancel() }
         enhancementJobs.clear()
     }
-}
-
-private fun ScannedPage.toUiModel(): ReviewPageUiModel {
-    return ReviewPageUiModel(
-        id = id,
-        displayUri = displayUri(),
-        isEnhanced = isEnhanced(),
-        processingState = processingState,
-    )
 }
 
 private const val KEY_CURRENT_PAGE = "review_current_page"

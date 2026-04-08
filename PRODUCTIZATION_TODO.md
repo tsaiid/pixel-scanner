@@ -98,8 +98,10 @@
   - [x] 設計 `ExportRequest` 與 `ExportResult`。
   - [x] 設計頁級 `ProcessingState`。
   - [x] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
-  - [~] 定義 domain model 與 UI model 的映射方式。
-    - 已落地 review 畫面的 `ScannedPage -> ReviewPageUiModel` 映射；其餘首頁 / export flow 尚待補齊。
+  - [x] 定義 domain model 與 UI model 的映射方式。
+    - review 與 home flow 已改為明確 mapper helper：`ScannedPage -> ReviewPageUiModel`、`RecoverableSessionSnapshot -> RecoverableSessionUiState`。
+    - export flow 目前以 `ExportUiState` 直接包裝 `ExportFormat` / `ExportState`，不另外引入獨立 mapper。
+    - 已補 mapper 單元測試覆蓋 review 與 home 的 domain-to-UI 轉換。
 - [x] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
   - 建議 use cases：`CreateSessionFromScanResultUseCase`, `LoadScanSessionUseCase`, `ToggleEnhancementUseCase`, `DeletePageUseCase`, `RestorePageUseCase`, `ExportSessionUseCase`, `DiscardSessionUseCase`, `ResumeSessionUseCase`。
   - 驗收標準：ViewModel 僅負責 state reduction、event handling、effect emission。
