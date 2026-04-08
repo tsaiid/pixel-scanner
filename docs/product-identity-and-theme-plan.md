@@ -1,6 +1,6 @@
 # Product Identity and Theme Plan
 
-This note closes the Phase 6 identity/theme planning slice. It defines the v1 visual direction without replacing the current theme implementation yet.
+This note closes the Phase 6 identity/theme planning slice and matches the implemented brand-first theme policy.
 
 ## Brand Direction
 

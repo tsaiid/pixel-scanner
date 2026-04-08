@@ -499,11 +499,13 @@
   - [x] 定義 icon style。
   - [x] 將 token 映射到 Material 3 theme。
     - 參考文件：[`docs/product-identity-and-theme-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/product-identity-and-theme-plan.md)
-- [ ] 決定 dynamic color 策略。
+- [x] 決定 dynamic color 策略。
   - 驗收標準：明確定義哪些畫面跟隨系統色，哪些畫面使用品牌色。
-  - [ ] 列出所有畫面與對應色彩策略。
-  - [ ] 記錄決策理由。
-  - [ ] 驗證深淺色模式一致性。
+  - [x] 列出所有畫面與對應色彩策略。
+    - 目前 Home、Scanner、Review、Export complete 全部使用品牌色；不使用 Android dynamic color。
+  - [x] 記錄決策理由。
+    - 參考文件：[`docs/dynamic-color-policy.md`](/Users/tsaiid/git/pixel-scanner/docs/dynamic-color-policy.md)
+  - [x] 驗證深淺色模式一致性。
 - [ ] 建立 design tokens。
   - 類型：color, spacing, radius, elevation, typography, motion。
   - 驗收標準：畫面不再直接硬編碼大量顏色與尺寸。

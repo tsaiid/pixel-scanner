@@ -8,13 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.pixelscanner.app.AppNavigation
+import com.example.pixelscanner.ui.theme.PixelScannerColorPolicy
 import com.example.pixelscanner.ui.theme.PixelScannerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            PixelScannerTheme {
+            PixelScannerTheme(colorPolicy = PixelScannerColorPolicy.BrandFirst) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
