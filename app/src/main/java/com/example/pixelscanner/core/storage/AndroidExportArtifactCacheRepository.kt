@@ -22,9 +22,11 @@ class AndroidExportArtifactCacheRepository : ExportArtifactCacheRepository {
         sourceUri: Uri,
     ): File {
         val file = pdfArtifactFile(context, request)
-        file.parentFile?.mkdirs()
-        copyUriToFile(context, sourceUri, file)
-        return file
+        return storeArtifactAtomically(
+            context = context,
+            sourceUri = sourceUri,
+            finalFile = file,
+        )
     }
 
     override fun getCachedImageArtifacts(
@@ -43,9 +45,11 @@ class AndroidExportArtifactCacheRepository : ExportArtifactCacheRepository {
         sourceUri: Uri,
     ): File {
         val file = imageArtifactFile(context, request, pageIndex)
-        file.parentFile?.mkdirs()
-        copyUriToFile(context, sourceUri, file)
-        return file
+        return storeArtifactAtomically(
+            context = context,
+            sourceUri = sourceUri,
+            finalFile = file,
+        )
     }
 
     private fun pdfArtifactFile(
@@ -79,5 +83,33 @@ class AndroidExportArtifactCacheRepository : ExportArtifactCacheRepository {
                 inputStream.copyTo(outputStream)
             }
         } ?: throw IllegalArgumentException("Could not open source URI: $sourceUri")
+    }
+
+    private fun storeArtifactAtomically(
+        context: Context,
+        sourceUri: Uri,
+        finalFile: File,
+    ): File {
+        finalFile.parentFile?.mkdirs()
+        val tempFile = finalFile.tempFile()
+        tempFile.delete()
+        try {
+            copyUriToFile(context, sourceUri, tempFile)
+            if (finalFile.exists() && !finalFile.delete()) {
+                throw IllegalStateException("Failed to replace existing artifact: ${finalFile.name}")
+            }
+            if (!tempFile.renameTo(finalFile)) {
+                tempFile.copyTo(finalFile, overwrite = true)
+                tempFile.delete()
+            }
+            return finalFile
+        } catch (e: Exception) {
+            tempFile.delete()
+            throw e
+        }
+    }
+
+    private fun File.tempFile(): File {
+        return File(parentFile, "$name.tmp")
     }
 }
