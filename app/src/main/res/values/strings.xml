@@ -1,8 +1,24 @@
 <resources>
     <string name="app_name">Pixel Scanner</string>
+    <string name="start_logo_content_description">App Logo</string>
+    <string name="start_tagline">Document Scanner</string>
+    <string name="start_primary_action">Start Scanning</string>
+    <string name="start_recover_session_title">Recover unfinished scan?</string>
+    <string name="start_recover_session_missing_assets_message">Some files are missing, but we can still recover what is available.</string>
+    <string name="start_recover_session_message">We found an unfinished scan with %1$d pages.</string>
+    <string name="start_recover_session_restore_action">Restore</string>
+    <string name="start_recover_session_discard_action">Discard</string>
     <string name="review_action_scan_more">Scan More</string>
     <string name="review_action_rescan">Rescan</string>
     <string name="review_action_discard_session">Discard Session</string>
+    <string name="review_deleted_page_message">Page deleted</string>
+    <string name="review_deleted_page_undo_action">Undo</string>
+    <string name="review_screen_title">Review</string>
+    <string name="review_screen_page_counter">(%1$d/%2$d)</string>
+    <string name="review_enhance_content_description">Enhance</string>
+    <string name="review_delete_page_content_description">Delete Page</string>
+    <string name="review_scanned_page_content_description">Scanned Page %1$d</string>
+    <string name="review_empty_state_message">No images to review</string>
     <string name="review_rescan_confirm_title">Rescan and discard current pages?</string>
     <string name="review_rescan_confirm_message">This will discard the current session and restart scanning from scratch.</string>
     <string name="review_rescan_confirm_action">Rescan</string>

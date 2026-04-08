@@ -716,7 +716,8 @@
 - [x] 為 export 建立 success / failure result model。
 - [x] 定義 `session dirty` 規則。
 - [x] 設計 review 新版 wireframe 與互動流程。
-- [ ] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
+- [x] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
+  - 受影響檔案：`app/src/main/java/com/example/pixelscanner/feature/review/ui/ReviewScreen.kt`, `app/src/main/java/com/example/pixelscanner/feature/home/ui/StartScreen.kt`, `app/src/main/res/values/strings.xml`
 - [ ] 為增強流程加入頁級 processing state。
 - [x] 建立單頁與多頁效能基線測試樣本。
   - 參考文件：[`docs/performance-baseline-measurement-and-samples.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-measurement-and-samples.md)

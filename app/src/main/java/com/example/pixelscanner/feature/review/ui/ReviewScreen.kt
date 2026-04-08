@@ -100,8 +100,8 @@ fun ReviewScreen(
                 is ReviewUiEffect.NavigateBackToHome -> onDiscardSession()
                 is ReviewUiEffect.ShowDeletedPageUndo -> {
                     val result = snackbarHostState.showSnackbar(
-                        message = "Page deleted",
-                        actionLabel = "Undo",
+                        message = context.getString(R.string.review_deleted_page_message),
+                        actionLabel = context.getString(R.string.review_deleted_page_undo_action),
                         duration = SnackbarDuration.Short
                     )
                     if (result == SnackbarResult.ActionPerformed) {
@@ -195,12 +195,16 @@ fun ReviewScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Review",
+                        text = stringResource(id = R.string.review_screen_title),
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "(${uiState.currentPage + 1}/${uiState.pages.size})",
+                        text = stringResource(
+                            id = R.string.review_screen_page_counter,
+                            uiState.currentPage + 1,
+                            uiState.pages.size
+                        ),
                         color = Color.LightGray,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 4.dp)
@@ -231,13 +235,13 @@ fun ReviewScreen(
                                     color = Color.White,
                                     strokeWidth = 2.dp
                                 )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = "Enhance",
-                                    tint = if (uiState.selectedPage?.isEnhanced == true) Color.Yellow else Color.White
-                                )
-                            }
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = stringResource(id = R.string.review_enhance_content_description),
+                                        tint = if (uiState.selectedPage?.isEnhanced == true) Color.Yellow else Color.White
+                                    )
+                                }
                         }
 
                         Spacer(modifier = Modifier.width(32.dp))
@@ -254,7 +258,7 @@ fun ReviewScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete Page",
+                                contentDescription = stringResource(id = R.string.review_delete_page_content_description),
                                 tint = Color.Red
                             )
                         }
@@ -276,7 +280,10 @@ fun ReviewScreen(
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 AsyncImage(
                                     model = page.displayUri,
-                                    contentDescription = "Scanned Page $pageIndex",
+                                    contentDescription = stringResource(
+                                        id = R.string.review_scanned_page_content_description,
+                                        pageIndex
+                                    ),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Fit
                                 )
@@ -291,7 +298,11 @@ fun ReviewScreen(
                         }
                     }
                 } else {
-                    Text("No images to review", color = Color.White, modifier = Modifier.align(Alignment.Center))
+                    Text(
+                        stringResource(id = R.string.review_empty_state_message),
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
             }
         }

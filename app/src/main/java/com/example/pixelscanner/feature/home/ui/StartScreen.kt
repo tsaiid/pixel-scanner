@@ -75,7 +75,7 @@ fun StartScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.mipmap.ic_launcher_foreground),
-                    contentDescription = "App Logo",
+                    contentDescription = stringResource(id = R.string.start_logo_content_description),
                     modifier = Modifier
                         .size(280.dp) // Increased from 192dp
                         .scale(scale)
@@ -88,7 +88,7 @@ fun StartScreen(
                     color = Color.White
                 )
                 Text(
-                    text = "Document Scanner",
+                    text = stringResource(id = R.string.start_tagline),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White.copy(alpha = 0.7f)
                 )
@@ -100,15 +100,15 @@ fun StartScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = 32.dp, vertical = 48.dp)
-                    .fillMaxWidth()
-                    .height(56.dp),
+                .fillMaxWidth()
+                .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = brandPurple
                 )
             ) {
                 Text(
-                    text = "Start Scanning",
+                    text = stringResource(id = R.string.start_primary_action),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -119,12 +119,15 @@ fun StartScreen(
     if (recoverableSession != null) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("Recover unfinished scan?") },
+            title = { Text(stringResource(id = R.string.start_recover_session_title)) },
             text = {
                 val statusLine = if (recoverableSession.hasMissingAssets) {
-                    "Some files are missing, but we can still recover what is available."
+                    stringResource(id = R.string.start_recover_session_missing_assets_message)
                 } else {
-                    "We found an unfinished scan with ${recoverableSession.pageCount} pages."
+                    stringResource(
+                        id = R.string.start_recover_session_message,
+                        recoverableSession.pageCount
+                    )
                 }
                 Text(statusLine)
             },
@@ -132,14 +135,14 @@ fun StartScreen(
                 TextButton(
                     onClick = { onRestoreRecoverableSession(recoverableSession.sessionId) }
                 ) {
-                    Text("Restore")
+                    Text(stringResource(id = R.string.start_recover_session_restore_action))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { onDiscardRecoverableSession(recoverableSession.sessionId) }
                 ) {
-                    Text("Discard")
+                    Text(stringResource(id = R.string.start_recover_session_discard_action))
                 }
             },
         )
