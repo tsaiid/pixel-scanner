@@ -473,12 +473,14 @@
   - [x] 定義整體匯出失敗狀態。
   - [x] 定義部分頁失敗狀態。
     - 參考文件：[`docs/review-empty-error-state-design.md`](/Users/tsaiid/git/pixel-scanner/docs/review-empty-error-state-design.md)
-- [ ] 補齊 accessibility。
+- [x] 補齊 accessibility。
   - 驗收標準：content description、可聚焦順序、色彩對比與觸控目標符合基本標準。
-  - [ ] 為所有 icon button 加上語意。
-  - [ ] 驗證主要觸控目標至少達建議尺寸。
-  - [ ] 驗證文字與背景對比。
-  - [ ] 驗證 TalkBack 流程。
+  - [x] 為所有 icon button 加上語意。
+  - [x] 驗證主要觸控目標至少達建議尺寸。
+  - [x] 驗證文字與背景對比。
+  - [x] 驗證 TalkBack 流程。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewAccessibilityContrastTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewAccessibilityContrastTest.kt)
 
 ## Phase 6: Start Flow And Product Identity
 

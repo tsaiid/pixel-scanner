@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
@@ -59,6 +60,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -218,7 +221,8 @@ fun ReviewScreen(
                     Text(
                         text = stringResource(id = R.string.review_screen_title),
                         color = Color.White,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.semantics { heading() }
                     )
                     Text(
                         text = stringResource(
@@ -262,7 +266,8 @@ fun ReviewScreen(
                                     )
                                 )
                             },
-                            enabled = selectedPage?.processingState != ProcessingState.PROCESSING
+                            enabled = selectedPage?.processingState != ProcessingState.PROCESSING,
+                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                         ) {
                             if (selectedPage?.processingState == ProcessingState.PROCESSING) {
                                 CircularProgressIndicator(
@@ -286,6 +291,7 @@ fun ReviewScreen(
                         IconButton(
                             onClick = { viewModel.onEvent(MovePageLeft) },
                             enabled = uiState.currentPage > 0 && !uiState.export.isExporting && !uiState.isProcessing,
+                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowLeft,
@@ -300,6 +306,7 @@ fun ReviewScreen(
                                 uiState.currentPage < uiState.pages.lastIndex &&
                                 !uiState.export.isExporting &&
                                 !uiState.isProcessing,
+                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowRight,
@@ -318,7 +325,8 @@ fun ReviewScreen(
                                 if (pageToDelete != null) {
                                     viewModel.onEvent(DeletePage(indexToDelete))
                                 }
-                            }
+                            },
+                            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
@@ -471,6 +479,7 @@ private fun ReviewThumbnailStrip(
             text = stringResource(id = R.string.review_thumbnail_strip_title),
             color = Color.LightGray,
             style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.semantics { heading() },
         )
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
