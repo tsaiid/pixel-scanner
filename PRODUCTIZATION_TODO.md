@@ -358,7 +358,7 @@
   - [x] 加入 JPEG 壓縮品質設定。
   - [x] 測試檔案大小與畫質 tradeoff。
     - 參考文件：[`docs/pdf-output-sizing-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/pdf-output-sizing-strategy.md)
-- [ ] 將 JPEG 與 PDF 匯出都改為可回報逐步進度。
+- [x] 將 JPEG 與 PDF 匯出都改為可回報逐步進度。
   - 驗收標準：多頁匯出時 UI 可顯示進度而非只有全域 loading。
   - [x] 設計 progress model。
     - `ExportProgress` 已區分 overall 與 page-level progress，並接入 `ExportState.InProgress`。
