@@ -531,12 +531,12 @@
 
 ## Phase 7: State, Errors, And User Feedback
 
-- [ ] 建立統一的 loading / error / success feedback pattern。
+- [x] 建立統一的 loading / error / success feedback pattern。
   - 驗收標準：不再依賴 scattered toast，改用 snackbar、banner、dialog 或 inline status。
-  - [ ] 定義全域 feedback pattern 規範。
-  - [ ] 定義哪些情境用 snackbar。
-  - [ ] 定義哪些情境用 dialog。
-  - [ ] 定義哪些情境用 inline status。
+  - [x] 定義全域 feedback pattern 規範。
+  - [x] 定義哪些情境用 snackbar。
+  - [x] 定義哪些情境用 dialog。
+  - [x] 定義哪些情境用 inline status。
 - [ ] 導入 effect channel。
   - 驗收標準：一次性事件如 toast、navigation、share sheet 不混在 persistent state 裡。
   - [ ] 定義 effect 類型。

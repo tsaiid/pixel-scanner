@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.ContextWrapper
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ScanResultPayload
+import com.example.pixelscanner.core.model.UiText
+import com.example.pixelscanner.core.model.uiTextResource
 import com.example.pixelscanner.feature.home.ui.StartScreen
 import com.example.pixelscanner.feature.home.ui.HomeUiState
 import com.example.pixelscanner.feature.scanner.ScannerManager
@@ -34,6 +35,7 @@ fun ScannerScreen(
     homeUiState: HomeUiState = HomeUiState(),
     onScanResult: (ScanResultPayload) -> Unit,
     onScanCancelled: () -> Unit = {},
+    onFeedbackMessage: (UiText) -> Unit = {},
     onRestoreRecoverableSession: (String) -> Unit = {},
     onDiscardRecoverableSession: (String) -> Unit = {},
 ) {
@@ -75,28 +77,18 @@ fun ScannerScreen(
                     }
                     .addOnFailureListener { error ->
                         error.printStackTrace()
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.scanner_start_error, error.message ?: ""),
-                            Toast.LENGTH_LONG
-                        ).show()
+                        onFeedbackMessage(
+                            uiTextResource(R.string.scanner_start_error, error.message ?: ""),
+                        )
                         onScanCancelled()
                     }
             } else {
-                Toast.makeText(
-                    context,
-                    R.string.scanner_activity_not_found,
-                    Toast.LENGTH_SHORT,
-                ).show()
+                onFeedbackMessage(uiTextResource(R.string.scanner_activity_not_found))
                 onScanCancelled()
             }
         } catch (error: Exception) {
             error.printStackTrace()
-            Toast.makeText(
-                context,
-                context.getString(R.string.scanner_crash, error.message ?: ""),
-                Toast.LENGTH_LONG,
-            ).show()
+            onFeedbackMessage(uiTextResource(R.string.scanner_crash, error.message ?: ""))
             onScanCancelled()
         }
     }

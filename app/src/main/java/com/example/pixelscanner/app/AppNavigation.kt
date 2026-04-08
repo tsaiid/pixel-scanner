@@ -3,16 +3,23 @@ package com.example.pixelscanner.app
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
-import android.widget.Toast
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -25,6 +32,9 @@ import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportPostActionTarget
+import com.example.pixelscanner.core.model.UiText
+import com.example.pixelscanner.core.model.asString
+import com.example.pixelscanner.core.model.uiTextResource
 import com.example.pixelscanner.PixelScannerApp
 import com.example.pixelscanner.domain.RestoreSessionOutcome
 import com.example.pixelscanner.feature.review.ui.HomeNavigationReason
@@ -43,6 +53,7 @@ fun AppNavigation() {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val appContainer = (context.applicationContext as PixelScannerApp).appContainer
     val appFlowViewModel: AppFlowViewModel = viewModel(
         factory = AppFlowViewModelFactory(owner = context as SavedStateRegistryOwner),
@@ -61,6 +72,11 @@ fun AppNavigation() {
     val appFlowUiState by appFlowViewModel.uiState.collectAsState()
     val homeUiState by homeViewModel.uiState.collectAsState()
     val reviewUiState by reviewViewModel.uiState.collectAsState()
+    val showSnackbarMessage: (UiText) -> Unit = { message ->
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar(message.asString(context))
+        }
+    }
 
     LaunchedEffect(homeUiState.shouldAttemptRecoverableSessionRestore, homeUiState.shouldAutoStartScanner) {
         if (!homeUiState.shouldAttemptRecoverableSessionRestore || homeUiState.shouldAutoStartScanner) {
@@ -76,101 +92,105 @@ fun AppNavigation() {
         homeViewModel.setRecoverableSession(recoverableSession)
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = AppNavigationContract.homeRoute,
-    ) {
-        composable(AppNavigationContract.homeRoute) {
-            ScannerScreen(
-                homeUiState = homeUiState,
-                onScanResult = { scanResult ->
-                    reviewViewModel.setScanResult(scanResult)
-                    navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
-                },
-                onScanCancelled = {
-                    homeViewModel.setShouldAutoStartScanner(false)
-                    if (reviewUiState.isAwaitingScanMoreResult) {
-                        reviewViewModel.clearScanMorePending()
-                        navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
-                    }
-                },
-                onRestoreRecoverableSession = { sessionId ->
-                    coroutineScope.launch {
-                        val outcome = runCatching { restoreSessionUseCase(sessionId) }.getOrElse { error ->
-                            error.printStackTrace()
-                            RestoreSessionOutcome.Unavailable
-                        }
-                        homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
-                        homeViewModel.clearRecoverableSession()
-                        when (outcome) {
-                            is RestoreSessionOutcome.Restored -> {
-                                reviewViewModel.setRestoredSession(outcome.result.session)
-                                if (outcome.result.isPartial) {
-                                    Toast.makeText(
-                                        context,
-                                        R.string.restore_session_partial_success_toast,
-                                        Toast.LENGTH_LONG,
-                                    ).show()
-                                }
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            NavHost(
+                navController = navController,
+                startDestination = AppNavigationContract.homeRoute,
+            ) {
+                composable(AppNavigationContract.homeRoute) {
+                    ScannerScreen(
+                        homeUiState = homeUiState,
+                        onScanResult = { scanResult ->
+                            reviewViewModel.setScanResult(scanResult)
+                            navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
+                        },
+                        onScanCancelled = {
+                            homeViewModel.setShouldAutoStartScanner(false)
+                            if (reviewUiState.isAwaitingScanMoreResult) {
+                                reviewViewModel.clearScanMorePending()
                                 navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
                             }
+                        },
+                        onFeedbackMessage = showSnackbarMessage,
+                        onRestoreRecoverableSession = { sessionId ->
+                            coroutineScope.launch {
+                                val outcome = runCatching { restoreSessionUseCase(sessionId) }.getOrElse { error ->
+                                    error.printStackTrace()
+                                    RestoreSessionOutcome.Unavailable
+                                }
+                                homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                                homeViewModel.clearRecoverableSession()
+                                when (outcome) {
+                                    is RestoreSessionOutcome.Restored -> {
+                                        reviewViewModel.setRestoredSession(outcome.result.session)
+                                        if (outcome.result.isPartial) {
+                                            showSnackbarMessage(
+                                                uiTextResource(R.string.restore_session_partial_success_toast),
+                                            )
+                                        }
+                                        navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
+                                    }
 
-                            RestoreSessionOutcome.Unavailable -> {
-                                Toast.makeText(
-                                    context,
-                                    R.string.restore_session_unavailable_toast,
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                    RestoreSessionOutcome.Unavailable -> {
+                                        showSnackbarMessage(
+                                            uiTextResource(R.string.restore_session_unavailable_toast),
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        onDiscardRecoverableSession = { sessionId ->
+                            coroutineScope.launch {
+                                runCatching { discardRecoverableSessionUseCase(sessionId) }
+                                    .onFailure { error -> error.printStackTrace() }
+                                homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                                homeViewModel.clearRecoverableSession()
                             }
                         }
-                    }
-                },
-                onDiscardRecoverableSession = { sessionId ->
-                    coroutineScope.launch {
-                        runCatching { discardRecoverableSessionUseCase(sessionId) }
-                            .onFailure { error -> error.printStackTrace() }
-                        homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
-                        homeViewModel.clearRecoverableSession()
-                    }
-                },
-            )
-        }
-
-        composable(AppNavigationContract.reviewRoute) {
-            ReviewScreen(
-                viewModel = reviewViewModel,
-                onExportSuccess = { format, target ->
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    val message = if (format == ExportFormat.PDF) {
-                        R.string.export_saved_pdf_toast
-                    } else {
-                        R.string.export_saved_gallery_toast
-                    }
-                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                    appFlowViewModel.setPendingExportAction(target)
-                },
-                onNavigateToScanner = { reason ->
-                    when (reason) {
-                        ScannerNavigationReason.RESCAN,
-                        ScannerNavigationReason.SCAN_MORE -> {
-                            homeViewModel.setShouldAutoStartScanner(true)
-                            homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
-                            homeViewModel.clearRecoverableSession()
-                            navController.navigateResettingToHome(AppNavigationContract.homeRoute)
-                        }
-                    }
-                },
-                onNavigateToHome = { reason ->
-                    when (reason) {
-                        HomeNavigationReason.DISCARD_SESSION -> {
-                            homeViewModel.setShouldAutoStartScanner(false)
-                            homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
-                            homeViewModel.clearRecoverableSession()
-                            navController.navigateResettingToHome(AppNavigationContract.homeRoute)
-                        }
-                    }
+                    )
                 }
-            )
+
+                composable(AppNavigationContract.reviewRoute) {
+                    ReviewScreen(
+                        viewModel = reviewViewModel,
+                        onExportSuccess = { format, target ->
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            showSnackbarMessage(
+                                if (format == ExportFormat.PDF) {
+                                    uiTextResource(R.string.export_saved_pdf_toast)
+                                } else {
+                                    uiTextResource(R.string.export_saved_gallery_toast)
+                                },
+                            )
+                            appFlowViewModel.setPendingExportAction(target)
+                        },
+                        onNavigateToScanner = { reason ->
+                            when (reason) {
+                                ScannerNavigationReason.RESCAN,
+                                ScannerNavigationReason.SCAN_MORE -> {
+                                    homeViewModel.setShouldAutoStartScanner(true)
+                                    homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                                    homeViewModel.clearRecoverableSession()
+                                    navController.navigateResettingToHome(AppNavigationContract.homeRoute)
+                                }
+                            }
+                        },
+                        onNavigateToHome = { reason ->
+                            when (reason) {
+                                HomeNavigationReason.DISCARD_SESSION -> {
+                                    homeViewModel.setShouldAutoStartScanner(false)
+                                    homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                                    homeViewModel.clearRecoverableSession()
+                                    navController.navigateResettingToHome(AppNavigationContract.homeRoute)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 
@@ -194,7 +214,7 @@ fun AppNavigation() {
             confirmButton = {
                 TextButton(
                     onClick = {
-                        context.openExportTarget(action.toTarget())
+                        context.openExportTarget(action.toTarget(), showSnackbarMessage)
                         appFlowViewModel.clearPendingExportAction()
                     }
                 ) {
@@ -204,7 +224,7 @@ fun AppNavigation() {
             dismissButton = {
                 TextButton(
                     onClick = {
-                        context.shareExportTarget(action.toTarget())
+                        context.shareExportTarget(action.toTarget(), showSnackbarMessage)
                         appFlowViewModel.clearPendingExportAction()
                     }
                 ) {
@@ -224,7 +244,10 @@ private fun NavHostController.navigateResettingToHome(route: String) {
     }
 }
 
-private fun Context.openExportTarget(target: ExportPostActionTarget) {
+private fun Context.openExportTarget(
+    target: ExportPostActionTarget,
+    onErrorMessage: (UiText) -> Unit,
+) {
     val primaryUri = target.primaryUri ?: return
     val intent = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(primaryUri, target.mimeType)
@@ -234,15 +257,14 @@ private fun Context.openExportTarget(target: ExportPostActionTarget) {
     runCatching {
         startActivity(Intent.createChooser(intent, getString(R.string.export_post_action_open)))
     }.onFailure {
-        Toast.makeText(
-            this,
-            getString(R.string.export_post_action_open_failed),
-            Toast.LENGTH_SHORT,
-        ).show()
+        onErrorMessage(uiTextResource(R.string.export_post_action_open_failed))
     }
 }
 
-private fun Context.shareExportTarget(target: ExportPostActionTarget) {
+private fun Context.shareExportTarget(
+    target: ExportPostActionTarget,
+    onErrorMessage: (UiText) -> Unit,
+) {
     val primaryUri = target.primaryUri ?: return
     val intent = if (target.outputUris.size == 1) {
         Intent(Intent.ACTION_SEND).apply {
@@ -262,10 +284,6 @@ private fun Context.shareExportTarget(target: ExportPostActionTarget) {
     runCatching {
         startActivity(Intent.createChooser(intent, getString(R.string.export_post_action_share)))
     }.onFailure {
-        Toast.makeText(
-            this,
-            getString(R.string.export_post_action_share_failed),
-            Toast.LENGTH_SHORT,
-        ).show()
+        onErrorMessage(uiTextResource(R.string.export_post_action_share_failed))
     }
 }
