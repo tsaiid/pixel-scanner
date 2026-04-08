@@ -32,6 +32,15 @@ class StorageManager(
 ) {
 
     suspend fun copyPdfToDocuments(sourceUri: Uri, fileName: String): ExportOperationResult = withContext(Dispatchers.IO) {
+        val resolvedFileName = resolveAvailableDisplayName(
+            collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            } else {
+                MediaStore.Files.getContentUri("external")
+            },
+            requestedFileName = fileName,
+            relativePath = Environment.DIRECTORY_DOCUMENTS + "/PixelScanner",
+        )
         when (preflightSharedStorage(
             requiredBytes = estimateBytesForSource(sourceUri),
         )) {
@@ -44,7 +53,7 @@ class StorageManager(
         }
         copyUriToMediaStore(
             sourceUri = sourceUri,
-            fileName = fileName,
+            fileName = resolvedFileName,
             mimeType = "application/pdf",
             relativePath = Environment.DIRECTORY_DOCUMENTS + "/PixelScanner",
             collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -56,6 +65,11 @@ class StorageManager(
     }
 
     suspend fun saveUriToGallery(sourceUri: Uri, fileName: String): ExportOperationResult = withContext(Dispatchers.IO) {
+        val resolvedFileName = resolveAvailableDisplayName(
+            collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            requestedFileName = fileName,
+            relativePath = Environment.DIRECTORY_PICTURES + "/PixelScanner",
+        )
         when (preflightSharedStorage(
             requiredBytes = estimateBytesForSource(sourceUri),
         )) {
@@ -68,7 +82,7 @@ class StorageManager(
         }
         copyUriToMediaStore(
             sourceUri = sourceUri,
-            fileName = fileName,
+            fileName = resolvedFileName,
             mimeType = "image/jpeg",
             relativePath = Environment.DIRECTORY_PICTURES + "/PixelScanner",
             collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -76,6 +90,15 @@ class StorageManager(
     }
 
     suspend fun saveUrisToPdf(sourceUris: List<Uri>, fileName: String): ExportOperationResult = withContext(Dispatchers.IO) {
+        val resolvedFileName = resolveAvailableDisplayName(
+            collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            } else {
+                MediaStore.Files.getContentUri("external")
+            },
+            requestedFileName = fileName,
+            relativePath = Environment.DIRECTORY_DOCUMENTS + "/PixelScanner",
+        )
         when (preflightSharedStorage(
             requiredBytes = estimateBytesForSources(sourceUris),
         )) {
@@ -129,7 +152,7 @@ class StorageManager(
         }
 
         val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            put(MediaStore.MediaColumns.DISPLAY_NAME, resolvedFileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/PixelScanner")
@@ -149,7 +172,7 @@ class StorageManager(
             pdfDocument.close()
             return@withContext ExportOperationResult.Failure(
                 ExportWriteFailure(
-                    destinationName = fileName,
+                    destinationName = resolvedFileName,
                     details = "Failed to create PDF destination",
                 ),
             )
@@ -160,7 +183,7 @@ class StorageManager(
                 pdfDocument.writeTo(outputStream)
             } ?: return@withContext ExportOperationResult.Failure(
                 ExportWriteFailure(
-                    destinationName = fileName,
+                    destinationName = resolvedFileName,
                     details = "Failed to open PDF destination for writing",
                 ),
             )
@@ -327,5 +350,61 @@ class StorageManager(
 
     private fun estimateBytesForSources(sourceUris: List<Uri>): Long {
         return ContentUriSizeEstimator.estimateBytes(context, sourceUris)
+    }
+
+    private fun resolveAvailableDisplayName(
+        collection: Uri,
+        requestedFileName: String,
+        relativePath: String,
+    ): String {
+        var candidate = requestedFileName
+        var suffixIndex = 1
+        while (mediaStoreFileExists(
+                collection = collection,
+                fileName = candidate,
+                relativePath = relativePath,
+            )
+        ) {
+            candidate = appendDuplicateSuffix(requestedFileName, suffixIndex++)
+        }
+        return candidate
+    }
+
+    private fun mediaStoreFileExists(
+        collection: Uri,
+        fileName: String,
+        relativePath: String,
+    ): Boolean {
+        val selection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            "${MediaStore.MediaColumns.DISPLAY_NAME}=? AND ${MediaStore.MediaColumns.RELATIVE_PATH}=?"
+        } else {
+            "${MediaStore.MediaColumns.DISPLAY_NAME}=?"
+        }
+        val selectionArgs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(fileName, relativePath)
+        } else {
+            arrayOf(fileName)
+        }
+
+        return context.contentResolver.query(
+            collection,
+            arrayOf(MediaStore.MediaColumns._ID),
+            selection,
+            selectionArgs,
+            null,
+        )?.use { cursor ->
+            cursor.moveToFirst()
+        } == true
+    }
+
+    private fun appendDuplicateSuffix(fileName: String, suffixIndex: Int): String {
+        val extensionIndex = fileName.lastIndexOf('.')
+        return if (extensionIndex > 0) {
+            val baseName = fileName.substring(0, extensionIndex)
+            val extension = fileName.substring(extensionIndex)
+            "$baseName ($suffixIndex)$extension"
+        } else {
+            "$fileName ($suffixIndex)"
+        }
     }
 }
