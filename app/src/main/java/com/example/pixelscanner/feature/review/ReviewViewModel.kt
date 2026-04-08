@@ -218,16 +218,6 @@ class ReviewViewModel(
         val session = _scanSession.value ?: return
         val result = deletePageUseCase(session, index) ?: return
         applySessionUpdate(result.updatedSession)
-        if (result.updatedSession.activePages().isEmpty()) {
-            previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
-            clearSessionState()
-            viewModelScope.launch {
-                _effects.emit(
-                    ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.DELETE_LAST_PAGE),
-                )
-            }
-            return
-        }
         viewModelScope.launch {
             _effects.emit(ReviewUiEffect.ShowDeletedPageUndo(result.deletedPage.id))
         }

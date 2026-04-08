@@ -16,7 +16,6 @@ sealed interface ReviewUiEffect {
 enum class ScannerNavigationReason {
     RESCAN,
     SCAN_MORE,
-    DELETE_LAST_PAGE,
 }
 
 enum class HomeNavigationReason {

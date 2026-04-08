@@ -152,8 +152,7 @@ fun AppNavigation() {
                 onNavigateToScanner = { reason ->
                     when (reason) {
                         ScannerNavigationReason.RESCAN,
-                        ScannerNavigationReason.SCAN_MORE,
-                        ScannerNavigationReason.DELETE_LAST_PAGE -> {
+                        ScannerNavigationReason.SCAN_MORE -> {
                             homeViewModel.setShouldAutoStartScanner(true)
                             homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
                             homeViewModel.clearRecoverableSession()

@@ -47,6 +47,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -201,9 +202,8 @@ class ReviewViewModelTest {
     }
 
     @Test
-    fun `deleting the last page emits an explicit delete last page scanner navigation reason`() = runBlocking {
-        val cleanupRepository = RecordingPreviewCacheCleanupRepository()
-        val viewModel = createViewModel(previewCacheCleanupRepository = cleanupRepository)
+    fun `deleting the last page keeps the review session available for undo`() = runBlocking {
+        val viewModel = createViewModel()
         val session = ScanSession(
             id = "session_review_delete_last_page",
             pages = listOf(
@@ -230,12 +230,20 @@ class ReviewViewModelTest {
             shadowOf(Looper.getMainLooper()).idle()
 
             assertEquals(
-                ReviewUiEffect.NavigateToScanner(ScannerNavigationReason.DELETE_LAST_PAGE),
+                ReviewUiEffect.ShowDeletedPageUndo(session.pages.single().id),
                 withTimeout(1_000) { firstEffect.await() },
             )
-            assertEquals(listOf(session.id), cleanupRepository.cleanedSessionIds)
-            assertNull(viewModel.scanSession.value)
+            assertNotNull(viewModel.scanSession.value)
             assertTrue(viewModel.uiState.value.pages.isEmpty())
+            assertFalse(viewModel.uiState.value.hasPages)
+            assertEquals(0, viewModel.uiState.value.currentPage)
+
+            viewModel.onEvent(ReviewUiEvent.RestorePage(pageId = session.pages.single().id))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertTrue(viewModel.uiState.value.hasPages)
+            assertEquals(1, viewModel.uiState.value.pages.size)
+            assertEquals(session.pages.single().id, viewModel.uiState.value.selectedPage?.id)
         } finally {
             effectJob.cancel()
         }
