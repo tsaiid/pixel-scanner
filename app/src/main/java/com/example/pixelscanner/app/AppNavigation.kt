@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
@@ -31,6 +32,7 @@ import com.example.pixelscanner.PixelScannerApp
 import com.example.pixelscanner.domain.RestoreSessionOutcome
 import com.example.pixelscanner.feature.home.HomeViewModel
 import com.example.pixelscanner.feature.review.ReviewViewModel
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestScanMore
 import com.example.pixelscanner.feature.review.ui.ReviewScreen
 import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
 import kotlinx.coroutines.launch
@@ -165,7 +167,19 @@ fun AppNavigation() {
         AlertDialog(
             onDismissRequest = { pendingExportAction = null },
             title = { Text(text = context.getString(R.string.export_post_action_title)) },
-            text = { Text(text = context.getString(R.string.export_post_action_message)) },
+            text = {
+                Column {
+                    Text(text = context.getString(R.string.export_post_action_message))
+                    TextButton(
+                        onClick = {
+                            pendingExportAction = null
+                            reviewViewModel.onEvent(RequestScanMore)
+                        }
+                    ) {
+                        Text(text = context.getString(R.string.export_post_action_continue))
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {

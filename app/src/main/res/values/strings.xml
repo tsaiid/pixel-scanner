@@ -12,6 +12,7 @@
     <string name="review_cancel_action">Cancel</string>
     <string name="export_post_action_title">Export saved</string>
     <string name="export_post_action_message">Open or share the exported file now?</string>
+    <string name="export_post_action_continue">Continue Scanning</string>
     <string name="export_post_action_open">Open</string>
     <string name="export_post_action_share">Share</string>
     <string name="export_post_action_open_failed">Unable to open the exported file.</string>
