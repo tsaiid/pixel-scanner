@@ -11,6 +11,7 @@ import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
+import com.example.pixelscanner.feature.home.HomeViewModelFactory
 import com.example.pixelscanner.feature.review.ReviewViewModelFactory
 
 class AppContainer {
@@ -37,5 +38,9 @@ class AppContainer {
             exportSessionUseCase = exportSessionUseCase,
             owner = owner,
         )
+    }
+
+    fun createHomeViewModelFactory(owner: SavedStateRegistryOwner): HomeViewModelFactory {
+        return HomeViewModelFactory(owner = owner)
     }
 }
