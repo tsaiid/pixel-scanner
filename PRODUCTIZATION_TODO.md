@@ -61,7 +61,7 @@
   - [x] 列出明確不做的功能。
   - [x] 為爭議項建立決策清單，例如 OCR、同步、歷史紀錄、增量 PDF 重組。
     - 參考文件：[`docs/product-scope-v1.md`](/Users/tsaiid/git/pixel-scanner/docs/product-scope-v1.md)
-- [~] 建立性能與穩定性基線。
+- [!] 建立性能與穩定性基線。
   - 驗收標準：記錄冷啟動、首次掃描、session ingestion、單頁增強、多頁 PDF 匯出的耗時與記憶體占用。
   - [x] 定義量測場景與裝置條件。
   - [x] 準備單頁 / 多頁 / 大圖 / 長文件測試樣本。
@@ -71,6 +71,8 @@
   - [ ] 記錄單頁增強耗時。
   - [ ] 記錄多頁 PDF 匯出耗時。
   - [ ] 記錄記憶體峰值與可能的 OOM 風險。
+  - [!] 目前阻塞：缺少可重複執行的 benchmark / instrumentation runner、實機量測裝置、以及已收斂的樣本資產執行流程。
+    - 參考文件：[`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)
 - [x] 建立產品化關鍵 ADR。
   - 驗收標準：session ingestion、export decision tree、背景匯出策略、preview/export 雙 pipeline 有正式決策文件。
   - [x] 撰寫 session ownership ADR。
