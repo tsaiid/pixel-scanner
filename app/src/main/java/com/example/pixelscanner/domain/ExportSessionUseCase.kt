@@ -9,7 +9,10 @@ import com.example.pixelscanner.core.model.ExportFailure
 import com.example.pixelscanner.core.model.ExportInsufficientSpaceFailure
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportImagePipelineResult
+import com.example.pixelscanner.core.model.ExportOverallProgress
 import com.example.pixelscanner.core.model.ExportOperationResult
+import com.example.pixelscanner.core.model.ExportPageProgress
+import com.example.pixelscanner.core.model.ExportProgress
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
 import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
@@ -27,6 +30,7 @@ class ExportSessionUseCase(
         session: ScanSession,
         request: ExportRequest,
         context: Context,
+        onProgress: (ExportProgress) -> Unit = {},
     ): ExportResult {
         val pagesToExport = session.activePages()
         if (pagesToExport.isEmpty()) {
@@ -46,6 +50,14 @@ class ExportSessionUseCase(
 
         return when (request.format) {
             ExportFormat.PDF -> {
+                onProgress(
+                    ExportProgress(
+                        overall = ExportOverallProgress(
+                            completed = 0,
+                            total = 1,
+                        ),
+                    ),
+                )
                 val cachedArtifact = exportArtifactCacheRepository.getCachedPdfArtifact(
                     context = context,
                     request = pipelineRequest,
@@ -106,6 +118,14 @@ class ExportSessionUseCase(
                         sourceUri = pipelineResult.outputUri,
                     )
                 }
+                onProgress(
+                    ExportProgress(
+                        overall = ExportOverallProgress(
+                            completed = 1,
+                            total = 1,
+                        ),
+                    ),
+                )
 
                 when (outputResult) {
                     is ExportOperationResult.Success -> ExportResult.Success(pipelineResult.outputUri)
@@ -120,9 +140,18 @@ class ExportSessionUseCase(
                     pageCount = urisToSave.size,
                 )
                 val sourceUrisForExport = cachedArtifacts?.map(Uri::fromFile) ?: urisToSave
+                val totalPages = sourceUrisForExport.size
+                onProgress(
+                    ExportProgress(
+                        overall = ExportOverallProgress(
+                            completed = 0,
+                            total = totalPages,
+                        ),
+                    ),
+                )
 
                 val results = sourceUrisForExport.mapIndexed { index, uri ->
-                    when (val exportResult = exportRepository.saveUriToGallery(
+                    val exportResult = when (val result = exportRepository.saveUriToGallery(
                         context = context,
                         sourceUri = uri,
                         fileName = "PixelScanner_${timestamp}_$index.jpg",
@@ -132,13 +161,26 @@ class ExportSessionUseCase(
                                 context = context,
                                 request = pipelineRequest,
                                 pageIndex = index,
-                                sourceUri = exportResult.outputUri,
+                                sourceUri = result.outputUri,
                             )
-                            exportResult
+                            result
                         }
 
-                        is ExportOperationResult.Failure -> exportResult
+                        is ExportOperationResult.Failure -> result
                     }
+                    onProgress(
+                        ExportProgress(
+                            overall = ExportOverallProgress(
+                                completed = index + 1,
+                                total = totalPages,
+                            ),
+                            page = ExportPageProgress(
+                                completed = index + 1,
+                                total = totalPages,
+                            ),
+                        ),
+                    )
+                    exportResult
                 }
 
                 val pipelineResult = ExportImagePipelineResult(

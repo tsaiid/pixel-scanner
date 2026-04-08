@@ -6,8 +6,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
+import com.example.pixelscanner.core.model.ExportOverallProgress
 import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ExportProgress
 import com.example.pixelscanner.core.model.toPostActionTarget
 import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
@@ -272,14 +274,38 @@ class ReviewViewModel(
                 sessionId = session.id,
                 format = _uiState.value.export.format,
             )
+            val totalSteps = when (request.format) {
+                ExportFormat.IMAGE -> session.activePages().size
+                ExportFormat.PDF -> 1
+            }
             updateUiState { currentState ->
-                currentState.copy(export = currentState.export.copy(state = ExportState.InProgress))
+                currentState.copy(
+                    export = currentState.export.copy(
+                        state = ExportState.InProgress(
+                            progress = ExportProgress(
+                                overall = ExportOverallProgress(
+                                    completed = 0,
+                                    total = totalSteps,
+                                ),
+                            ),
+                        ),
+                    ),
+                )
             }
             try {
                 val result = exportSessionUseCase(
                     session = session,
                     request = request,
                     context = context,
+                    onProgress = { progress ->
+                        updateUiState { currentState ->
+                            currentState.copy(
+                                export = currentState.export.copy(
+                                    state = ExportState.InProgress(progress),
+                                ),
+                            )
+                        }
+                    },
                 )
                 exportResult = result
 

@@ -333,9 +333,12 @@
   - [ ] 測試檔案大小與畫質 tradeoff。
 - [ ] 將 JPEG 與 PDF 匯出都改為可回報逐步進度。
   - 驗收標準：多頁匯出時 UI 可顯示進度而非只有全域 loading。
-  - [ ] 設計 progress model。
-  - [ ] 匯出頁級進度回報。
-  - [ ] UI 呈現 overall progress。
+  - [x] 設計 progress model。
+    - `ExportProgress` 已區分 overall 與 page-level progress，並接入 `ExportState.InProgress`。
+  - [x] 匯出頁級進度回報。
+    - image export 會在每頁完成後回報 page progress 與 overall progress。
+  - [x] UI 呈現 overall progress。
+    - export 按鈕會顯示目前進度數字，而不是只有通用 loading 文案。
   - [ ] 失敗時保留已完成頁面的處理資訊。
 - [ ] 為大型匯出建立背景執行策略。
   - 驗收標準：長時間 PDF 匯出在 app 進入背景時仍能穩定執行，且不把短任務複雜化。

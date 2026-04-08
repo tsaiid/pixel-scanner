@@ -23,7 +23,15 @@ fun ExportSaveButton(
         enabled = !exportState.isExporting,
         modifier = modifier,
     ) {
-        Text(if (exportState.isExporting) "Saving..." else "Save All")
+        Text(
+            when {
+                exportState.isExporting -> {
+                    exportState.progressText ?: "Saving..."
+                }
+
+                else -> "Save All"
+            }
+        )
     }
 }
 

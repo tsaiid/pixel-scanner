@@ -10,6 +10,9 @@ data class ExportUiState(
     val isExporting: Boolean
         get() = state is ExportState.InProgress
 
+    val progressText: String?
+        get() = (state as? ExportState.InProgress)?.progress?.displayLabel()
+
     val lastResult: ExportState.Finished?
         get() = state as? ExportState.Finished
 }

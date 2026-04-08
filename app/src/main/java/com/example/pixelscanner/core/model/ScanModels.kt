@@ -199,7 +199,9 @@ data class ExportRequest(
 
 sealed interface ExportState {
     data object Idle : ExportState
-    data object InProgress : ExportState
+    data class InProgress(
+        val progress: ExportProgress = ExportProgress(),
+    ) : ExportState
     data class Finished(val result: ExportResult) : ExportState
 }
 
