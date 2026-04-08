@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
+import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.ExportResult
 import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
@@ -59,6 +60,7 @@ class ReviewViewModel(
                 format = savedStateHandle.get<String>(KEY_EXPORT_FORMAT)
                     ?.let(ExportFormat::valueOf)
                     ?: ExportFormat.IMAGE,
+                state = ExportState.Idle,
             ),
             isAwaitingScanMoreResult = savedStateHandle.get<Boolean>(
                 KEY_IS_AWAITING_SCAN_MORE_RESULT,
@@ -256,12 +258,13 @@ class ReviewViewModel(
     private fun saveAll(context: Context) {
         viewModelScope.launch {
             val session = _scanSession.value ?: return@launch
+            var exportResult: ExportResult? = null
             val request = ExportRequest(
                 sessionId = session.id,
                 format = _uiState.value.export.format,
             )
             updateUiState { currentState ->
-                currentState.copy(export = currentState.export.copy(isExporting = true))
+                currentState.copy(export = currentState.export.copy(state = ExportState.InProgress))
             }
             try {
                 val result = exportSessionUseCase(
@@ -269,10 +272,20 @@ class ReviewViewModel(
                     request = request,
                     context = context,
                 )
+                exportResult = result
 
                 when (result) {
                     is ExportResult.Success -> {
                         _effects.emit(ReviewUiEffect.ExportSucceeded(request.format))
+                    }
+
+                    is ExportResult.PartialSuccess -> {
+                        _effects.emit(
+                            ReviewUiEffect.ShowMessage(
+                                result.warningMessage
+                                    ?: "Export completed with some skipped items"
+                            )
+                        )
                     }
 
                     is ExportResult.Failure -> {
@@ -282,10 +295,18 @@ class ReviewViewModel(
                             )
                         )
                     }
+
+                    ExportResult.Cancelled -> {
+                        _effects.emit(ReviewUiEffect.ShowMessage("Export cancelled"))
+                    }
                 }
             } finally {
                 updateUiState { currentState ->
-                    currentState.copy(export = currentState.export.copy(isExporting = false))
+                    currentState.copy(
+                        export = currentState.export.copy(
+                            state = exportResult?.let(ExportState::Finished) ?: ExportState.Idle,
+                        ),
+                    )
                 }
             }
         }
@@ -313,6 +334,9 @@ class ReviewViewModel(
         clearScanMorePending()
         _uiState.value = ReviewUiState(
             isAwaitingScanMoreResult = false,
+            export = ExportUiState(
+                state = ExportState.Idle,
+            ),
         )
     }
 

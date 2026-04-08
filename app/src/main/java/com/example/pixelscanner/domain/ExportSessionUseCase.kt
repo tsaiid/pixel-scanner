@@ -131,10 +131,22 @@ class ExportSessionUseCase(
                     reusedOriginalPdf = false,
                 )
 
-                if (savedUris.all { it != null }) {
-                    ExportResult.Success(pipelineResult.outputUri)
-                } else {
-                    ExportResult.Failure("Failed to export one or more images")
+                val successfulUris = savedUris.filterNotNull()
+                when {
+                    successfulUris.isEmpty() -> {
+                        ExportResult.Failure("Failed to export one or more images")
+                    }
+
+                    successfulUris.size == savedUris.size -> {
+                        ExportResult.Success(successfulUris.firstOrNull())
+                    }
+
+                    else -> {
+                        ExportResult.PartialSuccess(
+                            outputUris = successfulUris,
+                            warningMessage = "Exported ${successfulUris.size}/${savedUris.size} images",
+                        )
+                    }
                 }
             }
         }

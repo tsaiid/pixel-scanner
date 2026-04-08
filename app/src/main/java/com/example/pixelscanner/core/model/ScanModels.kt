@@ -197,6 +197,12 @@ data class ExportRequest(
     val format: ExportFormat,
 )
 
+sealed interface ExportState {
+    data object Idle : ExportState
+    data object InProgress : ExportState
+    data class Finished(val result: ExportResult) : ExportState
+}
+
 sealed interface ExportDecision {
     data object ReuseOriginalPdf : ExportDecision
     data object RebuildPdfFromEnhancedPages : ExportDecision
@@ -215,9 +221,14 @@ fun ExportRequest.resolveDecision(session: ScanSession): ExportDecision {
     }
 }
 
-sealed class ExportResult {
-    data class Success(val outputUri: Uri?) : ExportResult()
-    data class Failure(val errorMessage: String? = null) : ExportResult()
+sealed interface ExportResult {
+    data class Success(val outputUri: Uri?) : ExportResult
+    data class PartialSuccess(
+        val outputUris: List<Uri>,
+        val warningMessage: String? = null,
+    ) : ExportResult
+    data class Failure(val errorMessage: String? = null) : ExportResult
+    data object Cancelled : ExportResult
 }
 
 enum class ExportFormat {
