@@ -13,6 +13,22 @@ import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
 import kotlin.math.min
 
+internal fun calculateBackgroundDimensions(
+    originalWidth: Int,
+    originalHeight: Int,
+    scaleFactor: Int,
+): Pair<Int, Int> {
+    require(scaleFactor > 0) { "scaleFactor must be positive" }
+    require(originalWidth > 0 && originalHeight > 0) {
+        "Decoded bitmap must have positive dimensions"
+    }
+
+    val backgroundWidth = (originalWidth / scaleFactor).coerceIn(1, originalWidth)
+    val backgroundHeight = (originalHeight / scaleFactor).coerceIn(1, originalHeight)
+
+    return backgroundWidth to backgroundHeight
+}
+
 class ImageEnhancer {
     private val previewCacheRepository: PreviewImageCacheRepository =
         AndroidPreviewImageCacheRepository()
@@ -95,14 +111,10 @@ class ImageEnhancer {
         originalBitmap: Bitmap,
         scaleFactor: Int,
     ): Pair<Int, Int> {
-        require(scaleFactor > 0) { "scaleFactor must be positive" }
-        require(originalBitmap.width > 0 && originalBitmap.height > 0) {
-            "Decoded bitmap must have positive dimensions"
-        }
-
-        val backgroundWidth = (originalBitmap.width / scaleFactor).coerceIn(1, originalBitmap.width)
-        val backgroundHeight = (originalBitmap.height / scaleFactor).coerceIn(1, originalBitmap.height)
-
-        return backgroundWidth to backgroundHeight
+        return calculateBackgroundDimensions(
+            originalWidth = originalBitmap.width,
+            originalHeight = originalBitmap.height,
+            scaleFactor = scaleFactor,
+        )
     }
 }
