@@ -1,11 +1,20 @@
 package com.example.pixelscanner.app
 
+import android.content.ClipData
+import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -15,7 +24,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.SavedStateRegistryOwner
+import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.PixelScannerApp
 import com.example.pixelscanner.domain.RestoreSessionOutcome
 import com.example.pixelscanner.feature.home.HomeViewModel
@@ -23,6 +34,7 @@ import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewScreen
 import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
 import kotlinx.coroutines.launch
+import java.util.ArrayList
 
 @Composable
 fun AppNavigation() {
@@ -30,6 +42,7 @@ fun AppNavigation() {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
+    var pendingExportAction by remember { mutableStateOf<PendingExportAction?>(null) }
     val appContainer = (context.applicationContext as PixelScannerApp).appContainer
     val getRecoverableSessionUseCase = appContainer.getRecoverableSessionUseCase
     val restoreSessionUseCase = appContainer.restoreSessionUseCase
@@ -122,7 +135,7 @@ fun AppNavigation() {
         composable(AppNavigationContract.reviewRoute) {
             ReviewScreen(
                 viewModel = reviewViewModel,
-                onExportSuccess = { format ->
+                onExportSuccess = { format, target ->
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     val message = if (format == ExportFormat.PDF) {
                         "Saved as PDF to Documents"
@@ -130,6 +143,7 @@ fun AppNavigation() {
                         "Saved to Gallery"
                     }
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    pendingExportAction = PendingExportAction(target)
                 },
                 onRescan = {
                     homeViewModel.setShouldAutoStartScanner(true)
@@ -146,6 +160,34 @@ fun AppNavigation() {
             )
         }
     }
+
+    pendingExportAction?.let { action ->
+        AlertDialog(
+            onDismissRequest = { pendingExportAction = null },
+            title = { Text(text = context.getString(R.string.export_post_action_title)) },
+            text = { Text(text = context.getString(R.string.export_post_action_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        context.openExportTarget(action.target)
+                        pendingExportAction = null
+                    }
+                ) {
+                    Text(text = context.getString(R.string.export_post_action_open))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        context.shareExportTarget(action.target)
+                        pendingExportAction = null
+                    }
+                ) {
+                    Text(text = context.getString(R.string.export_post_action_share))
+                }
+            },
+        )
+    }
 }
 
 private fun NavHostController.navigateResettingToHome(route: String) {
@@ -154,5 +196,55 @@ private fun NavHostController.navigateResettingToHome(route: String) {
             inclusive = false
         }
         launchSingleTop = true
+    }
+}
+
+private data class PendingExportAction(
+    val target: ExportPostActionTarget,
+)
+
+private fun Context.openExportTarget(target: ExportPostActionTarget) {
+    val primaryUri = target.primaryUri ?: return
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(primaryUri, target.mimeType)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        clipData = ClipData.newUri(contentResolver, "export", primaryUri)
+    }
+    runCatching {
+        startActivity(Intent.createChooser(intent, getString(R.string.export_post_action_open)))
+    }.onFailure {
+        Toast.makeText(
+            this,
+            getString(R.string.export_post_action_open_failed),
+            Toast.LENGTH_SHORT,
+        ).show()
+    }
+}
+
+private fun Context.shareExportTarget(target: ExportPostActionTarget) {
+    val primaryUri = target.primaryUri ?: return
+    val intent = if (target.outputUris.size == 1) {
+        Intent(Intent.ACTION_SEND).apply {
+            type = target.mimeType
+            putExtra(Intent.EXTRA_STREAM, primaryUri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            clipData = ClipData.newUri(contentResolver, "export", primaryUri)
+        }
+    } else {
+        Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+            type = target.mimeType
+            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(target.outputUris))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            clipData = ClipData.newUri(contentResolver, "export", primaryUri)
+        }
+    }
+    runCatching {
+        startActivity(Intent.createChooser(intent, getString(R.string.export_post_action_share)))
+    }.onFailure {
+        Toast.makeText(
+            this,
+            getString(R.string.export_post_action_share_failed),
+            Toast.LENGTH_SHORT,
+        ).show()
     }
 }

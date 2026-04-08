@@ -53,6 +53,7 @@ import coil.compose.AsyncImage
 import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ProcessingState
+import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
 import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
@@ -71,7 +72,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun ReviewScreen(
     viewModel: ReviewViewModel = viewModel(),
-    onExportSuccess: (ExportFormat) -> Unit,
+    onExportSuccess: (ExportFormat, ExportPostActionTarget) -> Unit,
     onRescan: () -> Unit,
     onDiscardSession: () -> Unit,
 ) {
@@ -92,9 +93,9 @@ fun ReviewScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel, snackbarHostState) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format)
+            viewModel.effects.collect { effect ->
+                when (effect) {
+                is ReviewUiEffect.ExportSucceeded -> onExportSuccess(effect.format, effect.target)
                 is ReviewUiEffect.NavigateBackToScanner -> onRescan()
                 is ReviewUiEffect.NavigateBackToHome -> onDiscardSession()
                 is ReviewUiEffect.ShowDeletedPageUndo -> {

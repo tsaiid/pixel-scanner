@@ -10,4 +10,10 @@
     <string name="review_discard_confirm_message">This will discard the current pages and return to the home screen.</string>
     <string name="review_discard_confirm_action">Discard</string>
     <string name="review_cancel_action">Cancel</string>
+    <string name="export_post_action_title">Export saved</string>
+    <string name="export_post_action_message">Open or share the exported file now?</string>
+    <string name="export_post_action_open">Open</string>
+    <string name="export_post_action_share">Share</string>
+    <string name="export_post_action_open_failed">Unable to open the exported file.</string>
+    <string name="export_post_action_share_failed">Unable to share the exported file.</string>
 </resources>

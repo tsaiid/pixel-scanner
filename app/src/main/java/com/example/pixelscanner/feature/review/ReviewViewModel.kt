@@ -8,6 +8,7 @@ import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.toPostActionTarget
 import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
@@ -276,10 +277,15 @@ class ReviewViewModel(
 
                 when (result) {
                     is ExportResult.Success -> {
-                        _effects.emit(ReviewUiEffect.ExportSucceeded(request.format))
+                        result.toPostActionTarget(request.format)?.let { target ->
+                            _effects.emit(ReviewUiEffect.ExportSucceeded(request.format, target))
+                        }
                     }
 
                     is ExportResult.PartialSuccess -> {
+                        result.toPostActionTarget(request.format)?.let { target ->
+                            _effects.emit(ReviewUiEffect.ExportSucceeded(request.format, target))
+                        }
                         _effects.emit(
                             ReviewUiEffect.ShowMessage(
                                 result.warningMessage

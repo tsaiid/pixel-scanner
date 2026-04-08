@@ -311,11 +311,12 @@
   - [x] 將 decision tree 寫入 `ExportRequest` 或等效策略物件。
   - [x] 驗證刪頁、排序、增強、旋轉後會走對應分支。
     - 目前以 `ExportRequestDecisionTest` 覆蓋 clean / enhanced / deleted / reordered / rotated / image 分支。
-- [x] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
+  - [x] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
   - 驗收標準：避免不必要的 PDF 重建與解碼成本，保留原 PDF 可能包含的文字層或其他 metadata。
   - [x] 定義 destination write 流程。
   - [x] 實作 fast-track copy path。
-  - [ ] 驗證結果檔可正常開啟與分享。
+  - [x] 驗證結果檔可正常開啟與分享。
+    - 匯出成功後會提示使用者開啟或分享輸出檔，並以 `ACTION_VIEW` / `ACTION_SEND`（多檔時為 `ACTION_SEND_MULTIPLE`）走實際 intent 路徑。
 - [ ] 評估刪頁 / 排序場景的增量 PDF 重組方案。
   - 驗收標準：先完成可研究、可比較、可決策，不預設採用特定庫。
   - [ ] 列出可行方案，例如重建 PDF、增量操作 PDF、延後到 v2。
@@ -352,7 +353,8 @@
   - 建議支援：開啟檔案、分享、回到首頁、繼續掃描。
   - 驗收標準：匯出成功後有明確 next step，而不只是 toast。
   - [ ] 設計 export success sheet 或 dialog。
-  - [ ] 加入 open/share action。
+  - [x] 加入 open/share action。
+    - 匯出成功後提供 open / share post-action dialog。
   - [ ] 加入 continue scanning action。
   - [ ] 驗證取消與返回後狀態。
 - [ ] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
