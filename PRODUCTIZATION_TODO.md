@@ -721,4 +721,5 @@
 - [ ] 為增強流程加入頁級 processing state。
 - [x] 建立單頁與多頁效能基線測試樣本。
   - 參考文件：[`docs/performance-baseline-measurement-and-samples.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-measurement-and-samples.md)
-- [ ] 建立第一批 ViewModel 與 use case 單元測試骨架。
+- [x] 建立第一批 ViewModel 與 use case 單元測試骨架。
+  - 相關測試：`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`, `app/src/test/java/com/example/pixelscanner/domain/CreateSessionFromScanResultUseCaseTest.kt`
