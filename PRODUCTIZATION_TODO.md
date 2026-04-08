@@ -352,7 +352,8 @@
     - `ExportFailure.retryability` 已區分 `RETRYABLE` 與 `NON_RETRYABLE`。
   - [x] 在掃描前與匯出前加入磁碟空間檢查。
     - eager ingestion 與 export path 會先估算需求空間，再以 shared storage / cacheDir 做 preflight，若不足則回傳 `ExportInsufficientSpaceFailure`。
-  - [ ] 為未完成匯出殘檔建立清理策略。
+  - [x] 為未完成匯出殘檔建立清理策略。
+    - export failure path 會刪除已建立的 destination row，且 preflight 會避免在空間不足時留下半成品。
 - [ ] 建立匯出後動作。
   - 建議支援：開啟檔案、分享、回到首頁、繼續掃描。
   - 驗收標準：匯出成功後有明確 next step，而不只是 toast。
