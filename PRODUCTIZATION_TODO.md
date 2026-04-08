@@ -194,7 +194,8 @@
 - [ ] 定義 session 清理策略。
   - 驗收標準：離開 review、匯出完成、App 重啟後能安全清理舊快取，不殘留大量暫存檔。
   - [ ] 定義 preview cache 何時清理。
-  - [ ] 定義 export temp files 何時清理。
+  - [x] 定義 export temp files 何時清理。
+    - app launch 時會清理 session export 目錄下遺留的 `.tmp` 檔案，不影響成功輸出的成品檔。
   - [x] 定義失敗 / 中斷 session 的保留時間。
     - 目前採 7 天保留，之後由 app launch 的 stale session cleanup 一併清理整個 session root。
   - [x] 定義 stale session cleanup 規則，例如時效或 LRU。

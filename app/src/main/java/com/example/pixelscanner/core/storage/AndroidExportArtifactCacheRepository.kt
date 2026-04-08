@@ -8,6 +8,16 @@ import java.io.File
 import java.io.FileOutputStream
 
 class AndroidExportArtifactCacheRepository : ExportArtifactCacheRepository {
+    override fun cleanStaleTempArtifacts(context: Context) {
+        val sessionsRoot = SessionStoragePaths.sessionsRoot(context.cacheDir)
+        val sessionDirs = sessionsRoot.listFiles()?.filter { it.isDirectory } ?: return
+
+        sessionDirs.forEach { sessionDir ->
+            val exportDir = File(sessionDir, "export")
+            exportDir.deleteTempFilesRecursively()
+        }
+    }
+
     override fun getCachedPdfArtifact(
         context: Context,
         request: ExportImagePipelineRequest,
@@ -111,5 +121,14 @@ class AndroidExportArtifactCacheRepository : ExportArtifactCacheRepository {
 
     private fun File.tempFile(): File {
         return File(parentFile, "$name.tmp")
+    }
+
+    private fun File.deleteTempFilesRecursively() {
+        if (!exists()) return
+        walkTopDown()
+            .filter { it.isFile && it.name.endsWith(".tmp") }
+            .forEach { tempFile ->
+                tempFile.delete()
+            }
     }
 }

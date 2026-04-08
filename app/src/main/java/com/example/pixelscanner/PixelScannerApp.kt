@@ -16,6 +16,7 @@ class PixelScannerApp : Application() {
         super.onCreate()
         appScope.launch {
             appContainer.sessionCleanupRepository.cleanStaleSessions()
+            appContainer.exportArtifactCacheRepository.cleanStaleTempArtifacts(applicationContext)
         }
     }
 

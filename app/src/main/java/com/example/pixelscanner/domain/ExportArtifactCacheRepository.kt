@@ -6,6 +6,8 @@ import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import java.io.File
 
 interface ExportArtifactCacheRepository {
+    fun cleanStaleTempArtifacts(context: Context)
+
     fun getCachedPdfArtifact(
         context: Context,
         request: ExportImagePipelineRequest,
