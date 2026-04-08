@@ -7,6 +7,8 @@ import android.net.Uri
 
 class PreviewBitmapDecodeHelper(
     private val maxDimension: Int = DEFAULT_MAX_PREVIEW_DIMENSION,
+    // Keep preview bitmaps in software memory because the preview pipeline
+    // reads and rewrites pixels on the CPU before caching the output.
     private val preferredConfig: Bitmap.Config = Bitmap.Config.RGB_565,
 ) {
     fun decode(context: Context, sourceUri: Uri): Bitmap {

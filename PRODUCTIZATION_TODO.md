@@ -245,7 +245,8 @@
   - [x] 加入 `inSampleSize` 計算。
   - [x] 決定預覽與匯出各自的 bitmap config。
     - 預覽目前使用 `Bitmap.Config.RGB_565`，匯出維持既有輸出路徑。
-  - [ ] 評估預覽是否使用 `Bitmap.Config.HARDWARE` 或其他低拷貝策略。
+  - [x] 評估預覽是否使用 `Bitmap.Config.HARDWARE` 或其他低拷貝策略。
+    - 現階段不採用 `Bitmap.Config.HARDWARE`；預覽 pipeline 需要 CPU pixel access 與重新寫回 cache，維持 software bitmap 才能避免額外 copy 與轉換成本。
   - [x] 為異常尺寸建立保護條件。
     - 預覽 decode 會先驗證 bounds，並以最大尺寸上限避免一次 full decode。
 - [ ] 修正背景估計演算法的極端尺寸邊界。
