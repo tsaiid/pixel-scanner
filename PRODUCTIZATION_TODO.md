@@ -431,11 +431,11 @@
   - [x] 決定 destructive action 是否需要二次確認。
     - `Rescan` 與 `Discard Session` 已使用 confirm dialog。
   - [ ] 驗證英文與中文文案長度。
-- [ ] 加入頁級 enhancement toggle 與狀態提示。
+- [~] 加入頁級 enhancement toggle 與狀態提示。
   - 驗收標準：使用者知道當前頁是原圖或增強圖，處理中有明確 feedback。
-  - [ ] 加入頁級狀態標示。
-  - [ ] 加入 enhancement 前後的明確 label。
-  - [ ] 加入處理中 spinner 或 inline progress。
+  - [x] 加入頁級狀態標示。
+  - [x] 加入 enhancement 前後的明確 label。
+  - [x] 加入處理中 spinner 或 inline progress。
   - [ ] 加入失敗提示與重試。
 - [ ] 規劃批量操作 UX。
   - 驗收標準：大文件流程可用，但不在基礎狀態機不穩定時提早上線複雜互動。

@@ -14,6 +14,9 @@
     <string name="review_thumbnail_selected_content_description">第 %1$d 頁，共 %2$d 頁，已選取</string>
     <string name="review_empty_state_message">沒有可檢視的影像</string>
     <string name="review_empty_session_message">所有頁面都已移除。請再掃描一些內容，或開始新的工作階段。</string>
+    <string name="review_page_status_original">原圖</string>
+    <string name="review_page_status_enhanced">已增強</string>
+    <string name="review_page_status_processing">處理中</string>
     <string name="review_rescan_confirm_title">捨棄目前頁面並重新掃描？</string>
     <string name="review_rescan_confirm_message">這會捨棄目前的工作階段，並從頭開始重新掃描。</string>
     <string name="review_rescan_confirm_action">捨棄並重新掃描</string>

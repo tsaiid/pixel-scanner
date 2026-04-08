@@ -28,14 +28,15 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -223,6 +224,11 @@ fun ReviewScreen(
                         color = Color.LightGray,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    ReviewPageStatusChip(
+                        page = selectedPage,
+                        modifier = Modifier.padding(top = 10.dp),
                     )
 
                     Row(
@@ -505,3 +511,75 @@ private fun ReviewThumbnailItem(
         }
     }
 }
+
+@Composable
+private fun ReviewPageStatusChip(
+    page: ReviewPageUiModel?,
+    modifier: Modifier = Modifier,
+) {
+    if (page == null) return
+
+    val statusStyle = when {
+        page.processingState == ProcessingState.PROCESSING -> {
+            ReviewPageStatusStyle(
+                labelRes = R.string.review_page_status_processing,
+                containerColor = Color(0xFF3A2B00),
+                contentColor = Color(0xFFFFE08A),
+                borderColor = Color(0xFFFFC94D),
+            )
+        }
+
+        page.isEnhanced -> {
+            ReviewPageStatusStyle(
+                labelRes = R.string.review_page_status_enhanced,
+                containerColor = Color(0xFF1E1735),
+                contentColor = Color(0xFFE0D2FF),
+                borderColor = Color(0xFF9B82FF),
+            )
+        }
+
+        else -> {
+            ReviewPageStatusStyle(
+                labelRes = R.string.review_page_status_original,
+                containerColor = Color(0xFF222222),
+                contentColor = Color(0xFFD0D0D0),
+                borderColor = Color(0xFF4A4A4A),
+            )
+        }
+    }
+
+    Surface(
+        color = statusStyle.containerColor,
+        contentColor = statusStyle.contentColor,
+        shape = RoundedCornerShape(999.dp),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, statusStyle.borderColor),
+        modifier = modifier.testTag("review_page_status"),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            if (page.processingState == ProcessingState.PROCESSING) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    color = statusStyle.contentColor,
+                    strokeWidth = 2.dp,
+                )
+            }
+            Text(
+                text = stringResource(id = statusStyle.labelRes),
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+    }
+}
+
+private data class ReviewPageStatusStyle(
+    val labelRes: Int,
+    val containerColor: Color,
+    val contentColor: Color,
+    val borderColor: Color,
+)
