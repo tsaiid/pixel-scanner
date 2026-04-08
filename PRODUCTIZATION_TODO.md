@@ -443,13 +443,15 @@
   - [x] 重設刪除最後一頁的行為。
   - [x] 決定空 session 時顯示空狀態或離開流程。
   - [x] 改善 snackbar undo 與 pager 同步問題。
-- [~] 重新命名與拆分掃描相關按鈕文案。
+- [x] 重新命名與拆分掃描相關按鈕文案。
   - 驗收標準：`Scan More`、`Discard & Rescan`、`Save as JPEG`、`Save as PDF` 等語意明確。
   - [x] 建立文案表。
     - review action strings 已集中在 `strings.xml`。
   - [x] 決定 destructive action 是否需要二次確認。
     - `Rescan` 與 `Discard Session` 已使用 confirm dialog。
-  - [ ] 驗證英文與中文文案長度。
+  - [x] 驗證英文與中文文案長度。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt)
 - [~] 加入頁級 enhancement toggle 與狀態提示。
   - 驗收標準：使用者知道當前頁是原圖或增強圖，處理中有明確 feedback。
   - [x] 加入頁級狀態標示。
