@@ -7,6 +7,7 @@ object SessionStoragePaths {
     private const val ORIGINAL_DIR = "original"
     private const val PREVIEW_DIR = "preview"
     private const val EXPORT_DIR = "export"
+    private const val METADATA_FILE = "metadata.json"
 
     fun sessionRoot(cacheDir: File, sessionId: String): File {
         return File(File(cacheDir, SESSIONS_DIR), sessionId)
@@ -18,6 +19,10 @@ object SessionStoragePaths {
 
     fun originalPdfFile(cacheDir: File, sessionId: String): File {
         return File(sessionRoot(cacheDir, sessionId), "original.pdf")
+    }
+
+    fun metadataFile(cacheDir: File, sessionId: String): File {
+        return File(sessionRoot(cacheDir, sessionId), METADATA_FILE)
     }
 
     fun previewPagesDir(cacheDir: File, sessionId: String): File {

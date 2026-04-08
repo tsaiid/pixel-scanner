@@ -5,6 +5,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.core.image.AndroidImageProcessingRepository
 import com.example.pixelscanner.core.storage.AndroidExportRepository
 import com.example.pixelscanner.core.storage.AndroidSessionIngestionRepository
+import com.example.pixelscanner.core.storage.AndroidSessionMetadataRepository
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
@@ -22,7 +23,11 @@ class AppContainer(
 ) {
     val imageProcessingRepository = AndroidImageProcessingRepository()
     val exportRepository = AndroidExportRepository()
-    val sessionIngestionRepository = AndroidSessionIngestionRepository(applicationContext)
+    val sessionMetadataRepository = AndroidSessionMetadataRepository(applicationContext)
+    val sessionIngestionRepository = AndroidSessionIngestionRepository(
+        context = applicationContext,
+        sessionMetadataRepository = sessionMetadataRepository,
+    )
     val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
     val eagerSessionIngestionUseCase = EagerSessionIngestionUseCase(sessionIngestionRepository)
     val toggleEnhancementUseCase = ToggleEnhancementUseCase(imageProcessingRepository)

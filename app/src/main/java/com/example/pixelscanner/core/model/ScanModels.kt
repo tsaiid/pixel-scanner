@@ -86,12 +86,15 @@ data class ScanSession(
 ) {
     fun activePages(): List<ScannedPage> = pages.filterNot { it.isDeleted }
 
-    fun toMetadata(createdAtEpochMillis: Long): ScanSessionMetadata {
+    fun toMetadata(
+        createdAtEpochMillis: Long,
+        hasOriginalPdf: Boolean = originalPdfUri != null,
+    ): ScanSessionMetadata {
         return ScanSessionMetadata(
             sessionId = id,
             createdAtEpochMillis = createdAtEpochMillis,
             pageCount = pages.size,
-            hasOriginalPdf = originalPdfUri != null,
+            hasOriginalPdf = hasOriginalPdf,
             dirtyFlags = dirtyFlags,
         )
     }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.domain.SessionMetadataRepository
 import com.example.pixelscanner.domain.SessionIngestionAssetType
 import com.example.pixelscanner.domain.SessionIngestionFailure
 import com.example.pixelscanner.domain.SessionIngestionMapping
@@ -16,6 +17,7 @@ import java.io.FileOutputStream
 
 class AndroidSessionIngestionRepository(
     private val context: Context,
+    private val sessionMetadataRepository: SessionMetadataRepository,
 ) : SessionIngestionRepository {
 
     override suspend fun ingest(
@@ -76,6 +78,17 @@ class AndroidSessionIngestionRepository(
             failures.isEmpty() -> SessionIngestionStatus.SUCCESS
             pageMappings.isEmpty() && originalPdfMapping == null -> SessionIngestionStatus.FAILURE
             else -> SessionIngestionStatus.PARTIAL_SUCCESS
+        }
+
+        val metadata = session.toMetadata(
+            createdAtEpochMillis = System.currentTimeMillis(),
+            hasOriginalPdf = originalPdfMapping != null,
+        )
+        runCatching {
+            sessionMetadataRepository.write(metadata)
+            sessionMetadataRepository.read(session.id)
+        }.onFailure { error ->
+            println("Session metadata warning: ${error.message}")
         }
 
         return SessionIngestionResult(

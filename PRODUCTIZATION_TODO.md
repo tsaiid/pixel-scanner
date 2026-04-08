@@ -187,8 +187,10 @@
   - [x] 定義 session id 生成規則。
   - [x] 定義 session metadata schema。
   - [x] 建立 session 目錄命名規則。
-  - [ ] 決定 metadata 存放格式，例如 JSON 或 Room。
-  - [ ] 實作 metadata 讀寫。
+  - [x] 決定 metadata 存放格式，例如 JSON 或 Room。
+    - 目前採 JSON，並寫入 `cacheDir/sessions/{sessionId}/metadata.json`。
+  - [x] 實作 metadata 讀寫。
+    - 已能將 `ScanSessionMetadata` 寫入與讀回 session 目錄。
 - [ ] 定義 session 清理策略。
   - 驗收標準：離開 review、匯出完成、App 重啟後能安全清理舊快取，不殘留大量暫存檔。
   - [ ] 定義 preview cache 何時清理。
