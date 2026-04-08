@@ -266,12 +266,13 @@
     - background size 計算會保證寬高至少為 1，且不會超過原始尺寸。
   - [x] 驗證超長圖與超寬圖。
   - [x] 驗證小尺寸輸入圖片。
-- [ ] 重新設計像素處理的記憶體策略。
+- [~] 重新設計像素處理的記憶體策略。
   - 建議方向：tile-based、row-based 或分段 buffer 處理。
   - 驗收標準：12MP 圖片處理過程的瞬時記憶體峰值顯著下降。
-  - [ ] 比較 tile-based 與 row-based 方案。
-  - [ ] 選定實作方案並記錄設計理由。
-  - [ ] 實作分段處理。
+  - [x] 比較 tile-based 與 row-based 方案。
+  - [x] 選定實作方案並記錄設計理由。
+    - 已採 row-based segmented processing，說明見 [`docs/image-enhancer-memory-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/image-enhancer-memory-strategy.md)。
+  - [x] 實作分段處理。
   - [ ] 加入記憶體量測點。
 - [ ] 建立增強結果快取索引。
   - 驗收標準：同頁面重複切換不重新運算，可命中快取。

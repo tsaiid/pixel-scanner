@@ -2,7 +2,6 @@ package com.example.pixelscanner.core.image
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.net.Uri
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineResult
@@ -12,6 +11,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
 import kotlin.math.min
+
+internal fun applyPreviewEnhancementToRow(
+    originalRowPixels: IntArray,
+    backgroundRowPixels: IntArray,
+    outputRowPixels: IntArray,
+) {
+    require(originalRowPixels.size == backgroundRowPixels.size) {
+        "Row buffers must have matching lengths"
+    }
+    require(outputRowPixels.size == originalRowPixels.size) {
+        "Row buffers must have matching lengths"
+    }
+
+    for (index in originalRowPixels.indices) {
+        val origColor = originalRowPixels[index]
+        val backColor = backgroundRowPixels[index]
+
+        val rNew = min(255, (red(origColor) * 255) / (red(backColor) + 1))
+        val gNew = min(255, (green(origColor) * 255) / (green(backColor) + 1))
+        val bNew = min(255, (blue(origColor) * 255) / (blue(backColor) + 1))
+
+        outputRowPixels[index] = rgb(rNew, gNew, bNew)
+    }
+}
 
 internal fun calculateBackgroundDimensions(
     originalWidth: Int,
@@ -71,40 +94,36 @@ class ImageEnhancer {
         val height = originalBitmap.height
         val outputBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
-        val originalPixels = IntArray(width * height)
-        val backgroundPixels = IntArray(width * height)
-        val outputPixels = IntArray(width * height)
+        val originalRowPixels = IntArray(width)
+        val backgroundRowPixels = IntArray(width)
+        val outputRowPixels = IntArray(width)
 
-        originalBitmap.getPixels(originalPixels, 0, width, 0, 0, width, height)
-        backgroundBitmap.getPixels(backgroundPixels, 0, width, 0, 0, width, height)
-        backgroundBitmap.recycle()
+        try {
+            for (rowIndex in 0 until height) {
+                originalBitmap.getPixels(originalRowPixels, 0, width, 0, rowIndex, width, 1)
+                backgroundBitmap.getPixels(backgroundRowPixels, 0, width, 0, rowIndex, width, 1)
+                applyPreviewEnhancementToRow(
+                    originalRowPixels = originalRowPixels,
+                    backgroundRowPixels = backgroundRowPixels,
+                    outputRowPixels = outputRowPixels,
+                )
+                outputBitmap.setPixels(outputRowPixels, 0, width, 0, rowIndex, width, 1)
+            }
 
-        for (i in originalPixels.indices) {
-            val origColor = originalPixels[i]
-            val backColor = backgroundPixels[i]
-
-            val rNew = min(255, (Color.red(origColor) * 255) / (Color.red(backColor) + 1))
-            val gNew = min(255, (Color.green(origColor) * 255) / (Color.green(backColor) + 1))
-            val bNew = min(255, (Color.blue(origColor) * 255) / (Color.blue(backColor) + 1))
-
-            outputPixels[i] = Color.rgb(rNew, gNew, bNew)
+            val file = previewCacheRepository.createPreviewFile(context, request)
+            FileOutputStream(file).use { outputStream ->
+                outputBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+            }
+            return@withContext PreviewImagePipelineResult(
+                cacheKey = request.cacheKey,
+                outputUri = Uri.fromFile(file),
+                reusedCachedPreview = false,
+            )
+        } finally {
+            originalBitmap.recycle()
+            backgroundBitmap.recycle()
+            outputBitmap.recycle()
         }
-
-        originalBitmap.recycle()
-
-        outputBitmap.setPixels(outputPixels, 0, width, 0, 0, width, height)
-
-        val file = previewCacheRepository.createPreviewFile(context, request)
-        FileOutputStream(file).use { outputStream ->
-            outputBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
-        }
-        outputBitmap.recycle()
-
-        PreviewImagePipelineResult(
-            cacheKey = request.cacheKey,
-            outputUri = Uri.fromFile(file),
-            reusedCachedPreview = false,
-        )
     }
 
     private fun calculateBackgroundDimensions(
@@ -117,4 +136,17 @@ class ImageEnhancer {
             scaleFactor = scaleFactor,
         )
     }
+}
+
+private fun red(color: Int): Int = (color shr 16) and 0xFF
+
+private fun green(color: Int): Int = (color shr 8) and 0xFF
+
+private fun blue(color: Int): Int = color and 0xFF
+
+private fun rgb(red: Int, green: Int, blue: Int): Int {
+    return (0xFF shl 24) or
+        ((red and 0xFF) shl 16) or
+        ((green and 0xFF) shl 8) or
+        (blue and 0xFF)
 }
