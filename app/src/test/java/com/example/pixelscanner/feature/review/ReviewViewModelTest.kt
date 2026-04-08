@@ -2,13 +2,16 @@ package com.example.pixelscanner.feature.review
 
 import android.content.Context
 import android.net.Uri
+import android.os.Looper
 import androidx.lifecycle.SavedStateHandle
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineResult
+import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
@@ -26,13 +29,24 @@ import com.example.pixelscanner.domain.SessionIngestionStatus
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.testing.FakeExportRepository
+import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.LooperMode
 
+@RunWith(RobolectricTestRunner::class)
+@LooperMode(LooperMode.Mode.PAUSED)
 class ReviewViewModelTest {
 
     @Test
@@ -104,9 +118,55 @@ class ReviewViewModelTest {
         assertTrue(restoredViewModel.uiState.value.isAwaitingScanMoreResult)
     }
 
+    @Test
+    fun `restores page processing state to idle after repeated enhancement toggle cancellation`() {
+        val imageProcessingRepository = HangingImageProcessingRepository()
+        val viewModel = createViewModel(imageProcessingRepository = imageProcessingRepository)
+        val context = RuntimeEnvironment.getApplication()
+        val session = ScanSession(
+            id = "session_review_toggle_cancel",
+            pages = listOf(
+                ScannedPage(
+                    id = "session_review_toggle_cancel_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-0.jpg"),
+                ),
+            ),
+        )
+
+        viewModel.setRestoredSession(session)
+
+        viewModel.onEvent(ReviewUiEvent.ToggleEnhancement(pageIndex = 0, context = context))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(imageProcessingRepository.firstInvocationStarted.await(1, TimeUnit.SECONDS))
+        assertEquals(1, imageProcessingRepository.invocationCount.get())
+        assertEquals(
+            ProcessingState.PROCESSING,
+            viewModel.scanSession.value?.pages?.single()?.processingState,
+        )
+
+        viewModel.onEvent(ReviewUiEvent.ToggleEnhancement(pageIndex = 0, context = context))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(imageProcessingRepository.firstInvocationCancelled.await(1, TimeUnit.SECONDS))
+        assertEquals(2, imageProcessingRepository.invocationCount.get())
+        assertEquals(
+            ProcessingState.IDLE,
+            viewModel.scanSession.value?.pages?.single()?.processingState,
+        )
+    }
+
     private fun createViewModel(
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         previewCacheCleanupRepository: RecordingPreviewCacheCleanupRepository = RecordingPreviewCacheCleanupRepository(),
+        imageProcessingRepository: ImageProcessingRepository = object : ImageProcessingRepository {
+            override suspend fun enhance(
+                context: Context,
+                request: PreviewImagePipelineRequest,
+            ): PreviewImagePipelineResult {
+                throw AssertionError("Not used in this test")
+            }
+        },
     ): ReviewViewModel {
         return ReviewViewModel(
             createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase(),
@@ -121,14 +181,7 @@ class ReviewViewModelTest {
                 },
             ),
             toggleEnhancementUseCase = ToggleEnhancementUseCase(
-                object : ImageProcessingRepository {
-                    override suspend fun enhance(
-                        context: Context,
-                        request: PreviewImagePipelineRequest,
-                    ): PreviewImagePipelineResult {
-                        throw AssertionError("Not used in this test")
-                    }
-                },
+                imageProcessingRepository,
             ),
             deletePageUseCase = DeletePageUseCase(),
             restorePageUseCase = RestorePageUseCase(),
@@ -142,6 +195,32 @@ class ReviewViewModelTest {
             scanMoreUseCase = ScanMoreUseCase(),
             savedStateHandle = savedStateHandle,
         )
+    }
+
+    private class HangingImageProcessingRepository : ImageProcessingRepository {
+        val invocationCount = AtomicInteger(0)
+        val firstInvocationStarted = CountDownLatch(1)
+        val firstInvocationCancelled = CountDownLatch(1)
+
+        override suspend fun enhance(
+            context: Context,
+            request: PreviewImagePipelineRequest,
+        ): PreviewImagePipelineResult {
+            val invocation = invocationCount.incrementAndGet()
+            if (invocation == 1) {
+                firstInvocationStarted.countDown()
+                try {
+                    // Keep the first coroutine suspended until it is cancelled by the repeated toggle.
+                    awaitCancellation()
+                } finally {
+                    firstInvocationCancelled.countDown()
+                }
+            }
+            return PreviewImagePipelineResult(
+                cacheKey = request.cacheKey,
+                outputUri = Uri.parse("content://scanner/enhanced-${request.pageId}.jpg"),
+            )
+        }
     }
 
     private class RecordingPreviewCacheCleanupRepository : PreviewCacheCleanupRepository {
