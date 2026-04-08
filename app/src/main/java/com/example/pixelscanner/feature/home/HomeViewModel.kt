@@ -42,4 +42,4 @@ class HomeViewModelFactory(
     }
 }
 
-private const val KEY_SHOULD_AUTO_START_SCANNER = "home_should_auto_start_scanner"
+internal const val KEY_SHOULD_AUTO_START_SCANNER = "home_should_auto_start_scanner"
