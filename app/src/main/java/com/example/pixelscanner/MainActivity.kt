@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import com.example.pixelscanner.app.AppNavigation
 import com.example.pixelscanner.ui.theme.PixelScannerColorPolicy
 import com.example.pixelscanner.ui.theme.PixelScannerTheme
@@ -14,6 +15,7 @@ import com.example.pixelscanner.ui.theme.PixelScannerTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             PixelScannerTheme(colorPolicy = PixelScannerColorPolicy.BrandFirst) {
                 Surface(

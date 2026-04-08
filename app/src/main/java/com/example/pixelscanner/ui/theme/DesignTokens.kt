@@ -4,6 +4,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -108,6 +110,11 @@ object PixelScannerMotionTokens {
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessLow,
     )
+}
+
+object PixelScannerWindowInsetsTokens {
+    @Composable
+    fun safeDrawing(): WindowInsets = WindowInsets.safeDrawing
 }
 
 object PixelScannerShapeTokens {

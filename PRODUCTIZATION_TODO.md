@@ -516,11 +516,12 @@
   - [x] 建立 motion tokens。
   - [x] 將 home / review / export surface 的主要常數改為共享 token。
     - 參考文件：[`docs/design-tokens.md`](/Users/tsaiid/git/pixel-scanner/docs/design-tokens.md)
-- [ ] 修正系統列與 edge-to-edge 行為。
+- [x] 修正系統列與 edge-to-edge 行為。
   - 驗收標準：狀態列與導覽列在深淺色模式下都可讀、沉浸且一致。
-  - [ ] 修正 status bar icon appearance 邏輯。
-  - [ ] 導入 edge-to-edge。
-  - [ ] 驗證首頁與 review 頁的 inset 行為。
+  - [x] 修正 status bar icon appearance 邏輯。
+  - [x] 導入 edge-to-edge。
+  - [x] 驗證首頁與 review 頁的 inset 行為。
+    - Scanner resume/loading flow now uses the same safe-drawing inset policy as the other entry surfaces.
 - [ ] 將所有硬編碼文案移入 string resources。
   - 驗收標準：所有使用者可見文案都集中管理，為在地化做好準備。
   - [ ] 盤點所有 hardcoded strings。

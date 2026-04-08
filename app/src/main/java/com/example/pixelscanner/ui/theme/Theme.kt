@@ -3,6 +3,7 @@ package com.example.pixelscanner.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -42,9 +43,13 @@ fun PixelScannerTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars =
-                colorScheme.primary.luminance() > 0.5f
+            val systemBarStyle = resolveSystemBarStyle(colorScheme)
+            window.statusBarColor = systemBarStyle.statusBarColor.toArgb()
+            window.navigationBarColor = systemBarStyle.navigationBarColor.toArgb()
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = systemBarStyle.isAppearanceLightStatusBars
+                isAppearanceLightNavigationBars = systemBarStyle.isAppearanceLightNavigationBars
+            }
         }
     }
 
@@ -84,5 +89,22 @@ internal fun brandColorScheme(darkTheme: Boolean) = when (darkTheme) {
         onSecondary = BrandWarmLightOnSurface,
         onBackground = BrandWarmLightOnSurface,
         onSurface = BrandWarmLightOnSurface,
+    )
+}
+
+internal data class PixelScannerSystemBarStyle(
+    val statusBarColor: Color,
+    val navigationBarColor: Color,
+    val isAppearanceLightStatusBars: Boolean,
+    val isAppearanceLightNavigationBars: Boolean,
+)
+
+internal fun resolveSystemBarStyle(colorScheme: ColorScheme): PixelScannerSystemBarStyle {
+    val useLightAppearance = colorScheme.background.luminance() > 0.5f
+    return PixelScannerSystemBarStyle(
+        statusBarColor = Color.Transparent,
+        navigationBarColor = Color.Transparent,
+        isAppearanceLightStatusBars = useLightAppearance,
+        isAppearanceLightNavigationBars = useLightAppearance,
     )
 }

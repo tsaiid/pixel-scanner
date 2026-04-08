@@ -75,6 +75,7 @@ import com.example.pixelscanner.ui.theme.PixelScannerColorTokens
 import com.example.pixelscanner.ui.theme.PixelScannerElevationTokens
 import com.example.pixelscanner.ui.theme.PixelScannerShapeTokens
 import com.example.pixelscanner.ui.theme.PixelScannerSpacingTokens
+import com.example.pixelscanner.ui.theme.PixelScannerWindowInsetsTokens
 import com.example.pixelscanner.ui.theme.rememberPixelScannerTypographyTokens
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ClearStatusMessage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
@@ -161,7 +162,8 @@ fun ReviewScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = PixelScannerColorTokens.reviewSurface
+        containerColor = PixelScannerColorTokens.reviewSurface,
+        contentWindowInsets = PixelScannerWindowInsetsTokens.safeDrawing(),
     ) { innerPadding ->
         Column(
             modifier = Modifier

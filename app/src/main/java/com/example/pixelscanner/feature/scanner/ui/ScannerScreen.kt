@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.feature.home.ui.StartScreen
 import com.example.pixelscanner.feature.home.ui.HomeUiState
 import com.example.pixelscanner.feature.scanner.ScannerManager
+import com.example.pixelscanner.ui.theme.PixelScannerWindowInsetsTokens
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
 @Composable
@@ -97,7 +99,9 @@ fun ScannerScreen(
 
     if (homeUiState.shouldAutoStartScanner) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(PixelScannerWindowInsetsTokens.safeDrawing()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

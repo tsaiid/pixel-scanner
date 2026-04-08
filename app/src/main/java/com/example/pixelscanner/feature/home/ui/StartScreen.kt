@@ -31,6 +31,7 @@ import com.example.pixelscanner.R
 import com.example.pixelscanner.ui.theme.PixelScannerColorTokens
 import com.example.pixelscanner.ui.theme.PixelScannerMotionTokens
 import com.example.pixelscanner.ui.theme.PixelScannerSpacingTokens
+import com.example.pixelscanner.ui.theme.PixelScannerWindowInsetsTokens
 import com.example.pixelscanner.ui.theme.rememberPixelScannerTypographyTokens
 
 @Composable
@@ -54,7 +55,8 @@ fun StartScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = PixelScannerColorTokens.homeSurface
+        containerColor = PixelScannerColorTokens.homeSurface,
+        contentWindowInsets = PixelScannerWindowInsetsTokens.safeDrawing(),
     ) { innerPadding ->
         Box(
             modifier = Modifier
