@@ -2,7 +2,6 @@ package com.example.pixelscanner.core.image
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
@@ -18,6 +17,7 @@ import kotlin.math.min
 class ImageEnhancer {
     private val previewCacheRepository: PreviewImageCacheRepository =
         AndroidPreviewImageCacheRepository()
+    private val decodeHelper = PreviewBitmapDecodeHelper()
 
     suspend fun enhance(
         context: Context,
@@ -31,10 +31,7 @@ class ImageEnhancer {
             )
         }
 
-        val sourceUri = request.sourceUri
-        val originalBitmap = context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-            BitmapFactory.decodeStream(inputStream)
-        } ?: throw IllegalArgumentException("Could not decode bitmap from URI")
+        val originalBitmap = decodeHelper.decode(context, request.sourceUri)
 
         val scaleFactor = 32
         val backgroundWidth = max(1, originalBitmap.width / scaleFactor)

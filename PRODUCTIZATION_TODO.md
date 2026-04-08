@@ -240,12 +240,14 @@
 - [ ] 導入安全 decode 策略。
   - 包含：bounds decode、`inSampleSize`、色彩格式選擇、尺寸上限保護。
   - 驗收標準：處理大圖與異常圖片時不因一次性 full decode 容易 OOM。
-  - [ ] 建立 decode helper。
-  - [ ] 加入 bounds decode。
-  - [ ] 加入 `inSampleSize` 計算。
-  - [ ] 決定預覽與匯出各自的 bitmap config。
+  - [x] 建立 decode helper。
+  - [x] 加入 bounds decode。
+  - [x] 加入 `inSampleSize` 計算。
+  - [x] 決定預覽與匯出各自的 bitmap config。
+    - 預覽目前使用 `Bitmap.Config.RGB_565`，匯出維持既有輸出路徑。
   - [ ] 評估預覽是否使用 `Bitmap.Config.HARDWARE` 或其他低拷貝策略。
-  - [ ] 為異常尺寸建立保護條件。
+  - [x] 為異常尺寸建立保護條件。
+    - 預覽 decode 會先驗證 bounds，並以最大尺寸上限避免一次 full decode。
 - [ ] 修正背景估計演算法的極端尺寸邊界。
   - 驗收標準：小圖、長圖、極端比例圖片不會因縮放到 0 尺寸而 crash。
   - [ ] 加入最小縮放尺寸保護。
