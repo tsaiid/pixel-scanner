@@ -2,6 +2,7 @@ package com.example.pixelscanner.app
 
 import android.content.Context
 import androidx.savedstate.SavedStateRegistryOwner
+import com.example.pixelscanner.core.storage.AndroidExportArtifactCacheRepository
 import com.example.pixelscanner.core.image.AndroidImageProcessingRepository
 import com.example.pixelscanner.core.storage.AndroidExportRepository
 import com.example.pixelscanner.core.storage.AndroidSessionCleanupRepository
@@ -30,6 +31,7 @@ class AppContainer(
 ) {
     val imageProcessingRepository = AndroidImageProcessingRepository()
     val exportRepository = AndroidExportRepository()
+    val exportArtifactCacheRepository = AndroidExportArtifactCacheRepository()
     val sessionMetadataRepository = AndroidSessionMetadataRepository(applicationContext)
     val sessionCleanupRepository: SessionCleanupRepository = AndroidSessionCleanupRepository(
         context = applicationContext,
@@ -54,7 +56,10 @@ class AppContainer(
     val getRecoverableSessionUseCase = GetRecoverableSessionUseCase(sessionRecoveryRepository)
     val discardRecoverableSessionUseCase = DiscardRecoverableSessionUseCase(sessionRecoveryRepository)
     val restorePageUseCase = RestorePageUseCase()
-    val exportSessionUseCase = ExportSessionUseCase(exportRepository)
+    val exportSessionUseCase = ExportSessionUseCase(
+        exportRepository = exportRepository,
+        exportArtifactCacheRepository = exportArtifactCacheRepository,
+    )
 
     fun createReviewViewModelFactory(owner: SavedStateRegistryOwner): ReviewViewModelFactory {
         return ReviewViewModelFactory(
