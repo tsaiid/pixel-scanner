@@ -9,8 +9,12 @@ object SessionStoragePaths {
     private const val EXPORT_DIR = "export"
     private const val METADATA_FILE = "metadata.json"
 
+    fun sessionsRoot(cacheDir: File): File {
+        return File(cacheDir, SESSIONS_DIR)
+    }
+
     fun sessionRoot(cacheDir: File, sessionId: String): File {
-        return File(File(cacheDir, SESSIONS_DIR), sessionId)
+        return File(sessionsRoot(cacheDir), sessionId)
     }
 
     fun originalPagesDir(cacheDir: File, sessionId: String): File {

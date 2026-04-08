@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.core.image.AndroidImageProcessingRepository
 import com.example.pixelscanner.core.storage.AndroidExportRepository
+import com.example.pixelscanner.core.storage.AndroidSessionCleanupRepository
 import com.example.pixelscanner.core.storage.AndroidSessionIngestionRepository
 import com.example.pixelscanner.core.storage.AndroidSessionMetadataRepository
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
@@ -14,6 +15,7 @@ import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
+import com.example.pixelscanner.domain.SessionCleanupRepository
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.home.HomeViewModelFactory
 import com.example.pixelscanner.feature.review.ReviewViewModelFactory
@@ -24,6 +26,10 @@ class AppContainer(
     val imageProcessingRepository = AndroidImageProcessingRepository()
     val exportRepository = AndroidExportRepository()
     val sessionMetadataRepository = AndroidSessionMetadataRepository(applicationContext)
+    val sessionCleanupRepository: SessionCleanupRepository = AndroidSessionCleanupRepository(
+        context = applicationContext,
+        sessionMetadataRepository = sessionMetadataRepository,
+    )
     val sessionIngestionRepository = AndroidSessionIngestionRepository(
         context = applicationContext,
         sessionMetadataRepository = sessionMetadataRepository,

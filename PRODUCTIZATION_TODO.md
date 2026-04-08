@@ -195,9 +195,12 @@
   - 驗收標準：離開 review、匯出完成、App 重啟後能安全清理舊快取，不殘留大量暫存檔。
   - [ ] 定義 preview cache 何時清理。
   - [ ] 定義 export temp files 何時清理。
-  - [ ] 定義失敗 / 中斷 session 的保留時間。
-  - [ ] 定義 stale session cleanup 規則，例如時效或 LRU。
-  - [ ] 實作 app launch 時的 stale session cleanup。
+  - [x] 定義失敗 / 中斷 session 的保留時間。
+    - 目前採 7 天保留，之後由 app launch 的 stale session cleanup 一併清理整個 session root。
+  - [x] 定義 stale session cleanup 規則，例如時效或 LRU。
+    - 目前採 `metadata.json` 的建立時間做 7 天 TTL，清掉整個 session 目錄。
+  - [x] 實作 app launch 時的 stale session cleanup。
+    - `PixelScannerApp.onCreate()` 會在背景執行清理。
 - [ ] 加入 session recovery 策略。
   - 驗收標準：掃描完成後若 app 被系統回收，重新進入時可提示恢復或捨棄未完成 session。
   - [ ] 定義可恢復 session 的最小資訊。
