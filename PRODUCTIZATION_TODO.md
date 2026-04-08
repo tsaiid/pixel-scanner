@@ -54,12 +54,13 @@
   - [x] 定義每個 milestone 的完成條件。
   - [x] 建立簡易 roadmap 文件或看板欄位。
     - 參考文件：[`docs/productization-roadmap-and-branching.md`](/Users/tsaiid/git/pixel-scanner/docs/productization-roadmap-and-branching.md)
-- [ ] 釐清產品範圍與非目標。
+- [x] 釐清產品範圍與非目標。
   - 驗收標準：明確標記第一版是否包含歷史紀錄、頁面排序、分享流程、OCR、雲端同步、批量操作。
-  - [ ] 列出 v1 must-have 功能。
-  - [ ] 列出 v1 should-have 功能。
-  - [ ] 列出明確不做的功能。
-  - [ ] 為爭議項建立決策清單，例如 OCR、同步、歷史紀錄、增量 PDF 重組。
+  - [x] 列出 v1 must-have 功能。
+  - [x] 列出 v1 should-have 功能。
+  - [x] 列出明確不做的功能。
+  - [x] 為爭議項建立決策清單，例如 OCR、同步、歷史紀錄、增量 PDF 重組。
+    - 參考文件：[`docs/product-scope-v1.md`](/Users/tsaiid/git/pixel-scanner/docs/product-scope-v1.md)
 - [ ] 建立性能與穩定性基線。
   - 驗收標準：記錄冷啟動、首次掃描、session ingestion、單頁增強、多頁 PDF 匯出的耗時與記憶體占用。
   - [ ] 定義量測場景與裝置條件。
