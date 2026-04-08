@@ -16,8 +16,8 @@ import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
+import com.example.pixelscanner.feature.export.ui.ExportUiState
 import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
-import com.example.pixelscanner.feature.review.ui.ExportUiState
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState

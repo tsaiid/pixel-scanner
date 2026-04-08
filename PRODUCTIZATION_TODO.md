@@ -82,13 +82,13 @@
   - 建議目標：`scanner`, `review`, `export`, `core-ui`, `core-storage`, `core-image`, `core-model`。
   - 驗收標準：UI、domain、data 職責清楚，主要流程不再集中於單一 ViewModel。
   - 第一階段決策：先維持單一 `app` module，優先完成 package 分層與 use case / core package 抽離，再視需要拆 module。
-  - 目前已落地：`app` 負責入口與導航組裝，`feature/home`、`feature/scanner`、`feature/review` 已各自收斂畫面或流程；`feature/export` 尚待拆出。
+  - 目前已落地：`app` 負責入口與導航組裝，`feature/home`、`feature/scanner`、`feature/review` 已各自收斂畫面或流程；`feature/export` 已開始拆出 export state / controls，仍沿用 review flow orchestration。
   - [x] 定義第一階段是否先保留單 module、只做 package 分層。
   - [x] 設計目錄結構與命名規則。
   - [x] 抽出 `core-model` 或等效 model package。
   - [x] 抽出 `core-image` 或等效 image domain/data package。
   - [x] 抽出 `core-storage` 或等效 export/storage package。
-  - [~] 將 scanner、review、export UI 各自集中到 feature 區域。
+  - [x] 將 scanner、review、export UI 各自集中到 feature 區域。
 - [~] 定義核心 domain model。
   - 建議實體：`ScanSession`, `ScannedPage`, `PageVariant`, `ExportRequest`, `ExportResult`, `ProcessingState`, `SessionDirtyFlags`。
   - 驗收標準：UI 層不再直接依賴裸 `Uri` 列表做主要業務判斷。
@@ -133,7 +133,7 @@
     - save/export 入口已收斂到 ViewModel，畫面層只處理 effect 消費。
     - 目前 effect 已覆蓋 snackbar undo、匯出成功 toast 觸發、匯出失敗訊息與返回導航；last-page delete 也已改由 ViewModel 直接發出返回 effect。
     - pager selection 已回寫到 ViewModel，`currentPage` 會隨頁面變更與刪除後自動校正。
-    - export state 已獨立為 `ExportUiState`，目前涵蓋 export format 與 exporting flag。
+    - export state 已獨立為 `ExportUiState`，目前涵蓋 export format 與 exporting flag，且已移至 `feature/export`。
   - [x] 為 export 定義 `ExportUiState` 或等效 effect/state。
   - [x] 定義 `ReviewUiEvent`。
   - [x] 定義 `ReviewUiEffect`。

@@ -1,4 +1,4 @@
-package com.example.pixelscanner.feature.review.ui
+package com.example.pixelscanner.feature.export.ui
 
 import com.example.pixelscanner.core.model.ExportFormat
 

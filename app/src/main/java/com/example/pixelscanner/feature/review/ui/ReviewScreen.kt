@@ -30,8 +30,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
+import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
@@ -156,13 +156,11 @@ fun ReviewScreen(
                 }
 
                 if (uiState.hasPages) {
-                    Button(
-                        onClick = { viewModel.onEvent(SaveAll(context)) },
-                        enabled = !uiState.export.isExporting,
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        Text(if (uiState.export.isExporting) "Saving..." else "Save All")
-                    }
+                    ExportSaveButton(
+                        exportState = uiState.export,
+                        onSaveAll = { viewModel.onEvent(SaveAll(context)) },
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                    )
                 }
             }
 
@@ -240,23 +238,10 @@ fun ReviewScreen(
                 }
             }
 
-            TabRow(
-                selectedTabIndex = if (uiState.export.format == ExportFormat.IMAGE) 0 else 1,
-                containerColor = Color.Transparent,
-                contentColor = Color.White,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Tab(
-                    selected = uiState.export.format == ExportFormat.IMAGE,
-                    onClick = { viewModel.onEvent(ChangeExportFormat(ExportFormat.IMAGE)) },
-                    text = { Text("JPEG") }
-                )
-                Tab(
-                    selected = uiState.export.format == ExportFormat.PDF,
-                    onClick = { viewModel.onEvent(ChangeExportFormat(ExportFormat.PDF)) },
-                    text = { Text("PDF") }
-                )
-            }
+            ExportFormatTabs(
+                selectedFormat = uiState.export.format,
+                onSelectFormat = { viewModel.onEvent(ChangeExportFormat(it)) },
+            )
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 if (uiState.hasPages) {

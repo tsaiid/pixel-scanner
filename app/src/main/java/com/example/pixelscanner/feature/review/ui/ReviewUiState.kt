@@ -1,6 +1,7 @@
 package com.example.pixelscanner.feature.review.ui
 
 import android.net.Uri
+import com.example.pixelscanner.feature.export.ui.ExportUiState
 
 data class ReviewUiState(
     val pages: List<ReviewPageUiModel> = emptyList(),
