@@ -3,16 +3,22 @@ package com.example.pixelscanner.feature.review.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -45,9 +51,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pixelscanner.R
@@ -274,37 +286,67 @@ fun ReviewScreen(
                 onSelectFormat = { viewModel.onEvent(ChangeExportFormat(it)) },
             )
 
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                if (uiState.hasPages) {
-                    HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
-                        // Guard against index out of bounds during deletion animation
-                        if (pageIndex < uiState.pages.size) {
-                            val page = uiState.pages[pageIndex]
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                AsyncImage(
-                                    model = page.displayUri,
-                                    contentDescription = stringResource(
-                                        id = R.string.review_scanned_page_content_description,
-                                        pageIndex
-                                    ),
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Fit
-                                )
-                                if (page.processingState == ProcessingState.PROCESSING) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(36.dp),
-                                        color = Color.White,
-                                        strokeWidth = 3.dp
+            if (uiState.hasPages) {
+                val thumbnailListState = rememberLazyListState()
+
+                LaunchedEffect(uiState.currentPage, uiState.pages.size) {
+                    if (uiState.pages.isNotEmpty()) {
+                        val targetIndex = uiState.currentPage.coerceIn(0, uiState.pages.lastIndex)
+                        thumbnailListState.scrollToItem(targetIndex)
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                ) {
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
+                            // Guard against index out of bounds during deletion animation
+                            if (pageIndex < uiState.pages.size) {
+                                val page = uiState.pages[pageIndex]
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    AsyncImage(
+                                        model = page.displayUri,
+                                        contentDescription = stringResource(
+                                            id = R.string.review_scanned_page_content_description,
+                                            pageIndex + 1
+                                        ),
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Fit
                                     )
+                                    if (page.processingState == ProcessingState.PROCESSING) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(36.dp),
+                                            color = Color.White,
+                                            strokeWidth = 3.dp
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                } else {
+
+                    ReviewThumbnailStrip(
+                        pages = uiState.pages,
+                        currentPage = uiState.currentPage,
+                        listState = thumbnailListState,
+                        onPageSelected = { pageIndex ->
+                            viewModel.onEvent(PageChanged(pageIndex))
+                        },
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
                         stringResource(id = R.string.review_empty_state_message),
                         color = Color.White,
-                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
             }
@@ -355,5 +397,106 @@ fun ReviewScreen(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun ReviewThumbnailStrip(
+    pages: List<ReviewPageUiModel>,
+    currentPage: Int,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    onPageSelected: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF111111))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = stringResource(id = R.string.review_thumbnail_strip_title),
+            color = Color.LightGray,
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyRow(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("review_thumbnail_strip"),
+            contentPadding = PaddingValues(end = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            itemsIndexed(
+                items = pages,
+                key = { _, page -> page.id },
+            ) { pageIndex, page ->
+                ReviewThumbnailItem(
+                    pageIndex = pageIndex,
+                    totalPages = pages.size,
+                    page = page,
+                    selected = pageIndex == currentPage,
+                    onClick = { onPageSelected(pageIndex) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewThumbnailItem(
+    pageIndex: Int,
+    totalPages: Int,
+    page: ReviewPageUiModel,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val thumbnailShape = RoundedCornerShape(12.dp)
+    val borderColor = if (selected) Color(0xFF9B82FF) else Color(0xFF3A3A3A)
+    val contentDescription = if (selected) {
+        stringResource(
+            id = R.string.review_thumbnail_selected_content_description,
+            pageIndex + 1,
+            totalPages,
+        )
+    } else {
+        stringResource(
+            id = R.string.review_thumbnail_content_description,
+            pageIndex + 1,
+            totalPages,
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .size(width = 64.dp, height = 86.dp)
+            .clip(thumbnailShape)
+            .border(width = 2.dp, color = borderColor, shape = thumbnailShape)
+            .background(Color(0xFF1A1A1A))
+            .clickable(role = Role.Button, onClick = onClick)
+            .testTag("review_thumbnail_$pageIndex"),
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = page.displayUri,
+            contentDescription = contentDescription,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(6.dp)
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(if (selected) Color(0xFF9B82FF) else Color(0xAA000000)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = (pageIndex + 1).toString(),
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
     }
 }
