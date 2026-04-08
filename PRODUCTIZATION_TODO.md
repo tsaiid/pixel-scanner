@@ -140,12 +140,14 @@
   - [x] 定義 `ReviewUiEffect`。
   - [~] 整理 loading、error、selection、pager、batch progress 的責任邊界。
     - loading 與 selection / pager 已部分收斂；error 與 batch progress 仍待拆出更明確的狀態模型。
-- [ ] 導入依賴注入方案。
+- [x] 導入依賴注入方案。
   - 建議可選：先用簡單 constructor injection，必要時再導入 Hilt。
   - 驗收標準：ViewModel 與 use case 可被測試替換，不需在測試中直接建立 Android `Context`。
   - [x] 先決定是否維持純手動 DI。
+    - Current milestone decision: keep manual constructor DI via `AppContainer` and ViewModel factories. See [`docs/di-decision-current-milestone.md`](/Users/tsaiid/git/pixel-scanner/docs/di-decision-current-milestone.md).
   - [x] 若手動 DI，建立 app container。
-  - [ ] 若 Hilt，規劃 migration 範圍。
+  - [x] 若 Hilt，規劃 migration 範圍。
+    - Deferred for this milestone; Hilt migration is not being executed until explicit triggers are identified.
   - [x] 將 ViewModel 依賴改由注入提供。
     - 目前 `AppContainer` 提供 review flow 的 use case 與 `ReviewViewModelFactory`，`ReviewViewModel` 不再自行 new use case。
 - [ ] 正式導入 Navigation。
