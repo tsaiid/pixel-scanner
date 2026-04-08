@@ -702,7 +702,8 @@
 - [~] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
 - [x] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
 - [x] 設計 review 畫面新資訊架構草案。
-- [ ] 建立效能基線量測方式與測試樣本。
+- [x] 建立效能基線量測方式與測試樣本。
+  - 參考文件：[`docs/performance-baseline-measurement-and-samples.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-measurement-and-samples.md)
 
 ## Sprint-Ready Candidate Tasks
 
@@ -717,5 +718,6 @@
 - [x] 設計 review 新版 wireframe 與互動流程。
 - [ ] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
 - [ ] 為增強流程加入頁級 processing state。
-- [ ] 建立單頁與多頁效能基線測試樣本。
+- [x] 建立單頁與多頁效能基線測試樣本。
+  - 參考文件：[`docs/performance-baseline-measurement-and-samples.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-measurement-and-samples.md)
 - [ ] 建立第一批 ViewModel 與 use case 單元測試骨架。
