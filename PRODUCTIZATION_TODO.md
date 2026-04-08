@@ -78,7 +78,7 @@
 
 ## Phase 1: Architecture Refactor
 
-- [~] 導入明確的 feature/module 分層。
+- [x] 導入明確的 feature/module 分層。
   - 建議目標：`scanner`, `review`, `export`, `core-ui`, `core-storage`, `core-image`, `core-model`。
   - 驗收標準：UI、domain、data 職責清楚，主要流程不再集中於單一 ViewModel。
   - 第一階段決策：先維持單一 `app` module，優先完成 package 分層與 use case / core package 抽離，再視需要拆 module。
@@ -89,7 +89,7 @@
   - [x] 抽出 `core-image` 或等效 image domain/data package。
   - [x] 抽出 `core-storage` 或等效 export/storage package。
   - [x] 將 scanner、review、export UI 各自集中到 feature 區域。
-- [~] 定義核心 domain model。
+- [x] 定義核心 domain model。
   - 建議實體：`ScanSession`, `ScannedPage`, `PageVariant`, `ExportRequest`, `ExportResult`, `ProcessingState`, `SessionDirtyFlags`。
   - 驗收標準：UI 層不再直接依賴裸 `Uri` 列表做主要業務判斷。
   - [x] 設計 `ScanSession` 欄位。
@@ -124,12 +124,12 @@
   - [x] 將 temp file、session file、stale cleanup 集中到 repository。
     - temp file creation 已集中到 `TempFileRepository`；session metadata 已由 `AndroidSessionMetadataRepository` 管理，stale cleanup 由 `AndroidSessionCleanupRepository` 在 `PixelScannerApp.onCreate()` 觸發。
   - [x] 為 repository 設計測試替身。
-  - [~] 建立單向資料流的 UI state 結構。
+- [~] 建立單向資料流的 UI state 結構。
   - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
   - [x] 為首頁定義 `HomeUiState`。
   - [x] 為 review 定義 `ReviewUiState`。
-  - [~] 首頁狀態已集中成 `HomeUiState`，目前先涵蓋 scanner 自動重啟旗標。
-  - [~] review 畫面已改為單一 `uiState` 驅動畫面。
+  - [x] 首頁狀態已集中成 `HomeUiState`，目前先涵蓋 scanner 自動重啟旗標。
+  - [x] review 畫面已改為單一 `uiState` 驅動畫面。
     - 目前 `ReviewUiState` 已收斂 pages、export format、processing flag，畫面不再直接消費 `ScannedPage` domain list。
     - review 畫面互動已透過 `ReviewUiEvent` 送入 ViewModel；刪除 undo、匯出成功、匯出失敗已透過 `ReviewUiEffect` 發送。
     - 已事件化的互動包含 export format 切換、頁面增強、刪除與復原。
@@ -141,7 +141,7 @@
   - [x] 定義 `ReviewUiEvent`。
   - [x] 定義 `ReviewUiEffect`。
   - [~] 整理 loading、error、selection、pager、batch progress 的責任邊界。
-    - loading 與 selection / pager 已部分收斂；error 與 batch progress 仍待拆出更明確的狀態模型。
+    - selection / pager 已回到 `ReviewUiState` 與 `SavedStateHandle`；batch progress 目前由 `ExportUiState` / `ExportState.InProgress` 承接，但 review 仍以 effect + snackbar 呈現錯誤，尚未拆成獨立 error state。
 - [x] 導入依賴注入方案。
   - 建議可選：先用簡單 constructor injection，必要時再導入 Hilt。
   - 驗收標準：ViewModel 與 use case 可被測試替換，不需在測試中直接建立 Android `Context`。
@@ -152,7 +152,7 @@
     - Deferred for this milestone; Hilt migration is not being executed until explicit triggers are identified.
   - [x] 將 ViewModel 依賴改由注入提供。
     - 目前 `AppContainer` 提供 review flow 的 use case 與 `ReviewViewModelFactory`，`ReviewViewModel` 不再自行 new use case。
-- [ ] 正式導入 Navigation。
+- [x] 正式導入 Navigation。
   - 建議使用 Navigation Compose 或至少明確封裝 screen contract。
   - 驗收標準：導航狀態可保存，返回行為一致。
   - [x] 定義 screen route 或等效 contract。
