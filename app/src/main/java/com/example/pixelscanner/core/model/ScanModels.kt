@@ -7,6 +7,14 @@ data class ScanResultPayload(
     val pdfUri: Uri? = null,
 )
 
+data class ScanSessionMetadata(
+    val sessionId: String,
+    val createdAtEpochMillis: Long,
+    val pageCount: Int,
+    val hasOriginalPdf: Boolean,
+    val dirtyFlags: SessionDirtyFlags,
+)
+
 enum class ProcessingState {
     IDLE,
     PROCESSING,
@@ -75,6 +83,16 @@ data class ScanSession(
     val dirtyFlags: SessionDirtyFlags = SessionDirtyFlags(),
 ) {
     fun activePages(): List<ScannedPage> = pages.filterNot { it.isDeleted }
+
+    fun toMetadata(createdAtEpochMillis: Long): ScanSessionMetadata {
+        return ScanSessionMetadata(
+            sessionId = id,
+            createdAtEpochMillis = createdAtEpochMillis,
+            pageCount = pages.size,
+            hasOriginalPdf = originalPdfUri != null,
+            dirtyFlags = dirtyFlags,
+        )
+    }
 
     fun isDirty(): Boolean {
         return dirtyFlags.isDirty()
