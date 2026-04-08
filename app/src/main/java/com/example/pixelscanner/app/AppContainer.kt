@@ -7,6 +7,7 @@ import com.example.pixelscanner.core.storage.AndroidExportRepository
 import com.example.pixelscanner.core.storage.AndroidSessionCleanupRepository
 import com.example.pixelscanner.core.storage.AndroidSessionIngestionRepository
 import com.example.pixelscanner.core.storage.AndroidSessionMetadataRepository
+import com.example.pixelscanner.core.storage.AndroidSessionRecoveryRepository
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
@@ -16,6 +17,7 @@ import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
 import com.example.pixelscanner.domain.SessionCleanupRepository
+import com.example.pixelscanner.domain.SessionRecoveryRepository
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.home.HomeViewModelFactory
 import com.example.pixelscanner.feature.review.ReviewViewModelFactory
@@ -27,6 +29,10 @@ class AppContainer(
     val exportRepository = AndroidExportRepository()
     val sessionMetadataRepository = AndroidSessionMetadataRepository(applicationContext)
     val sessionCleanupRepository: SessionCleanupRepository = AndroidSessionCleanupRepository(
+        context = applicationContext,
+        sessionMetadataRepository = sessionMetadataRepository,
+    )
+    val sessionRecoveryRepository: SessionRecoveryRepository = AndroidSessionRecoveryRepository(
         context = applicationContext,
         sessionMetadataRepository = sessionMetadataRepository,
     )

@@ -203,7 +203,8 @@
     - `PixelScannerApp.onCreate()` 會在背景執行清理。
 - [ ] 加入 session recovery 策略。
   - 驗收標準：掃描完成後若 app 被系統回收，重新進入時可提示恢復或捨棄未完成 session。
-  - [ ] 定義可恢復 session 的最小資訊。
+  - [x] 定義可恢復 session 的最小資訊。
+    - 目前以 `ScanSessionMetadata` JSON 作為 recoverable session 摘要。
   - [ ] 定義恢復提示 UI。
   - [ ] 實作 restore session flow。
   - [ ] 驗證部分檔案遺失時的 fallback。
