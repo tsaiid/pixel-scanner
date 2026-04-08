@@ -385,13 +385,13 @@
 
 ## Phase 5: Review Experience Redesign
 
-- [ ] 重設 review screen 資訊架構。
+- [~] 重設 review screen 資訊架構。
   - 建議區塊：top app bar、主預覽、縮圖列、頁面工具列、底部 primary action。
   - 驗收標準：多頁操作時可快速理解目前頁面與下一步動作。
-  - [ ] 畫 review screen wireframe。
-  - [ ] 定義資訊優先順序。
-  - [ ] 定義單頁與多頁時的版型差異。
-  - [ ] 定義 loading、error、empty 的版型。
+  - [x] 畫 review screen wireframe。
+  - [x] 定義資訊優先順序。
+  - [x] 定義單頁與多頁時的版型差異。
+  - [x] 定義 loading、error、empty 的版型。
 - [ ] 加入縮圖帶與頁面快速切換。
   - 驗收標準：10 頁以上文件仍可有效管理，不需只靠左右滑動。
   - [ ] 決定縮圖帶是水平列還是底部 filmstrip。
@@ -701,7 +701,7 @@
 - [~] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
 - [~] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
 - [x] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
-- [ ] 設計 review 畫面新資訊架構草案。
+- [x] 設計 review 畫面新資訊架構草案。
 - [ ] 建立效能基線量測方式與測試樣本。
 
 ## Sprint-Ready Candidate Tasks
@@ -714,7 +714,7 @@
 - [x] 擴充 scanner result，保留原始 PDF URI。
 - [x] 為 export 建立 success / failure result model。
 - [x] 定義 `session dirty` 規則。
-- [ ] 設計 review 新版 wireframe 與互動流程。
+- [x] 設計 review 新版 wireframe 與互動流程。
 - [ ] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
 - [ ] 為增強流程加入頁級 processing state。
 - [ ] 建立單頁與多頁效能基線測試樣本。
