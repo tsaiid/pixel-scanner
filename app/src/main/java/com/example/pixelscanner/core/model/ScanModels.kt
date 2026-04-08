@@ -211,11 +211,21 @@ sealed interface ExportDecision {
 }
 
 fun ExportRequest.resolveDecision(session: ScanSession): ExportDecision {
+    return resolveDecision(
+        dirtyFlags = session.dirtyFlags,
+        hasOriginalPdf = session.originalPdfUri != null,
+    )
+}
+
+fun ExportRequest.resolveDecision(
+    dirtyFlags: SessionDirtyFlags,
+    hasOriginalPdf: Boolean,
+): ExportDecision {
     return when (format) {
         ExportFormat.IMAGE -> ExportDecision.ExportJpegs
         ExportFormat.PDF -> when {
-            session.canReuseOriginalPdfForExport() -> ExportDecision.ReuseOriginalPdf
-            session.dirtyFlags.hasEnhancedPages -> ExportDecision.RebuildPdfFromEnhancedPages
+            hasOriginalPdf && !dirtyFlags.isDirty() -> ExportDecision.ReuseOriginalPdf
+            dirtyFlags.hasEnhancedPages -> ExportDecision.RebuildPdfFromEnhancedPages
             else -> ExportDecision.RebuildPdfFromPages
         }
     }

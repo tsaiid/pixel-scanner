@@ -294,7 +294,7 @@
 
 ## Phase 4: Export Pipeline
 
-- [ ] 重構 export 為明確的 request/result 流程。
+- [x] 重構 export 為明確的 request/result 流程。
   - 驗收標準：UI 可知道 export 是否成功、失敗、取消或部分成功。
   - [x] 定義 export state machine。
     - `ExportUiState` 現在以 `ExportState` 表示 `Idle` / `InProgress` / `Finished`.
@@ -302,14 +302,15 @@
     - `ExportResult` 已覆蓋 `Success` / `PartialSuccess` / `Failure` / `Cancelled`.
   - [x] 調整 UI 消費 export result 的方式。
     - `ReviewViewModel` 現在會把每種結果轉成對應 effect，並在 state 中保留最後一次 export 結果。
-- [~] 建立 export decision tree。
+- [x] 建立 export decision tree。
   - 驗收標準：匯出路徑可根據 session 狀態選擇 reuse original PDF、rebuild PDF 或輸出 JPEG，而不是一律重建。
   - [x] 定義 `reuse original PDF` 的條件。
   - [x] 定義 `rebuild from reordered pages` 的條件。
   - [x] 定義 `rebuild from enhanced pages` 的條件。
     - 目前由 `ExportRequest.resolveDecision(session)` 明確以 `hasEnhancedPages` 分支決定。
   - [x] 將 decision tree 寫入 `ExportRequest` 或等效策略物件。
-  - [ ] 驗證刪頁、排序、增強、旋轉後會走對應分支。
+  - [x] 驗證刪頁、排序、增強、旋轉後會走對應分支。
+    - 目前以 `ExportRequestDecisionTest` 覆蓋 clean / enhanced / deleted / reordered / rotated / image 分支。
 - [x] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
   - 驗收標準：避免不必要的 PDF 重建與解碼成本，保留原 PDF 可能包含的文字層或其他 metadata。
   - [x] 定義 destination write 流程。
