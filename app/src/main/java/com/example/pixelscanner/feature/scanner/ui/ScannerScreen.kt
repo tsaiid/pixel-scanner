@@ -30,6 +30,8 @@ fun ScannerScreen(
     homeUiState: HomeUiState = HomeUiState(),
     onScanResult: (ScanResultPayload) -> Unit,
     onScanCancelled: () -> Unit = {},
+    onRestoreRecoverableSession: (String) -> Unit = {},
+    onDiscardRecoverableSession: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scannerManager = remember { ScannerManager(context) }
@@ -105,7 +107,12 @@ fun ScannerScreen(
             )
         }
     } else {
-        StartScreen(onStartScanClicked = ::launchScanner)
+        StartScreen(
+            recoverableSession = homeUiState.recoverableSession,
+            onStartScanClicked = ::launchScanner,
+            onRestoreRecoverableSession = onRestoreRecoverableSession,
+            onDiscardRecoverableSession = onDiscardRecoverableSession,
+        )
     }
 }
 

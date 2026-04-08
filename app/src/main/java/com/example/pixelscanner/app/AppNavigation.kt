@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -21,14 +22,18 @@ import com.example.pixelscanner.feature.home.HomeViewModel
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewScreen
 import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val coroutineScope = rememberCoroutineScope()
     val appContainer = (context.applicationContext as PixelScannerApp).appContainer
+    val getRecoverableSessionUseCase = appContainer.getRecoverableSessionUseCase
     val restoreSessionUseCase = appContainer.restoreSessionUseCase
+    val discardRecoverableSessionUseCase = appContainer.discardRecoverableSessionUseCase
     val homeViewModelFactory = appContainer.createHomeViewModelFactory(
         owner = context as SavedStateRegistryOwner,
     )
@@ -44,27 +49,13 @@ fun AppNavigation() {
             return@LaunchedEffect
         }
 
-        val outcome = runCatching { restoreSessionUseCase() }.getOrElse { error ->
+        val recoverableSession = runCatching { getRecoverableSessionUseCase() }.getOrElse { error ->
             error.printStackTrace()
-            RestoreSessionOutcome.Unavailable
+            null
         }
 
         homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
-        when (outcome) {
-            is RestoreSessionOutcome.Restored -> {
-                reviewViewModel.setRestoredSession(outcome.result.session)
-                if (outcome.result.isPartial) {
-                    Toast.makeText(
-                        context,
-                        "Recovered session with some missing files",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
-            }
-
-            RestoreSessionOutcome.Unavailable -> Unit
-        }
+        homeViewModel.setRecoverableSession(recoverableSession)
     }
 
     NavHost(
@@ -80,7 +71,46 @@ fun AppNavigation() {
                 },
                 onScanCancelled = {
                     homeViewModel.setShouldAutoStartScanner(false)
-                }
+                },
+                onRestoreRecoverableSession = { sessionId ->
+                    coroutineScope.launch {
+                        val outcome = runCatching { restoreSessionUseCase(sessionId) }.getOrElse { error ->
+                            error.printStackTrace()
+                            RestoreSessionOutcome.Unavailable
+                        }
+                        homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                        homeViewModel.clearRecoverableSession()
+                        when (outcome) {
+                            is RestoreSessionOutcome.Restored -> {
+                                reviewViewModel.setRestoredSession(outcome.result.session)
+                                if (outcome.result.isPartial) {
+                                    Toast.makeText(
+                                        context,
+                                        "Recovered session with some missing files",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                                navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
+                            }
+
+                            RestoreSessionOutcome.Unavailable -> {
+                                Toast.makeText(
+                                    context,
+                                    "No recoverable session found",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                    }
+                },
+                onDiscardRecoverableSession = { sessionId ->
+                    coroutineScope.launch {
+                        runCatching { discardRecoverableSessionUseCase(sessionId) }
+                            .onFailure { error -> error.printStackTrace() }
+                        homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                        homeViewModel.clearRecoverableSession()
+                    }
+                },
             )
         }
 
@@ -99,11 +129,13 @@ fun AppNavigation() {
                 onRescan = {
                     homeViewModel.setShouldAutoStartScanner(true)
                     homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                    homeViewModel.clearRecoverableSession()
                     navController.navigateResettingToHome(AppNavigationContract.homeRoute)
                 },
                 onDiscardSession = {
                     homeViewModel.setShouldAutoStartScanner(false)
                     homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
+                    homeViewModel.clearRecoverableSession()
                     navController.navigateResettingToHome(AppNavigationContract.homeRoute)
                 }
             )

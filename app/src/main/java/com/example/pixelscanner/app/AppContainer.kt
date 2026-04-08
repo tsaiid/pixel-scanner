@@ -9,7 +9,9 @@ import com.example.pixelscanner.core.storage.AndroidSessionIngestionRepository
 import com.example.pixelscanner.core.storage.AndroidSessionMetadataRepository
 import com.example.pixelscanner.core.storage.AndroidSessionRecoveryRepository
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
+import com.example.pixelscanner.domain.DiscardRecoverableSessionUseCase
 import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
+import com.example.pixelscanner.domain.GetRecoverableSessionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
@@ -49,6 +51,8 @@ class AppContainer(
     val resumeSessionUseCase = ResumeSessionUseCase()
     val scanMoreUseCase = ScanMoreUseCase(discardSessionUseCase)
     val restoreSessionUseCase = RestoreSessionUseCase(sessionRecoveryRepository)
+    val getRecoverableSessionUseCase = GetRecoverableSessionUseCase(sessionRecoveryRepository)
+    val discardRecoverableSessionUseCase = DiscardRecoverableSessionUseCase(sessionRecoveryRepository)
     val restorePageUseCase = RestorePageUseCase()
     val exportSessionUseCase = ExportSessionUseCase(exportRepository)
 

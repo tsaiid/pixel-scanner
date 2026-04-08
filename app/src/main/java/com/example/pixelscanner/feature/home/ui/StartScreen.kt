@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +37,10 @@ import com.example.pixelscanner.R
 
 @Composable
 fun StartScreen(
-    onStartScanClicked: () -> Unit
+    recoverableSession: RecoverableSessionUiState? = null,
+    onStartScanClicked: () -> Unit,
+    onRestoreRecoverableSession: (String) -> Unit = {},
+    onDiscardRecoverableSession: (String) -> Unit = {},
 ) {
     val brandPurple = Color(0xFF541765) // Updated to match icon background #541765
     var startAnimation by rememberSaveable { mutableStateOf(false) }
@@ -109,5 +114,34 @@ fun StartScreen(
                 )
             }
         }
+    }
+
+    if (recoverableSession != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Recover unfinished scan?") },
+            text = {
+                val statusLine = if (recoverableSession.hasMissingAssets) {
+                    "Some files are missing, but we can still recover what is available."
+                } else {
+                    "We found an unfinished scan with ${recoverableSession.pageCount} pages."
+                }
+                Text(statusLine)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { onRestoreRecoverableSession(recoverableSession.sessionId) }
+                ) {
+                    Text("Restore")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { onDiscardRecoverableSession(recoverableSession.sessionId) }
+                ) {
+                    Text("Discard")
+                }
+            },
+        )
     }
 }

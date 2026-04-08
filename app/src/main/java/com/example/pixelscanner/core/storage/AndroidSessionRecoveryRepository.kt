@@ -43,4 +43,8 @@ class AndroidSessionRecoveryRepository(
             missingOriginalPdf = metadata.hasOriginalPdf && originalPdfFile == null,
         )
     }
+
+    override suspend fun discardRecoverableSession(sessionId: String) {
+        SessionStoragePaths.sessionRoot(context.cacheDir, sessionId).deleteRecursively()
+    }
 }

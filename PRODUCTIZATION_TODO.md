@@ -205,9 +205,10 @@
   - 驗收標準：掃描完成後若 app 被系統回收，重新進入時可提示恢復或捨棄未完成 session。
   - [x] 定義可恢復 session 的最小資訊。
     - 目前以 `ScanSessionMetadata` JSON 作為 recoverable session 摘要。
-  - [ ] 定義恢復提示 UI。
+  - [x] 定義恢復提示 UI。
+    - 目前 home/app flow 會顯示 restore / discard prompt，由使用者明確決定是否復原 recoverable session。
   - [x] 實作 restore session flow。
-    - 目前 home/app flow 會自動嘗試復原最新 recoverable session；若檔案不完整，會以可用檔案恢復並提示缺檔。
+    - 目前 home/app flow 會在 prompt 允許後復原 latest recoverable session；若檔案不完整，會以可用檔案恢復並提示缺檔。
   - [ ] 驗證部分檔案遺失時的 fallback。
 - [~] 明確區分 `Rescan`、`Scan More`、`Discard Session` 三種動作。
   - 驗收標準：使用者操作語意與實際行為一致，不再用模糊返回行為代替。

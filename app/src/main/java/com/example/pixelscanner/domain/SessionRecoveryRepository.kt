@@ -6,4 +6,6 @@ interface SessionRecoveryRepository {
     suspend fun listRecoverableSessions(): List<RecoverableSessionSnapshot>
 
     suspend fun loadRecoverableSession(sessionId: String): RecoverableSessionSnapshot?
+
+    suspend fun discardRecoverableSession(sessionId: String)
 }
