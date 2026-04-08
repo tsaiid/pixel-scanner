@@ -492,12 +492,13 @@
   - [x] 決定是否顯示 resume session。
   - [x] 重畫首頁 wireframe。
     - 參考文件：[`docs/home-product-entry-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/home-product-entry-plan.md)
-- [ ] 統一品牌色、字體、圖示與 Material 3 token。
+- [x] 統一品牌色、字體、圖示與 Material 3 token。
   - 驗收標準：首頁與 review 頁視覺語言一致，不再混用品牌紫與 dynamic color 導致割裂。
-  - [ ] 選定品牌主色與輔色。
-  - [ ] 選定字體策略。
-  - [ ] 定義 icon style。
-  - [ ] 將 token 映射到 Material 3 theme。
+  - [x] 選定品牌主色與輔色。
+  - [x] 選定字體策略。
+  - [x] 定義 icon style。
+  - [x] 將 token 映射到 Material 3 theme。
+    - 參考文件：[`docs/product-identity-and-theme-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/product-identity-and-theme-plan.md)
 - [ ] 決定 dynamic color 策略。
   - 驗收標準：明確定義哪些畫面跟隨系統色，哪些畫面使用品牌色。
   - [ ] 列出所有畫面與對應色彩策略。
