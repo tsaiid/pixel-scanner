@@ -2,12 +2,19 @@ package com.example.pixelscanner.testing
 
 import android.content.Context
 import android.net.Uri
+import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.domain.ExportRepository
 
 class FakeExportRepository(
-    var copyPdfResult: Uri? = null,
-    var saveUriResult: Uri? = null,
-    var saveUrisToPdfResult: Uri? = null,
+    var copyPdfResult: ExportOperationResult = ExportOperationResult.Failure(
+        com.example.pixelscanner.core.model.ExportUnknownFailure("No fake PDF result configured"),
+    ),
+    var saveUriResult: ExportOperationResult = ExportOperationResult.Failure(
+        com.example.pixelscanner.core.model.ExportUnknownFailure("No fake image result configured"),
+    ),
+    var saveUrisToPdfResult: ExportOperationResult = ExportOperationResult.Failure(
+        com.example.pixelscanner.core.model.ExportUnknownFailure("No fake PDF export result configured"),
+    ),
 ) : ExportRepository {
     val copiedPdfRequests = mutableListOf<ExportPdfRequest>()
     val savedUriRequests = mutableListOf<ExportImageRequest>()
@@ -17,7 +24,7 @@ class FakeExportRepository(
         context: Context,
         sourceUri: Uri,
         fileName: String,
-    ): Uri? {
+    ): ExportOperationResult {
         copiedPdfRequests += ExportPdfRequest(sourceUri, fileName)
         return copyPdfResult
     }
@@ -26,7 +33,7 @@ class FakeExportRepository(
         context: Context,
         sourceUri: Uri,
         fileName: String,
-    ): Uri? {
+    ): ExportOperationResult {
         savedUriRequests += ExportImageRequest(sourceUri, fileName)
         return saveUriResult
     }
@@ -35,7 +42,7 @@ class FakeExportRepository(
         context: Context,
         sourceUris: List<Uri>,
         fileName: String,
-    ): Uri? {
+    ): ExportOperationResult {
         savedPdfRequests += ExportPdfBuildRequest(sourceUris, fileName)
         return saveUrisToPdfResult
     }

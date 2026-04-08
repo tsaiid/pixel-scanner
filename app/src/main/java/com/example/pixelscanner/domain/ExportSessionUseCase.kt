@@ -4,10 +4,17 @@ import android.content.Context
 import android.net.Uri
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportDecision
+import com.example.pixelscanner.core.model.ExportDecodeFailure
+import com.example.pixelscanner.core.model.ExportFailure
+import com.example.pixelscanner.core.model.ExportInsufficientSpaceFailure
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportImagePipelineResult
+import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
+import com.example.pixelscanner.core.model.ExportUnknownFailure
+import com.example.pixelscanner.core.model.ExportWriteFailure
 import com.example.pixelscanner.core.model.resolveDecision
 import com.example.pixelscanner.core.model.ScanSession
 
@@ -23,7 +30,7 @@ class ExportSessionUseCase(
     ): ExportResult {
         val pagesToExport = session.activePages()
         if (pagesToExport.isEmpty()) {
-            return ExportResult.Failure("No pages to export")
+            return ExportResult.Failure(com.example.pixelscanner.core.model.ExportNoPagesFailure)
         }
 
         val pipelineRequest = ExportImagePipelineRequest(
@@ -45,7 +52,7 @@ class ExportSessionUseCase(
                 )
                 val cachedSourceUri = cachedArtifact?.let(Uri::fromFile)
 
-                val outputUri = when (exportDecision) {
+                val outputResult = when (exportDecision) {
                     ExportDecision.ReuseOriginalPdf -> {
                         val sourceUri = cachedSourceUri ?: requireNotNull(pipelineRequest.originalPdfUri)
                         exportRepository.copyPdfToDocuments(
@@ -82,6 +89,11 @@ class ExportSessionUseCase(
                     }
                 }
 
+                val outputUri = when (outputResult) {
+                    is ExportOperationResult.Success -> outputResult.outputUri
+                    is ExportOperationResult.Failure -> null
+                }
+
                 val pipelineResult = ExportImagePipelineResult(
                     cacheKey = pipelineRequest.cacheKey,
                     outputUri = outputUri,
@@ -95,10 +107,9 @@ class ExportSessionUseCase(
                     )
                 }
 
-                if (pipelineResult.outputUri != null) {
-                    ExportResult.Success(pipelineResult.outputUri)
-                } else {
-                    ExportResult.Failure("Failed to export PDF")
+                when (outputResult) {
+                    is ExportOperationResult.Success -> ExportResult.Success(pipelineResult.outputUri)
+                    is ExportOperationResult.Failure -> ExportResult.Failure(outputResult.error)
                 }
             }
 
@@ -110,18 +121,23 @@ class ExportSessionUseCase(
                 )
                 val sourceUrisForExport = cachedArtifacts?.map(Uri::fromFile) ?: urisToSave
 
-                val savedUris = sourceUrisForExport.mapIndexed { index, uri ->
-                    exportRepository.saveUriToGallery(
+                val results = sourceUrisForExport.mapIndexed { index, uri ->
+                    when (val exportResult = exportRepository.saveUriToGallery(
                         context = context,
                         sourceUri = uri,
                         fileName = "PixelScanner_${timestamp}_$index.jpg",
-                    )?.also { exportedUri ->
-                        exportArtifactCacheRepository.storeImageArtifact(
-                            context = context,
-                            request = pipelineRequest,
-                            pageIndex = index,
-                            sourceUri = exportedUri,
-                        )
+                    )) {
+                        is ExportOperationResult.Success -> {
+                            exportArtifactCacheRepository.storeImageArtifact(
+                                context = context,
+                                request = pipelineRequest,
+                                pageIndex = index,
+                                sourceUri = exportResult.outputUri,
+                            )
+                            exportResult
+                        }
+
+                        is ExportOperationResult.Failure -> exportResult
                     }
                 }
 
@@ -131,20 +147,30 @@ class ExportSessionUseCase(
                     reusedOriginalPdf = false,
                 )
 
-                val successfulUris = savedUris.filterNotNull()
+                val successfulUris = results.mapNotNull { result ->
+                    (result as? ExportOperationResult.Success)?.outputUri
+                }
+                val failures = results.mapNotNull { result ->
+                    (result as? ExportOperationResult.Failure)?.error
+                }
                 when {
                     successfulUris.isEmpty() -> {
-                        ExportResult.Failure("Failed to export one or more images")
+                        ExportResult.Failure(
+                            failures.firstOrNull() ?: ExportUnknownFailure(
+                                details = "Failed to export one or more images",
+                            ),
+                        )
                     }
 
-                    successfulUris.size == savedUris.size -> {
+                    successfulUris.size == results.size -> {
                         ExportResult.Success(successfulUris.firstOrNull())
                     }
 
                     else -> {
                         ExportResult.PartialSuccess(
                             outputUris = successfulUris,
-                            warningMessage = "Exported ${successfulUris.size}/${savedUris.size} images",
+                            failures = failures,
+                            warningMessage = "Exported ${successfulUris.size}/${results.size} images",
                         )
                     }
                 }

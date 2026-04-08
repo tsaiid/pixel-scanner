@@ -344,9 +344,12 @@
 - [ ] 補齊錯誤分類與前置檢查。
   - 類型：讀取失敗、decode 失敗、寫入失敗、儲存空間不足、權限或 `ContentResolver` 異常、來源檔失效。
   - 驗收標準：不同錯誤能映射成可理解的使用者訊息，且可區分可重試與不可重試。
-  - [ ] 定義 domain error 類型。
-  - [ ] 定義使用者訊息映射表。
-  - [ ] 定義可重試與不可重試錯誤。
+  - [x] 定義 domain error 類型。
+    - 已以 `ExportFailure` sealed hierarchy 定義 read / decode / write / space / permission / source invalid / unknown 等失敗。
+  - [x] 定義使用者訊息映射表。
+    - `ExportFailure.userMessage` 已集中對應各失敗類型的預設訊息。
+  - [x] 定義可重試與不可重試錯誤。
+    - `ExportFailure.retryability` 已區分 `RETRYABLE` 與 `NON_RETRYABLE`。
   - [ ] 在掃描前與匯出前加入磁碟空間檢查。
   - [ ] 為未完成匯出殘檔建立清理策略。
 - [ ] 建立匯出後動作。

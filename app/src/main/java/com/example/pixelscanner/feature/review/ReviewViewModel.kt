@@ -297,7 +297,7 @@ class ReviewViewModel(
                     is ExportResult.Failure -> {
                         _effects.emit(
                             ReviewUiEffect.ShowMessage(
-                                result.errorMessage ?: "Export failed"
+                                result.error.userMessage
                             )
                         )
                     }

@@ -235,9 +235,13 @@ sealed interface ExportResult {
     data class Success(val outputUri: Uri?) : ExportResult
     data class PartialSuccess(
         val outputUris: List<Uri>,
+        val failures: List<ExportFailure> = emptyList(),
         val warningMessage: String? = null,
     ) : ExportResult
-    data class Failure(val errorMessage: String? = null) : ExportResult
+    data class Failure(val error: ExportFailure) : ExportResult {
+        val errorMessage: String
+            get() = error.userMessage
+    }
     data object Cancelled : ExportResult
 }
 
