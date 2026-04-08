@@ -251,6 +251,61 @@ class ReviewViewModelTest {
     }
 
     @Test
+    fun `restoring a deleted page reselects that page and keeps current page in sync`() = runBlocking {
+        val viewModel = createViewModel()
+        val session = ScanSession(
+            id = "session_review_restore_selection",
+            pages = listOf(
+                ScannedPage(
+                    id = "session_review_restore_selection_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-0.jpg"),
+                ),
+                ScannedPage(
+                    id = "session_review_restore_selection_page_1",
+                    originalSourceUri = Uri.parse("content://scanner/page-1.jpg"),
+                ),
+                ScannedPage(
+                    id = "session_review_restore_selection_page_2",
+                    originalSourceUri = Uri.parse("content://scanner/page-2.jpg"),
+                ),
+            ),
+        )
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.PageChanged(pageIndex = 1))
+
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
+
+        try {
+            viewModel.onEvent(ReviewUiEvent.DeletePage(pageIndex = 1))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(
+                ReviewUiEffect.ShowDeletedPageUndo(session.pages[1].id),
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertEquals(1, viewModel.uiState.value.currentPage)
+            assertEquals(session.pages[2].id, viewModel.uiState.value.selectedPage?.id)
+
+            viewModel.onEvent(ReviewUiEvent.RestorePage(pageId = session.pages[1].id))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertEquals(1, viewModel.uiState.value.currentPage)
+            assertEquals(session.pages[1].id, viewModel.uiState.value.selectedPage?.id)
+            assertEquals(session.pages[1].id, viewModel.uiState.value.pages[1].id)
+        } finally {
+            effectJob.cancel()
+        }
+    }
+
+    @Test
     fun `export failure is surfaced in review state and can be cleared explicitly`() = runBlocking {
         val exportRepository = FakeExportRepository(
             saveUrisToPdfResult = ExportOperationResult.Failure(

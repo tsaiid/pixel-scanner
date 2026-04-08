@@ -227,7 +227,10 @@ class ReviewViewModel(
     private fun restorePage(pageId: String) {
         val session = _scanSession.value ?: return
         val page = session.pages.firstOrNull { it.id == pageId } ?: return
-        applySessionUpdate(restorePageUseCase(session, page))
+        applySessionUpdate(
+            restorePageUseCase(session, page),
+            preferredPageId = pageId,
+        )
     }
 
     private fun startScanMore() {
@@ -348,12 +351,18 @@ class ReviewViewModel(
     }
     }
 
-    private fun applySessionUpdate(session: ScanSession) {
+    private fun applySessionUpdate(
+        session: ScanSession,
+        preferredPageId: String? = null,
+    ) {
         _scanSession.value = session
         updateUiState { currentState ->
             val activePages = session.activePages().map(ReviewPageUiMapper::map)
             val lastIndex = (activePages.size - 1).coerceAtLeast(0)
-            val currentPage = currentState.currentPage.coerceIn(0, lastIndex)
+            val preferredPageIndex = preferredPageId?.let { pageId ->
+                activePages.indexOfFirst { it.id == pageId }.takeIf { it >= 0 }
+            }
+            val currentPage = (preferredPageIndex ?: currentState.currentPage).coerceIn(0, lastIndex)
             savedStateHandle[KEY_CURRENT_PAGE] = currentPage
             currentState.copy(
                 pages = activePages,
