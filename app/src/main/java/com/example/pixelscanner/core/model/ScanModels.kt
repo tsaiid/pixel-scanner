@@ -1,6 +1,8 @@
 package com.example.pixelscanner.core.model
 
 import android.net.Uri
+import com.example.pixelscanner.domain.SessionIngestionAssetType
+import com.example.pixelscanner.domain.SessionIngestionResult
 
 data class ScanResultPayload(
     val pageUris: List<Uri>,
@@ -115,6 +117,28 @@ data class ScanSession(
                     page
                 }
             }
+        )
+    }
+
+    fun withIngestedAssets(ingestionResult: SessionIngestionResult): ScanSession {
+        val ingestedPageUriBySource = ingestionResult.pageMappings
+            .filter { it.assetType == SessionIngestionAssetType.PAGE_JPEG }
+            .associateBy({ it.sourceUri }, { it.destinationUri })
+
+        val updatedPages = pages.map { page ->
+            val ingestedUri = ingestedPageUriBySource[page.originalSourceUri]
+            if (ingestedUri != null) {
+                page.copy(originalSourceUri = ingestedUri)
+            } else {
+                page
+            }
+        }
+
+        val updatedOriginalPdfUri = ingestionResult.originalPdfMapping?.destinationUri ?: originalPdfUri
+        return copy(
+            pages = updatedPages,
+            originalPdfUri = updatedOriginalPdfUri,
+            dirtyFlags = SessionDirtyFlags.fromPages(updatedPages),
         )
     }
 

@@ -16,6 +16,10 @@ object SessionStoragePaths {
         return File(sessionRoot(cacheDir, sessionId), ORIGINAL_DIR)
     }
 
+    fun originalPdfFile(cacheDir: File, sessionId: String): File {
+        return File(sessionRoot(cacheDir, sessionId), "original.pdf")
+    }
+
     fun previewPagesDir(cacheDir: File, sessionId: String): File {
         return File(sessionRoot(cacheDir, sessionId), PREVIEW_DIR)
     }

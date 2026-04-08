@@ -82,8 +82,9 @@ class ReviewViewModel(
 
     fun setScanResult(scanResult: ScanResultPayload) {
         val session = createSessionFromScanResultUseCase(scanResult)
-        applySessionUpdate(resumeSessionUseCase(session).session)
-        startEagerIngestion(session, scanResult)
+        val resumedSession = resumeSessionUseCase(session).session
+        applySessionUpdate(resumedSession)
+        startEagerIngestion(resumedSession, scanResult)
     }
 
     private fun startEagerIngestion(
@@ -93,7 +94,18 @@ class ReviewViewModel(
         // Kick ingestion off after the session exists so review can render immediately.
         viewModelScope.launch {
             runCatching {
-                eagerSessionIngestionUseCase(session, scanResult)
+                val ingestionResult = eagerSessionIngestionUseCase(session, scanResult)
+                if (ingestionResult.successfulMappingCount() > 0) {
+                    val currentSession = _scanSession.value
+                    if (currentSession != null && currentSession.id == session.id) {
+                        applySessionUpdate(currentSession.withIngestedAssets(ingestionResult))
+                    }
+                }
+                if (ingestionResult.hasFailures()) {
+                    ingestionResult.failures.forEach { failure ->
+                        println("Session ingestion warning: ${failure.message}")
+                    }
+                }
             }.onFailure { error ->
                 error.printStackTrace()
             }

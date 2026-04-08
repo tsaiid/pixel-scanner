@@ -7,5 +7,5 @@ interface SessionIngestionRepository {
     suspend fun ingest(
         session: ScanSession,
         scanResult: ScanResultPayload,
-    )
+    ): SessionIngestionResult
 }

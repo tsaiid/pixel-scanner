@@ -1,5 +1,6 @@
 package com.example.pixelscanner.app
 
+import android.content.Context
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.core.image.AndroidImageProcessingRepository
 import com.example.pixelscanner.core.storage.AndroidExportRepository
@@ -16,10 +17,12 @@ import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.home.HomeViewModelFactory
 import com.example.pixelscanner.feature.review.ReviewViewModelFactory
 
-class AppContainer {
+class AppContainer(
+    applicationContext: Context,
+) {
     val imageProcessingRepository = AndroidImageProcessingRepository()
     val exportRepository = AndroidExportRepository()
-    val sessionIngestionRepository = AndroidSessionIngestionRepository()
+    val sessionIngestionRepository = AndroidSessionIngestionRepository(applicationContext)
     val createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase()
     val eagerSessionIngestionUseCase = EagerSessionIngestionUseCase(sessionIngestionRepository)
     val toggleEnhancementUseCase = ToggleEnhancementUseCase(imageProcessingRepository)

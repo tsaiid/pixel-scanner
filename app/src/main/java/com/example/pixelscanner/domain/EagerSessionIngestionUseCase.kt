@@ -2,6 +2,7 @@ package com.example.pixelscanner.domain
 
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.domain.SessionIngestionResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,8 +15,8 @@ class EagerSessionIngestionUseCase(
     suspend operator fun invoke(
         session: ScanSession,
         scanResult: ScanResultPayload,
-    ) {
-        withContext(ioDispatcher) {
+    ): SessionIngestionResult {
+        return withContext(ioDispatcher) {
             sessionIngestionRepository.ingest(session, scanResult)
         }
     }

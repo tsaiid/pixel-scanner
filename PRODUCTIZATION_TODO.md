@@ -178,10 +178,10 @@
   - 驗收標準：掃描完成後，review 與後續處理都以 app 內部 session 檔案為主，不直接依賴外部短生命週期 URI。
   - [x] 定義 ingestion 的觸發點與執行緒模型。
     - 目前由 `ReviewViewModel.setScanResult()` 在建立 session 後立刻觸發背景 eager ingestion，並透過 use case 內的 `Dispatchers.IO` 邊界執行。
-  - [ ] 將 page JPEG 拷貝到 `cacheDir/sessions/{sessionId}/original/`。
-  - [ ] 若有原始 PDF，拷貝到 session 目錄並記錄 metadata。
-  - [ ] 建立 source URI 到 session file 的映射資訊。
-  - [ ] 定義 ingestion 失敗時的 fallback 與錯誤回報。
+  - [x] 將 page JPEG 拷貝到 `cacheDir/sessions/{sessionId}/original/`。
+  - [x] 若有原始 PDF，拷貝到 session 目錄並記錄 metadata。
+  - [x] 建立 source URI 到 session file 的映射資訊。
+  - [x] 定義 ingestion 失敗時的 fallback 與錯誤回報。
 - [ ] 建立 scan session 暫存目錄與 metadata。
   - 驗收標準：單次掃描的原圖、增強圖、排序資訊、刪除狀態、匯出狀態都有可追蹤 metadata。
   - [x] 定義 session id 生成規則。

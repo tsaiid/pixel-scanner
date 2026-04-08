@@ -1,12 +1,107 @@
 package com.example.pixelscanner.core.storage
 
+import android.content.ContentResolver
+import android.content.Context
+import android.net.Uri
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.domain.SessionIngestionAssetType
+import com.example.pixelscanner.domain.SessionIngestionFailure
+import com.example.pixelscanner.domain.SessionIngestionMapping
+import com.example.pixelscanner.domain.SessionIngestionResult
+import com.example.pixelscanner.domain.SessionIngestionStatus
 import com.example.pixelscanner.domain.SessionIngestionRepository
+import java.io.File
+import java.io.FileOutputStream
 
-class AndroidSessionIngestionRepository : SessionIngestionRepository {
-    override suspend fun ingest(session: ScanSession, scanResult: ScanResultPayload) {
-        // Eager ingestion is wired through this boundary first.
-        // File copying will be added in the next slice.
+class AndroidSessionIngestionRepository(
+    private val context: Context,
+) : SessionIngestionRepository {
+
+    override suspend fun ingest(
+        session: ScanSession,
+        scanResult: ScanResultPayload,
+    ): SessionIngestionResult {
+        val sessionOriginalDir = SessionStoragePaths.originalPagesDir(context.cacheDir, session.id)
+        sessionOriginalDir.mkdirs()
+        val pageMappings = mutableListOf<SessionIngestionMapping>()
+        val failures = mutableListOf<SessionIngestionFailure>()
+
+        scanResult.pageUris.forEachIndexed { index, sourceUri ->
+            val destinationFile = File(sessionOriginalDir, "page_${index + 1}.jpg")
+            val result = runCatching {
+                copyUriToFile(sourceUri, destinationFile)
+            }
+            if (result.isSuccess) {
+                pageMappings += SessionIngestionMapping(
+                    sourceUri = sourceUri,
+                    destinationPath = destinationFile.absolutePath,
+                    destinationUri = Uri.fromFile(destinationFile),
+                    assetType = SessionIngestionAssetType.PAGE_JPEG,
+                )
+            } else {
+                failures += SessionIngestionFailure(
+                    sourceUri = sourceUri,
+                    destinationPath = destinationFile.absolutePath,
+                    assetType = SessionIngestionAssetType.PAGE_JPEG,
+                    message = result.exceptionOrNull()?.message ?: "Failed to ingest page image",
+                )
+            }
+        }
+
+        val originalPdfMapping = scanResult.pdfUri?.let { sourceUri ->
+            val destinationFile = SessionStoragePaths.originalPdfFile(context.cacheDir, session.id)
+            val result = runCatching {
+                copyUriToFile(sourceUri, destinationFile)
+            }
+            if (result.isSuccess) {
+                SessionIngestionMapping(
+                    sourceUri = sourceUri,
+                    destinationPath = destinationFile.absolutePath,
+                    destinationUri = Uri.fromFile(destinationFile),
+                    assetType = SessionIngestionAssetType.ORIGINAL_PDF,
+                )
+            } else {
+                failures += SessionIngestionFailure(
+                    sourceUri = sourceUri,
+                    destinationPath = destinationFile.absolutePath,
+                    assetType = SessionIngestionAssetType.ORIGINAL_PDF,
+                    message = result.exceptionOrNull()?.message ?: "Failed to ingest original PDF",
+                )
+                null
+            }
+        }
+
+        val status = when {
+            failures.isEmpty() -> SessionIngestionStatus.SUCCESS
+            pageMappings.isEmpty() && originalPdfMapping == null -> SessionIngestionStatus.FAILURE
+            else -> SessionIngestionStatus.PARTIAL_SUCCESS
+        }
+
+        return SessionIngestionResult(
+            status = status,
+            pageMappings = pageMappings,
+            originalPdfMapping = originalPdfMapping,
+            failures = failures,
+        )
+    }
+
+    private fun copyUriToFile(sourceUri: Uri, destinationFile: File) {
+        destinationFile.parentFile?.mkdirs()
+        if (sourceUri.scheme == ContentResolver.SCHEME_FILE) {
+            val sourceFile = File(requireNotNull(sourceUri.path) { "Missing file path for $sourceUri" })
+            sourceFile.inputStream().use { input ->
+                FileOutputStream(destinationFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            return
+        }
+
+        context.contentResolver.openInputStream(sourceUri)?.use { input ->
+            FileOutputStream(destinationFile).use { output ->
+                input.copyTo(output)
+            }
+        } ?: error("Unable to open input stream for $sourceUri")
     }
 }
