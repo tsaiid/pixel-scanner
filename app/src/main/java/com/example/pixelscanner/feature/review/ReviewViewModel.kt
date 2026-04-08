@@ -25,6 +25,8 @@ import com.example.pixelscanner.feature.review.ui.ReviewPageUiModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -48,6 +50,7 @@ class ReviewViewModel(
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
+    private val enhancementJobs = mutableMapOf<String, Job>()
 
     private val _uiState = MutableStateFlow(
         ReviewUiState(
@@ -161,9 +164,10 @@ class ReviewViewModel(
         val session = _scanSession.value ?: return
         val page = session.activePages().getOrNull(index) ?: return
 
+        enhancementJobs.remove(page.id)?.cancel()
         applySessionUpdate(session.withPageProcessing(page.id, ProcessingState.PROCESSING))
 
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             try {
                 val result = toggleEnhancementUseCase(page, context)
                 val currentSession = _scanSession.value ?: return@launch
@@ -175,14 +179,23 @@ class ReviewViewModel(
                     }
                 }
                 applySessionUpdate(currentSession.withPages(updatedPages))
+            } catch (e: CancellationException) {
+                val currentSession = _scanSession.value
+                if (currentSession != null && currentSession.pages.any { it.id == page.id }) {
+                    applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
+                }
+                throw e
             } catch (e: Exception) {
                 e.printStackTrace() // Handle error appropriately
                 val currentSession = _scanSession.value ?: return@launch
                 if (currentSession.pages.any { it.id == page.id }) {
                     applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
                 }
+            } finally {
+                enhancementJobs.remove(page.id)
             }
         }
+        enhancementJobs[page.id] = job
     }
 
     private fun deletePage(index: Int) {
@@ -293,6 +306,7 @@ class ReviewViewModel(
     }
 
     private fun clearSessionState() {
+        cancelEnhancementJobs()
         _scanSession.value = null
         savedStateHandle[KEY_CURRENT_PAGE] = 0
         savedStateHandle[KEY_EXPORT_FORMAT] = ExportFormat.IMAGE.name
@@ -302,8 +316,18 @@ class ReviewViewModel(
         )
     }
 
+    override fun onCleared() {
+        cancelEnhancementJobs()
+        super.onCleared()
+    }
+
     private fun updateUiState(transform: (ReviewUiState) -> ReviewUiState) {
         _uiState.value = transform(_uiState.value)
+    }
+
+    private fun cancelEnhancementJobs() {
+        enhancementJobs.values.forEach { job -> job.cancel() }
+        enhancementJobs.clear()
     }
 }
 
