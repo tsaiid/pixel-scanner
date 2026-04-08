@@ -18,6 +18,7 @@ import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
+import com.example.pixelscanner.domain.PreviewCacheCleanupRepository
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
@@ -45,6 +46,7 @@ class ReviewViewModel(
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
+    private val previewCacheCleanupRepository: PreviewCacheCleanupRepository,
     private val resumeSessionUseCase: ResumeSessionUseCase,
     private val scanMoreUseCase: ScanMoreUseCase,
     private val savedStateHandle: SavedStateHandle,
@@ -209,6 +211,7 @@ class ReviewViewModel(
         val result = deletePageUseCase(session, index) ?: return
         applySessionUpdate(result.updatedSession)
         if (result.updatedSession.activePages().isEmpty()) {
+            previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
             clearSessionState()
             viewModelScope.launch {
                 _effects.emit(ReviewUiEffect.NavigateBackToScanner)
@@ -245,6 +248,7 @@ class ReviewViewModel(
         val session = _scanSession.value ?: return
         viewModelScope.launch {
             discardSessionUseCase(session)
+            previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
             clearSessionState()
             _effects.emit(ReviewUiEffect.NavigateBackToScanner)
         }
@@ -254,6 +258,7 @@ class ReviewViewModel(
         val session = _scanSession.value ?: return
         viewModelScope.launch {
             discardSessionUseCase(session)
+            previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
             clearSessionState()
             _effects.emit(ReviewUiEffect.NavigateBackToHome)
         }
@@ -385,6 +390,7 @@ class ReviewViewModelFactory(
     private val restorePageUseCase: RestorePageUseCase,
     private val exportSessionUseCase: ExportSessionUseCase,
     private val discardSessionUseCase: DiscardSessionUseCase,
+    private val previewCacheCleanupRepository: PreviewCacheCleanupRepository,
     private val resumeSessionUseCase: ResumeSessionUseCase,
     private val scanMoreUseCase: ScanMoreUseCase,
     owner: androidx.savedstate.SavedStateRegistryOwner,
@@ -406,6 +412,7 @@ class ReviewViewModelFactory(
             restorePageUseCase = restorePageUseCase,
             exportSessionUseCase = exportSessionUseCase,
             discardSessionUseCase = discardSessionUseCase,
+            previewCacheCleanupRepository = previewCacheCleanupRepository,
             resumeSessionUseCase = resumeSessionUseCase,
             scanMoreUseCase = scanMoreUseCase,
             savedStateHandle = handle,

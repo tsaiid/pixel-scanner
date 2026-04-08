@@ -2,6 +2,7 @@ package com.example.pixelscanner.app
 
 import android.content.Context
 import androidx.savedstate.SavedStateRegistryOwner
+import com.example.pixelscanner.core.storage.AndroidPreviewCacheCleanupRepository
 import com.example.pixelscanner.core.storage.AndroidExportArtifactCacheRepository
 import com.example.pixelscanner.core.image.AndroidImageProcessingRepository
 import com.example.pixelscanner.core.storage.AndroidExportRepository
@@ -16,6 +17,7 @@ import com.example.pixelscanner.domain.GetRecoverableSessionUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.ExportSessionUseCase
+import com.example.pixelscanner.domain.PreviewCacheCleanupRepository
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.RestoreSessionUseCase
@@ -32,6 +34,8 @@ class AppContainer(
     val imageProcessingRepository = AndroidImageProcessingRepository()
     val exportRepository = AndroidExportRepository()
     val exportArtifactCacheRepository = AndroidExportArtifactCacheRepository()
+    val previewCacheCleanupRepository: PreviewCacheCleanupRepository =
+        AndroidPreviewCacheCleanupRepository(applicationContext)
     val sessionMetadataRepository = AndroidSessionMetadataRepository(applicationContext)
     val sessionCleanupRepository: SessionCleanupRepository = AndroidSessionCleanupRepository(
         context = applicationContext,
@@ -68,6 +72,7 @@ class AppContainer(
             toggleEnhancementUseCase = toggleEnhancementUseCase,
             deletePageUseCase = deletePageUseCase,
             discardSessionUseCase = discardSessionUseCase,
+            previewCacheCleanupRepository = previewCacheCleanupRepository,
             resumeSessionUseCase = resumeSessionUseCase,
             scanMoreUseCase = scanMoreUseCase,
             restorePageUseCase = restorePageUseCase,

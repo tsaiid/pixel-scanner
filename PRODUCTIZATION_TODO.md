@@ -193,7 +193,8 @@
     - 已能將 `ScanSessionMetadata` 寫入與讀回 session 目錄。
 - [ ] 定義 session 清理策略。
   - 驗收標準：離開 review、匯出完成、App 重啟後能安全清理舊快取，不殘留大量暫存檔。
-  - [ ] 定義 preview cache 何時清理。
+  - [x] 定義 preview cache 何時清理。
+    - preview cache 會在 session 被 discard 或 last-page delete 時清理；app launch 的 stale session cleanup 也會刪除整個 session root。
   - [x] 定義 export temp files 何時清理。
     - app launch 時會清理 session export 目錄下遺留的 `.tmp` 檔案，不影響成功輸出的成品檔。
   - [x] 定義失敗 / 中斷 session 的保留時間。
