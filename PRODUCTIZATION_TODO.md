@@ -172,7 +172,7 @@
 
 - [~] 擴充掃描結果模型，保留 ML Kit 回傳的 JPEG pages 與原始 PDF URI。
   - 驗收標準：後續匯出時可根據是否修改過內容決定是否重用原始 PDF。
-  - [ ] 研究 ML Kit result 中需要持久化的欄位。
+  - [x] 研究 ML Kit result 中需要持久化的欄位。
   - [x] 擴充 session model 接住 page URIs 與 pdf URI。
   - [x] 定義 `session dirty` 的判斷規則。
   - [x] 驗證未修改 session 可直接重用 PDF。
