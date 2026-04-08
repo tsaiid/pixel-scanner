@@ -51,24 +51,22 @@ class PreviewBitmapDecodeHelper(
         }
     }
 
-    private fun calculateInSampleSize(
-        sourceWidth: Int,
-        sourceHeight: Int,
-        maxWidth: Int,
-        maxHeight: Int,
-    ): Int {
-        var sampleSize = 1
-        var halfWidth = sourceWidth / 2
-        var halfHeight = sourceHeight / 2
-
-        while (halfWidth / sampleSize >= maxWidth && halfHeight / sampleSize >= maxHeight) {
-            sampleSize *= 2
-        }
-
-        return sampleSize.coerceAtLeast(1)
-    }
-
     private companion object {
         const val DEFAULT_MAX_PREVIEW_DIMENSION = 1600
     }
+}
+
+internal fun calculateInSampleSize(
+    sourceWidth: Int,
+    sourceHeight: Int,
+    maxWidth: Int,
+    maxHeight: Int,
+): Int {
+    var sampleSize = 1
+
+    while (sourceWidth / sampleSize > maxWidth || sourceHeight / sampleSize > maxHeight) {
+        sampleSize *= 2
+    }
+
+    return sampleSize.coerceAtLeast(1)
 }

@@ -241,7 +241,7 @@
     - 目前 preview 會先查 session-owned cache，命中時直接重用既有預覽檔，未命中才重新運算與寫入。
   - [x] 實作 export pipeline。
     - 目前 export 會先查 session-owned artifact cache，命中時直接重用既有輸出素材，未命中才建立新素材並寫回 cache。
-- [ ] 導入安全 decode 策略。
+- [x] 導入安全 decode 策略。
   - 包含：bounds decode、`inSampleSize`、色彩格式選擇、尺寸上限保護。
   - 驗收標準：處理大圖與異常圖片時不因一次性 full decode 容易 OOM。
   - [x] 建立 decode helper。
