@@ -7,12 +7,16 @@ This checklist is for the current Pixel Scanner release-prep state. It assumes t
 - Confirm `git status` is clean except for intentional release-prep changes.
 - Run `./gradlew assembleDebug` and `./gradlew testDebugUnitTest` to confirm the main host-side build is healthy.
 - Run `./gradlew lintDebug` and confirm it passes with `app/lint-baseline.xml` filtering only pre-existing debt.
+- Run `./gradlew :app:detekt :benchmark:detekt` and confirm it passes with `detekt-baseline.xml` filtering only pre-existing Kotlin static-analysis debt.
 - Run `./gradlew assembleRelease` if the release artifact is being prepared.
 - Confirm release settings are intentional:
   - `versionCode` and `versionName` are updated.
   - Signing config is present for the intended release channel.
   - `release` minify/shrinker status matches the current release decision.
   - Current repo decision: release R8 minify and resource shrinking are enabled, with baseline rules in `app/proguard-rules.pro`.
+- Static analysis status matches the current repo decision:
+  - `detekt` runs for `app` and `benchmark` in CI.
+  - `detekt-baseline.xml` files capture the current debt so future findings are incremental.
 
 ## QA Checks
 

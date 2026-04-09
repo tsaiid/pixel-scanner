@@ -706,12 +706,15 @@
     - `lintDebug` currently passes with `app/lint-baseline.xml` filtering pre-existing lint debt.
   - [ ] 視可行性加入 smoke test。
     - 目前 GitHub Actions workflow 只先覆蓋 host-side validation；instrumentation smoke test 仍需要 emulator / device strategy，暫不列入本 slice。
-- [ ] 補上 static analysis。
+- [x] 補上 static analysis。
   - 建議可選：ktlint、detekt、dependency analysis。
   - 驗收標準：風格與常見錯誤有自動檢查。
-  - [ ] 選定 static analysis 工具。
-  - [ ] 建立規則檔。
-  - [ ] 將檢查接入 CI。
+  - [x] 選定 static analysis 工具。
+    - Current repo decision: use `detekt` as the Kotlin static-analysis lane, with a baseline to keep legacy findings from blocking the rollout.
+  - [x] 建立規則檔。
+    - Shared config: [`config/detekt/detekt.yml`](/Users/tsaiid/git/pixel-scanner/config/detekt/detekt.yml)
+  - [x] 將檢查接入 CI。
+    - GitHub Actions now runs `:app:detekt` and `:benchmark:detekt` alongside the debug build and tests.
 
 ## Phase 11: Observability And Diagnostics
 
