@@ -722,12 +722,12 @@
 
 ## Phase 12: Documentation And Handoff
 
-- [ ] 重寫 README，使其反映實際功能、限制與開發方式。
+- [x] 重寫 README，使其反映實際功能、限制與開發方式。
   - 驗收標準：新加入開發者能依 README 成功建置、理解架構與限制。
-  - [ ] 重寫功能概述。
-  - [ ] 補上目前限制。
-  - [ ] 補上建置需求。
-  - [ ] 補上架構簡圖或說明。
+  - [x] 重寫功能概述。
+  - [x] 補上目前限制。
+  - [x] 補上建置需求。
+  - [x] 補上架構簡圖或說明。
 - [ ] 撰寫 architecture decision records。
   - 主題：ML Kit 掃描限制、session 模型、preview/export 雙 pipeline、PDF 策略、背景匯出策略。
   - 驗收標準：關鍵決策有留痕，不依賴口頭傳承。
