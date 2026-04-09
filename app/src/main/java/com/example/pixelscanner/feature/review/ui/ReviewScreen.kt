@@ -6,12 +6,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -110,7 +107,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.SaveAll
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ReviewScreen(
     viewModel: ReviewViewModel = viewModel(),
@@ -204,7 +201,6 @@ fun ReviewScreen(
                 state = commandBarState,
                 onScanMore = { viewModel.onEvent(RequestScanMore) },
                 onRescan = { showRescanConfirmDialog = true },
-                onDiscard = { showDiscardConfirmDialog = true },
                 onSaveAll = {
                     viewModel.onEvent(
                         if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
@@ -346,19 +342,17 @@ internal data class ReviewRecompositionTrace(
     val onThumbnailStripRecomposed: (() -> Unit)? = null,
 )
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ReviewCommandBar(
     state: ReviewCommandBarState,
     onScanMore: () -> Unit,
     onRescan: () -> Unit,
-    onDiscard: () -> Unit,
     onSaveAll: () -> Unit,
     onCancelExport: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(
@@ -366,177 +360,57 @@ private fun ReviewCommandBar(
                 vertical = PixelScannerSpacingTokens.sm,
             ),
     ) {
-        val isCompactCommandBar = maxWidth < 720.dp
-        if (isCompactCommandBar) {
-            ReviewCompactCommandActions(
-                state = state,
-                onScanMore = onScanMore,
-                onRescan = onRescan,
-                onDiscard = onDiscard,
-                onSaveAll = onSaveAll,
-                onCancelExport = onCancelExport,
-                onOpenSettings = onOpenSettings,
-            )
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+        Row(
+            modifier = Modifier.align(Alignment.CenterStart),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
+        ) {
+            Button(
+                onClick = onScanMore,
+                enabled = state.hasPages && !state.exportState.isExporting && !state.isProcessing,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelScannerColorTokens.reviewActionContainer,
+                    contentColor = PixelScannerColorTokens.reviewActionContent,
+                ),
             ) {
-                ReviewPrimaryCommandActions(
-                    state = state,
-                    onScanMore = onScanMore,
-                    onRescan = onRescan,
-                    onDiscard = onDiscard,
-                )
-                if (state.hasPages) {
-                    ReviewSecondaryCommandActions(
-                        state = state,
-                        onSaveAll = onSaveAll,
-                        onCancelExport = onCancelExport,
-                        onRescan = onRescan,
-                        onOpenSettings = onOpenSettings,
-                    )
-                }
+                Text(stringResource(id = R.string.review_action_scan_more))
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ReviewCompactCommandActions(
-    state: ReviewCommandBarState,
-    onScanMore: () -> Unit,
-    onRescan: () -> Unit,
-    onDiscard: () -> Unit,
-    onSaveAll: () -> Unit,
-    onCancelExport: () -> Unit,
-    onOpenSettings: () -> Unit,
-) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
-        verticalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.xs),
-    ) {
-        Button(
-            onClick = onScanMore,
-            enabled = state.hasPages && !state.exportState.isExporting && !state.isProcessing,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PixelScannerColorTokens.reviewActionContainer,
-                contentColor = PixelScannerColorTokens.reviewActionContent,
-            ),
-        ) {
-            Text(stringResource(id = R.string.review_action_scan_more))
-        }
-        TextButton(
-            onClick = onRescan,
-            enabled = !state.exportState.isExporting && !state.isProcessing,
-        ) {
-            Text(stringResource(id = R.string.review_action_rescan))
-        }
-        TextButton(
-            onClick = onDiscard,
-            enabled = !state.exportState.isExporting && !state.isProcessing,
-        ) {
-            Text(stringResource(id = R.string.review_action_discard_session))
-        }
-        if (state.hasPages) {
-            ExportSaveButton(
-                exportState = state.exportState,
-                onSaveAll = onSaveAll,
-                modifier = Modifier.testTag("review_save_button"),
-            )
-            if (state.exportState.isExporting) {
-                ExportCancelButton(onCancel = onCancelExport)
-            } else if (state.exportState.fallbackAction == ExportFallbackAction.DISCARD_AND_RESCAN) {
-                TextButton(
-                    onClick = onRescan,
-                    modifier = Modifier.testTag("review_export_fallback_rescan"),
-                ) {
-                    Text(stringResource(id = R.string.review_action_rescan))
-                }
-            } else if (state.exportState.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
-                TextButton(
-                    onClick = onOpenSettings,
-                    modifier = Modifier.testTag("review_export_fallback_settings"),
-                ) {
-                    Text(stringResource(id = R.string.export_fallback_open_settings))
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ReviewPrimaryCommandActions(
-    state: ReviewCommandBarState,
-    onScanMore: () -> Unit,
-    onRescan: () -> Unit,
-    onDiscard: () -> Unit,
-) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
-        verticalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.xs),
-    ) {
-        Button(
-            onClick = onScanMore,
-            enabled = state.hasPages && !state.exportState.isExporting && !state.isProcessing,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PixelScannerColorTokens.reviewActionContainer,
-                contentColor = PixelScannerColorTokens.reviewActionContent,
-            ),
-        ) {
-            Text(stringResource(id = R.string.review_action_scan_more))
-        }
-        TextButton(
-            onClick = onRescan,
-            enabled = !state.exportState.isExporting && !state.isProcessing,
-        ) {
-            Text(stringResource(id = R.string.review_action_rescan))
-        }
-        TextButton(
-            onClick = onDiscard,
-            enabled = !state.exportState.isExporting && !state.isProcessing,
-        ) {
-            Text(stringResource(id = R.string.review_action_discard_session))
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ReviewSecondaryCommandActions(
-    state: ReviewCommandBarState,
-    onSaveAll: () -> Unit,
-    onCancelExport: () -> Unit,
-    onRescan: () -> Unit,
-    onOpenSettings: () -> Unit,
-) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
-        verticalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.xs),
-    ) {
-        ExportSaveButton(
-            exportState = state.exportState,
-            onSaveAll = onSaveAll,
-            modifier = Modifier.testTag("review_save_button"),
-        )
-        if (state.exportState.isExporting) {
-            ExportCancelButton(onCancel = onCancelExport)
-        } else if (state.exportState.fallbackAction == ExportFallbackAction.DISCARD_AND_RESCAN) {
             TextButton(
                 onClick = onRescan,
-                modifier = Modifier.testTag("review_export_fallback_rescan"),
+                enabled = !state.exportState.isExporting && !state.isProcessing,
             ) {
                 Text(stringResource(id = R.string.review_action_rescan))
             }
-        } else if (state.exportState.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
-            TextButton(
-                onClick = onOpenSettings,
-                modifier = Modifier.testTag("review_export_fallback_settings"),
+        }
+
+        if (state.hasPages) {
+            Row(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
             ) {
-                Text(stringResource(id = R.string.export_fallback_open_settings))
+                ExportSaveButton(
+                    exportState = state.exportState,
+                    onSaveAll = onSaveAll,
+                    modifier = Modifier.testTag("review_save_button"),
+                )
+                if (state.exportState.isExporting) {
+                    ExportCancelButton(onCancel = onCancelExport)
+                } else if (state.exportState.fallbackAction == ExportFallbackAction.DISCARD_AND_RESCAN) {
+                    TextButton(
+                        onClick = onRescan,
+                        modifier = Modifier.testTag("review_export_fallback_rescan"),
+                    ) {
+                        Text(stringResource(id = R.string.review_action_rescan))
+                    }
+                } else if (state.exportState.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
+                    TextButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier.testTag("review_export_fallback_settings"),
+                    ) {
+                        Text(stringResource(id = R.string.export_fallback_open_settings))
+                    }
+                }
             }
         }
     }
