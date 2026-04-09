@@ -550,7 +550,8 @@
   - [x] 驗證取消後 state 一致性。
 - [~] 為不可恢復錯誤設計 fallback。
   - 驗收標準：例如圖片檔失效時可提示重新掃描，而非沉默失敗。
-  - [ ] 列出不可恢復錯誤清單。
+  - [x] 列出不可恢復錯誤清單。
+    - 參考文件：[`docs/nonrecoverable-error-fallbacks.md`](/Users/tsaiid/git/pixel-scanner/docs/nonrecoverable-error-fallbacks.md)
   - [~] 定義各錯誤的 fallback CTA。
     - review export 現已針對 `ExportSourceInvalidFailure` 提供 `Discard & Rescan` CTA，避免 source 檔失效時只有 snackbar 而沒有恢復動作。
   - [ ] 驗證 fallback 是否會造成資料遺失誤解。
