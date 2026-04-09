@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import com.example.pixelscanner.core.diagnostics.DebugLog
 import com.example.pixelscanner.core.model.ExportDecodeFailure
 import com.example.pixelscanner.core.model.ExportFailure
 import com.example.pixelscanner.core.model.ExportInsufficientSpaceFailure
@@ -139,7 +140,7 @@ class StorageManager(
                 bitmap.recycle()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            DebugLog.error("export_read_decode_failed", e)
             pdfDocument.close()
             return@withContext ExportOperationResult.Failure(
                 classifyFailure(
@@ -194,7 +195,7 @@ class StorageManager(
                 resolver.update(pdfUri, contentValues, null, null)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            DebugLog.error("export_write_failed", e)
             resolver.delete(pdfUri, null, null)
             pdfDocument.close()
             return@withContext ExportOperationResult.Failure(
@@ -265,7 +266,7 @@ class StorageManager(
 
             ExportOperationResult.Success(destinationUri)
         } catch (e: Exception) {
-            e.printStackTrace()
+            DebugLog.error("export_copy_failed", e)
             resolver.delete(destinationUri, null, null)
             ExportOperationResult.Failure(
                 classifyFailure(

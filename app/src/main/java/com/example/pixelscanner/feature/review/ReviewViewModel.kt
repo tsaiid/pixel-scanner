@@ -1,9 +1,12 @@
 package com.example.pixelscanner.feature.review
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.example.pixelscanner.R
+import com.example.pixelscanner.core.diagnostics.DebugLog
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportRequest
 import com.example.pixelscanner.core.model.ExportOverallProgress
@@ -35,7 +38,6 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiState
 import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
-import com.example.pixelscanner.R
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -147,25 +149,46 @@ class ReviewViewModel(
     ) {
         // Kick ingestion off after the session exists so review can render immediately.
         viewModelScope.launch {
-            runCatching {
-                val ingestionResult = eagerSessionIngestionUseCase(session, scanResult)
+            val startedAtMs = SystemClock.elapsedRealtime()
+            val ingestionResult = runCatching {
+                eagerSessionIngestionUseCase(session, scanResult)
+            }.onFailure { error ->
+                DebugLog.error("session_ingestion_failed", error)
+            }.getOrNull()
+
+            if (ingestionResult != null) {
                 if (ingestionResult.successfulMappingCount() > 0) {
                     val currentSession = _scanSession.value
                     if (currentSession != null && currentSession.id == session.id) {
                         applySessionUpdate(currentSession.withIngestedAssets(ingestionResult))
                     }
                 }
-                    if (ingestionResult.hasFailures()) {
-                        ingestionResult.failures.forEach { failure ->
-                            println("Session ingestion warning: ${failure.message}")
-                        }
-                        ingestionResult.failures.firstOrNull { it.typedFailure != null }?.typedFailure?.let { typedFailure ->
-                            setStatusMessage(typedFailure.userMessage)
-                        }
+                if (ingestionResult.hasFailures()) {
+                    DebugLog.event(
+                        name = "session_ingestion_warnings",
+                        "pageCount" to scanResult.pageUris.size,
+                        "hasPdf" to (scanResult.pdfUri != null),
+                        "warningCount" to ingestionResult.failures.size,
+                    )
+                    ingestionResult.failures.firstOrNull { it.typedFailure != null }?.typedFailure?.let { typedFailure ->
+                        setStatusMessage(typedFailure.userMessage)
+                    }
                 }
-            }.onFailure { error ->
-                error.printStackTrace()
             }
+
+            DebugLog.event(
+                name = "session_ingestion",
+                "durationMs" to (SystemClock.elapsedRealtime() - startedAtMs),
+                "pageCount" to scanResult.pageUris.size,
+                "hasPdf" to (scanResult.pdfUri != null),
+                "status" to when {
+                    ingestionResult == null -> "failed"
+                    ingestionResult.hasFailures() -> "partial_success"
+                    else -> "success"
+                },
+                "successfulMappings" to (ingestionResult?.successfulMappingCount() ?: 0),
+                "failureCount" to (ingestionResult?.failures?.size ?: 0),
+            )
         }
     }
 
@@ -210,22 +233,22 @@ class ReviewViewModel(
                     applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
                 }
                 throw e
-                } catch (e: Exception) {
-                    e.printStackTrace() // Handle error appropriately
-                    val currentSession = _scanSession.value ?: return@launch
-                    if (currentSession.pages.any { it.id == page.id }) {
-                        applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
-                    }
-                    applySessionUpdate(
-                        currentSession.withPageEnhancementFailure(
-                            page.id,
-                            uiTextResource(R.string.review_page_enhancement_failed),
-                        ),
-                    )
-                    setStatusMessage(uiTextResource(R.string.review_page_enhancement_failed))
-                } finally {
-                    enhancementJobs.remove(page.id)
+            } catch (e: Exception) {
+                DebugLog.error("preview_enhancement_failed", e)
+                val currentSession = _scanSession.value ?: return@launch
+                if (currentSession.pages.any { it.id == page.id }) {
+                    applySessionUpdate(currentSession.withPageProcessing(page.id, ProcessingState.IDLE))
                 }
+                applySessionUpdate(
+                    currentSession.withPageEnhancementFailure(
+                        page.id,
+                        uiTextResource(R.string.review_page_enhancement_failed),
+                    ),
+                )
+                setStatusMessage(uiTextResource(R.string.review_page_enhancement_failed))
+            } finally {
+                enhancementJobs.remove(page.id)
+            }
         }
         enhancementJobs[page.id] = job
     }
@@ -318,12 +341,18 @@ class ReviewViewModel(
         exportJob?.cancel()
         exportCancellationRequested = false
         exportJob = viewModelScope.launch {
+            val startedAtMs = SystemClock.elapsedRealtime()
             val session = _scanSession.value ?: return@launch
             var exportResult: ExportResult? = null
+            var exportOutcome = "idle"
+            var exportPath = "unknown"
+            var exportDecision = "unknown"
             val request = ExportRequest(
                 sessionId = session.id,
                 format = _uiState.value.export.format,
             )
+            exportPath = request.format.name.lowercase()
+            exportDecision = "n/a"
             val totalSteps = when (request.format) {
                 ExportFormat.IMAGE -> session.activePages().size
                 ExportFormat.PDF -> 1
@@ -361,12 +390,14 @@ class ReviewViewModel(
 
                 when (result) {
                     is ExportResult.Success -> {
+                        exportOutcome = "success"
                         result.toPostActionTarget(request.format)?.let { target ->
                             _effects.emit(ReviewUiEffect.ExportSucceeded(request.format, target))
                         }
                     }
 
                     is ExportResult.PartialSuccess -> {
+                        exportOutcome = "partial_success"
                         result.toPostActionTarget(request.format)?.let { target ->
                             _effects.emit(ReviewUiEffect.ExportSucceeded(request.format, target))
                         }
@@ -377,15 +408,18 @@ class ReviewViewModel(
                     }
 
                     is ExportResult.Failure -> {
+                        exportOutcome = "failure"
                         setStatusMessage(result.error.userMessage)
                     }
 
                     ExportResult.Cancelled -> {
+                        exportOutcome = "cancelled"
                         setStatusMessage(uiTextResource(R.string.review_status_export_cancelled))
                     }
                 }
             } catch (e: CancellationException) {
                 if (exportCancellationRequested) {
+                    exportOutcome = "cancelled"
                     exportResult = ExportResult.Cancelled
                     setStatusMessage(uiTextResource(R.string.review_status_export_cancelled))
                 } else {
@@ -401,6 +435,16 @@ class ReviewViewModel(
                         ),
                     )
                 }
+                DebugLog.event(
+                    name = "export",
+                    "durationMs" to (SystemClock.elapsedRealtime() - startedAtMs),
+                    "format" to request.format.name,
+                    "outcome" to exportOutcome,
+                    "path" to exportPath,
+                    "decision" to exportDecision,
+                    "pageCount" to session.activePages().size,
+                    "hasPdf" to (session.originalPdfUri != null),
+                )
             }
         }
     }

@@ -3,6 +3,7 @@ package com.example.pixelscanner.app
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,8 +31,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.pixelscanner.R
+import com.example.pixelscanner.core.diagnostics.DebugLog
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportPostActionTarget
+import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.UiText
 import com.example.pixelscanner.core.model.asString
 import com.example.pixelscanner.core.model.uiTextResource
@@ -78,13 +81,27 @@ fun AppNavigation() {
         }
     }
 
+    fun logScannerReturn(
+        status: String,
+        startedAtMs: Long,
+        scanResult: ScanResultPayload? = null,
+    ) {
+        DebugLog.event(
+            name = "scanner_return",
+            "status" to status,
+            "durationMs" to (SystemClock.elapsedRealtime() - startedAtMs),
+            "pageCount" to (scanResult?.pageUris?.size ?: 0),
+            "hasPdf" to (scanResult?.pdfUri != null),
+        )
+    }
+
     LaunchedEffect(homeUiState.shouldAttemptRecoverableSessionRestore, homeUiState.shouldAutoStartScanner) {
         if (!homeUiState.shouldAttemptRecoverableSessionRestore || homeUiState.shouldAutoStartScanner) {
             return@LaunchedEffect
         }
 
         val recoverableSession = runCatching { getRecoverableSessionUseCase() }.getOrElse { error ->
-            error.printStackTrace()
+            DebugLog.error("recoverable_session_lookup_failed", error)
             null
         }
 
@@ -104,21 +121,25 @@ fun AppNavigation() {
                     ScannerScreen(
                         homeUiState = homeUiState,
                         onScanResult = { scanResult ->
+                            val startedAtMs = SystemClock.elapsedRealtime()
                             reviewViewModel.setScanResult(scanResult)
                             navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
+                            logScannerReturn("success", startedAtMs, scanResult)
                         },
                         onScanCancelled = {
+                            val startedAtMs = SystemClock.elapsedRealtime()
                             homeViewModel.setShouldAutoStartScanner(false)
                             if (reviewUiState.isAwaitingScanMoreResult) {
                                 reviewViewModel.clearScanMorePending()
                                 navController.navigateResettingToHome(AppNavigationContract.reviewRoute)
                             }
+                            logScannerReturn("cancelled", startedAtMs)
                         },
                         onFeedbackMessage = showSnackbarMessage,
                         onRestoreRecoverableSession = { sessionId ->
                             coroutineScope.launch {
                                 val outcome = runCatching { restoreSessionUseCase(sessionId) }.getOrElse { error ->
-                                    error.printStackTrace()
+                                    DebugLog.error("restore_session_failed", error)
                                     RestoreSessionOutcome.Unavailable
                                 }
                                 homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
@@ -145,7 +166,7 @@ fun AppNavigation() {
                         onDiscardRecoverableSession = { sessionId ->
                             coroutineScope.launch {
                                 runCatching { discardRecoverableSessionUseCase(sessionId) }
-                                    .onFailure { error -> error.printStackTrace() }
+                                    .onFailure { error -> DebugLog.error("discard_recoverable_session_failed", error) }
                                 homeViewModel.setShouldAttemptRecoverableSessionRestore(false)
                                 homeViewModel.clearRecoverableSession()
                             }

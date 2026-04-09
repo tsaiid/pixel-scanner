@@ -700,23 +700,23 @@
 
 ## Phase 11: Observability And Diagnostics
 
-- [ ] 建立 debug logging policy。
+- [x] 建立 debug logging policy。
   - 驗收標準：開發期有足夠資訊，release 不暴露敏感內容。
-  - [ ] 定義 log tag 規則。
-  - [ ] 定義哪些事件要記錄。
-  - [ ] 定義 release build log 降級策略。
+  - [x] 定義 log tag 規則。
+  - [x] 定義哪些事件要記錄。
+  - [x] 定義 release build log 降級策略。
 - [ ] 設計非侵入式錯誤統計策略。
   - 驗收標準：在不違反隱私前提下，能知道匯出或處理失敗率。
   - [ ] 定義匿名事件模型。
   - [ ] 定義不收集的敏感資料。
   - [ ] 決定是否只做本地 debug 統計或接入遙測。
-- [ ] 為性能關鍵路徑加入 timing logs。
+- [x] 為性能關鍵路徑加入 timing logs。
   - 驗收標準：可追蹤掃描返回、session ingestion、預覽處理、匯出耗時。
-  - [ ] 為 scanner return 加 timing。
-  - [ ] 為 ingestion 加 timing。
-  - [ ] 為 enhancement 加 timing。
-  - [ ] 為 export 加 timing。
-  - [ ] 將 timing 結果格式化便於比較。
+  - [x] 為 scanner return 加 timing。
+  - [x] 為 ingestion 加 timing。
+  - [x] 為 enhancement 加 timing。
+  - [x] 為 export 加 timing。
+  - [x] 將 timing 結果格式化便於比較。
 
 ## Phase 12: Documentation And Handoff
 

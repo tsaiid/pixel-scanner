@@ -3,6 +3,7 @@ package com.example.pixelscanner.core.storage
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import com.example.pixelscanner.core.diagnostics.DebugLog
 import com.example.pixelscanner.core.model.ExportInsufficientSpaceFailure
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
@@ -119,7 +120,7 @@ class AndroidSessionIngestionRepository(
             sessionMetadataRepository.write(metadata)
             sessionMetadataRepository.read(session.id)
         }.onFailure { error ->
-            println("Session metadata warning: ${error.message}")
+            DebugLog.error("session_metadata_warning", error)
         }
 
         return SessionIngestionResult(

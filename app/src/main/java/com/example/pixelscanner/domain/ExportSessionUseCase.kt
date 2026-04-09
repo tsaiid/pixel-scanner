@@ -2,7 +2,9 @@ package com.example.pixelscanner.domain
 
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import com.example.pixelscanner.R
+import com.example.pixelscanner.core.diagnostics.DebugLog
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportDecision
 import com.example.pixelscanner.core.model.ExportDecodeFailure
@@ -34,9 +36,22 @@ class ExportSessionUseCase(
         context: Context,
         onProgress: (ExportProgress) -> Unit = {},
     ): ExportResult {
+        val startedAtMs = SystemClock.elapsedRealtime()
         val pagesToExport = session.activePages()
         if (pagesToExport.isEmpty()) {
-            return ExportResult.Failure(com.example.pixelscanner.core.model.ExportNoPagesFailure)
+            val result = ExportResult.Failure(com.example.pixelscanner.core.model.ExportNoPagesFailure)
+            DebugLog.event(
+                name = "export",
+                "durationMs" to (SystemClock.elapsedRealtime() - startedAtMs),
+                "format" to request.format.name,
+                "outcome" to "failure_no_pages",
+                "path" to "empty_session",
+                "decision" to "n/a",
+                "cacheHit" to false,
+                "pageCount" to 0,
+                "hasPdf" to (session.originalPdfUri != null),
+            )
+            return result
         }
 
         val pipelineRequest = ExportImagePipelineRequest(
@@ -49,8 +64,11 @@ class ExportSessionUseCase(
         val exportDecision = request.resolveDecision(session)
         val timestamp = System.currentTimeMillis()
         val urisToSave = pipelineRequest.sourceUris
+        var exportOutcome = "unknown"
+        var exportPath = "unknown"
+        var cacheHit = false
 
-        return when (request.format) {
+        val result = when (request.format) {
             ExportFormat.PDF -> {
                 onProgress(
                     ExportProgress(
@@ -65,6 +83,19 @@ class ExportSessionUseCase(
                     request = pipelineRequest,
                 )
                 val cachedSourceUri = cachedArtifact?.let(Uri::fromFile)
+                cacheHit = cachedArtifact != null
+                exportPath = when (exportDecision) {
+                    ExportDecision.ReuseOriginalPdf -> {
+                        if (cachedSourceUri != null) "pdf_copy_cached" else "pdf_copy_original"
+                    }
+
+                    ExportDecision.RebuildPdfFromEnhancedPages,
+                    ExportDecision.RebuildPdfFromPages -> {
+                        if (cachedSourceUri != null) "pdf_copy_cached" else "pdf_rebuild"
+                    }
+
+                    ExportDecision.ExportJpegs -> "pdf_from_jpegs"
+                }
 
                 val outputResult = when (exportDecision) {
                     ExportDecision.ReuseOriginalPdf -> {
@@ -130,8 +161,15 @@ class ExportSessionUseCase(
                 )
 
                 when (outputResult) {
-                    is ExportOperationResult.Success -> ExportResult.Success(pipelineResult.outputUri)
-                    is ExportOperationResult.Failure -> ExportResult.Failure(outputResult.error)
+                    is ExportOperationResult.Success -> {
+                        exportOutcome = "success"
+                        ExportResult.Success(pipelineResult.outputUri)
+                    }
+
+                    is ExportOperationResult.Failure -> {
+                        exportOutcome = "failure"
+                        ExportResult.Failure(outputResult.error)
+                    }
                 }
             }
 
@@ -142,6 +180,8 @@ class ExportSessionUseCase(
                     pageCount = urisToSave.size,
                 )
                 val sourceUrisForExport = cachedArtifacts?.map(Uri::fromFile) ?: urisToSave
+                cacheHit = cachedArtifacts != null
+                exportPath = if (cacheHit) "image_cached" else "image_render"
                 val totalPages = sourceUrisForExport.size
                 val completedPages = mutableListOf<ExportResult.CompletedExportPage>()
                 val failures = mutableListOf<ExportFailure>()
@@ -203,6 +243,7 @@ class ExportSessionUseCase(
                 val successfulUris = completedPages.map { it.outputUri }
                 when {
                     successfulUris.isEmpty() -> {
+                        exportOutcome = "failure"
                         ExportResult.Failure(
                             failures.firstOrNull() ?: ExportUnknownFailure(
                                 details = context.getString(R.string.export_error_image_export_failed),
@@ -211,10 +252,12 @@ class ExportSessionUseCase(
                     }
 
                     successfulUris.size == results.size -> {
+                        exportOutcome = "success"
                         ExportResult.Success(successfulUris.firstOrNull())
                     }
 
                     else -> {
+                        exportOutcome = "partial_success"
                         ExportResult.PartialSuccess(
                             completedPages = completedPages,
                             failures = failures,
@@ -228,6 +271,19 @@ class ExportSessionUseCase(
                 }
             }
         }
+
+        DebugLog.event(
+            name = "export",
+            "durationMs" to (SystemClock.elapsedRealtime() - startedAtMs),
+            "format" to request.format.name,
+            "outcome" to exportOutcome,
+            "path" to exportPath,
+            "decision" to exportDecision.toString(),
+            "cacheHit" to cacheHit,
+            "pageCount" to pagesToExport.size,
+            "hasPdf" to (session.originalPdfUri != null),
+        )
+        return result
     }
 
 }
