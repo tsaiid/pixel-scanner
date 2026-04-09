@@ -581,13 +581,13 @@
     - 參考文件：[`docs/review-recomposition-hotspots.md`](/Users/tsaiid/git/pixel-scanner/docs/review-recomposition-hotspots.md)
   - [x] 調整 state 結構降低整頁重組。
   - [x] 驗證 pager 與縮圖列分離後的重組數。
-- [ ] 檢查 Coil 載入策略。
+- [x] 檢查 Coil 載入策略。
   - 驗收標準：預覽頁使用合適的大小、快取與 placeholder，不浪費解碼成本。
   - [x] 定義主預覽尺寸需求。
     - 參考文件：[`docs/coil-load-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/coil-load-strategy.md)
-  - [ ] 定義縮圖尺寸需求。
-  - [ ] 為不同用途設定不同 request。
-  - [ ] 驗證 memory cache / disk cache 行為。
+  - [x] 定義縮圖尺寸需求。
+  - [x] 為不同用途設定不同 request。
+  - [x] 驗證 memory cache / disk cache 行為。
 - [ ] 對大型文件流程做壓力測試。
   - 驗收標準：50-100 頁 session 仍可接受，不出現明顯 ANR 或 OOM。
   - [ ] 建立 50 頁測試場景。

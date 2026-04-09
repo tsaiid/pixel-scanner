@@ -58,8 +58,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -68,6 +70,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pixelscanner.R
@@ -441,14 +445,7 @@ internal fun ReviewWorkspace(
     val typography = rememberPixelScannerTypographyTokens()
     if (state.hasPages) {
         val thumbnailListState = rememberLazyListState()
-        val thumbnailPages = remember(
-            state.pages.map { page ->
-                ReviewThumbnailUiModel(
-                    id = page.id,
-                    displayUri = page.displayUri,
-                )
-            }
-        ) {
+        val thumbnailPages = remember(state.pages) {
             state.pages.map { page ->
                 ReviewThumbnailUiModel(
                     id = page.id,
@@ -659,20 +656,39 @@ private fun ReviewPagerSection(
         onPagerRecomposed?.invoke()
     }
 
-    Box(modifier = modifier) {
+    val context = LocalContext.current
+    var previewViewportSize by remember { mutableStateOf(IntSize.Zero) }
+    Box(
+        modifier = modifier.onSizeChanged { previewViewportSize = it },
+    ) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
             if (pageIndex < pages.size) {
                 val page = pages[pageIndex]
+                val previewRequest = remember(page.displayUri, previewViewportSize) {
+                    val viewportSize = previewViewportSize.takeIf { it.width > 0 && it.height > 0 }
+                    if (viewportSize != null) {
+                        buildReviewPreviewImageRequest(
+                            context = context,
+                            data = page.displayUri,
+                            viewportSize = viewportSize,
+                        )
+                    } else {
+                        null
+                    }
+                }
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    AsyncImage(
-                        model = page.displayUri,
-                        contentDescription = stringResource(
-                            id = R.string.review_scanned_page_content_description,
-                            pageIndex + 1,
-                        ),
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit,
-                    )
+                    if (previewRequest != null) {
+                        AsyncImage(
+                            model = previewRequest,
+                            placeholder = ColorPainter(PixelScannerColorTokens.reviewSurfaceRaised),
+                            contentDescription = stringResource(
+                                id = R.string.review_scanned_page_content_description,
+                                pageIndex + 1,
+                            ),
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit,
+                        )
+                    }
                     if (page.processingState == ProcessingState.PROCESSING) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
@@ -698,6 +714,15 @@ private fun ReviewThumbnailStrip(
         onThumbnailStripRecomposed?.invoke()
     }
 
+    val density = LocalDensity.current
+    val thumbnailSize = remember(density) {
+        with(density) {
+            IntSize(
+                PixelScannerSpacingTokens.reviewThumbnailWidth.roundToPx(),
+                PixelScannerSpacingTokens.reviewThumbnailHeight.roundToPx(),
+            )
+        }
+    }
     val typography = rememberPixelScannerTypographyTokens()
     Column(
         modifier = Modifier
@@ -731,6 +756,7 @@ private fun ReviewThumbnailStrip(
                     pageIndex = pageIndex,
                     totalPages = thumbnails.size,
                     page = page,
+                    thumbnailSize = thumbnailSize,
                     selected = pageIndex == currentPage,
                     onClick = { onPageSelected(pageIndex) },
                 )
@@ -744,9 +770,11 @@ private fun ReviewThumbnailItem(
     pageIndex: Int,
     totalPages: Int,
     page: ReviewThumbnailUiModel,
+    thumbnailSize: IntSize,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
     val typography = rememberPixelScannerTypographyTokens()
     val thumbnailShape = PixelScannerShapeTokens.thumbnail
     val borderColor = if (selected) {
@@ -785,8 +813,16 @@ private fun ReviewThumbnailItem(
             .testTag("review_thumbnail_$pageIndex"),
         contentAlignment = Alignment.Center,
     ) {
+        val thumbnailRequest = remember(page.displayUri, thumbnailSize) {
+            buildReviewThumbnailImageRequest(
+                context = context,
+                data = page.displayUri,
+                thumbnailSize = thumbnailSize,
+            )
+        }
         AsyncImage(
-            model = page.displayUri,
+            model = thumbnailRequest,
+            placeholder = ColorPainter(PixelScannerColorTokens.reviewThumbnailSurface),
             contentDescription = contentDescription,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,

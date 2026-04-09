@@ -2,8 +2,7 @@
 
 ## Scope
 
-This note only defines the main preview size requirement for the review screen.
-Thumbnail sizing, request differentiation, and cache-behavior validation are deferred to later slices.
+This note defines the review screen's Coil request shape for both the main preview and the thumbnail strip.
 
 ## Main Preview Requirement
 
@@ -20,10 +19,31 @@ Why this matters:
 
 - The main preview is the highest-visibility Coil workload in `ReviewScreen`.
 - Matching the request to the viewport avoids decoding and caching a larger bitmap than the user can see.
+- A simple solid placeholder keeps the preview area stable while the request resolves.
 - The preview remains faithful to the current page layout while keeping the decode cost bounded by the actual display area.
 
-## Deferred
+## Thumbnail Requirement
 
-- Thumbnail request sizing.
-- Separate Coil request shapes for preview vs thumbnail.
-- Memory-cache and disk-cache verification.
+Thumbnail requests must target the thumbnail box size, not the preview viewport and not the source bitmap size.
+
+Practical rule:
+
+- Use the review thumbnail token size as the request size, currently `64dp x 86dp`.
+- Keep `ContentScale.Crop` so the thumbnail stays visually consistent inside the rounded frame.
+- Use a separate request builder from the main preview so the thumbnail strip does not inherit viewport-sized decode work.
+
+Why this matters:
+
+- Thumbnails are repeated across page sets, so oversizing them multiplies decode and cache cost.
+- A fixed thumbnail size keeps the strip stable even when the main preview viewport changes.
+- A solid placeholder keeps each thumbnail slot readable while the request resolves.
+
+## Cache Behavior
+
+Both preview and thumbnail requests should leave Coil's memory cache and disk cache enabled.
+
+Validation rule:
+
+- Confirm the request builders keep `memoryCachePolicy = ENABLED` and `diskCachePolicy = ENABLED`.
+- Rely on the differing request sizes to produce distinct cache entries for preview and thumbnail workloads.
+- Keep the request builders separate so the main preview can evolve independently from the thumbnail strip.
