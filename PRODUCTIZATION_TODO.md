@@ -559,10 +559,10 @@
 
 ## Phase 8: Performance And Quality
 
-- [ ] 加入 Macrobenchmark。
+- [~] 加入 Macrobenchmark。
   - 指標：冷啟動、首頁到掃描、review 切頁、增強切換、session ingestion、PDF 匯出。
   - 驗收標準：建立可持續追蹤的 benchmark 模組與基線結果。
-  - [ ] 建立 benchmark module。
+  - [x] 建立 benchmark module。
   - [ ] 新增冷啟動 benchmark。
   - [ ] 新增 review 切頁 benchmark。
   - [ ] 新增 enhancement toggle benchmark。
