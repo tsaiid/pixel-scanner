@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.example.pixelscanner.benchmark"
-    compileSdk = 34
+    compileSdk = 35
     targetProjectPath = ":app"
     experimentalProperties["android.experimental.self-instrumenting"] = true
 

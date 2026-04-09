@@ -1,6 +1,6 @@
 # Pixel Scanner
 
-![Android](https://img.shields.io/badge/Android-34-green?style=flat&logo=android)
+![Android](https://img.shields.io/badge/Android-35-green?style=flat&logo=android)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2-purple?style=flat&logo=kotlin)
 ![Compose](https://img.shields.io/badge/Jetpack-Compose-4285F4?style=flat&logo=jetpackcompose)
 
@@ -50,10 +50,11 @@ The runtime entry flow is:
 Current toolchain values are:
 
 - `minSdk` 29
-- `compileSdk` 34
-- `targetSdk` 34
+- `compileSdk` 35
+- `targetSdk` 35
 - AGP `9.0.0`
 - Kotlin `2.2.10`
+- Compose BOM `2025.01.00`
 
 ## Build And Run
 

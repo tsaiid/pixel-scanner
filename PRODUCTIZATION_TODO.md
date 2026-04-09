@@ -672,12 +672,12 @@
 
 ## Phase 10: Build, Tooling, And Delivery
 
-- [ ] 修正與升級 Android / Kotlin / Compose 版本策略。
+- [x] 修正與升級 Android / Kotlin / Compose 版本策略。
   - 驗收標準：依實際可用版本對齊 AGP、Kotlin、Compose BOM 與 target SDK。
-  - [ ] 盤點目前版本組合。
-  - [ ] 查核相容矩陣。
-  - [ ] 升級至選定版本組合。
-  - [ ] 更新文件中的版本描述。
+  - [x] 盤點目前版本組合。
+  - [x] 查核相容矩陣。
+  - [x] 升級至選定版本組合。
+  - [x] 更新文件中的版本描述。
 - [ ] 檢查是否需要恢復 `org.jetbrains.kotlin.android` plugin 聲明或調整現有 plugin 配置。
   - 驗收標準：build 設定一致、可被新成員快速理解。
   - [ ] 釐清目前 plugin 配置依賴。

@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.pixelscanner"
-    compileSdk = 34
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
     lint {
         baseline = file("lint-baseline.xml")
@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "com.example.pixelscanner"
         minSdk = 29
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
