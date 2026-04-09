@@ -590,11 +590,11 @@
   - [ ] 建立 100 頁測試場景。
   - [ ] 記錄滑動、排序、匯出的表現。
   - [ ] 記錄失敗模式。
-- [ ] 補上 StrictMode 與 debug 檢查策略。
+- [x] 補上 StrictMode 與 debug 檢查策略。
   - 驗收標準：開發期可早期發現主執行緒 I/O、資源洩漏等問題。
-  - [ ] 在 debug build 開啟 StrictMode。
-  - [ ] 加入主執行緒 I/O 檢查。
-  - [ ] 加入 leaked closable / file handle 檢查。
+  - [x] 在 debug build 開啟 StrictMode。
+  - [x] 加入主執行緒 I/O 檢查。
+  - [x] 加入 leaked closable / file handle 檢查。
 
 ## Phase 9: Testing Strategy
 
