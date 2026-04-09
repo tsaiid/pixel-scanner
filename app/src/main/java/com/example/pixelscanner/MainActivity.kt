@@ -19,6 +19,10 @@ class MainActivity : ComponentActivity() {
             EXTRA_START_IN_BENCHMARK_REVIEW_MODE,
             false,
         )
+        val startInBenchmarkIngestionMode = intent.getBooleanExtra(
+            EXTRA_START_IN_BENCHMARK_INGESTION_MODE,
+            false,
+        )
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             PixelScannerTheme(colorPolicy = PixelScannerColorPolicy.BrandFirst) {
@@ -28,6 +32,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavigation(
                         startInBenchmarkReviewMode = startInBenchmarkReviewMode,
+                        startInBenchmarkIngestionMode = startInBenchmarkIngestionMode,
                     )
                 }
             }
@@ -37,5 +42,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_START_IN_BENCHMARK_REVIEW_MODE =
             "com.example.pixelscanner.extra.START_IN_BENCHMARK_REVIEW_MODE"
+        const val EXTRA_START_IN_BENCHMARK_INGESTION_MODE =
+            "com.example.pixelscanner.extra.START_IN_BENCHMARK_INGESTION_MODE"
     }
 }

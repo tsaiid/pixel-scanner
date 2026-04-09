@@ -56,6 +56,7 @@ import java.util.ArrayList
 @Composable
 fun AppNavigation(
     startInBenchmarkReviewMode: Boolean = false,
+    startInBenchmarkIngestionMode: Boolean = false,
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -87,7 +88,14 @@ fun AppNavigation(
             null
         }
     }
-    val startDestination = if (startInBenchmarkReviewMode) {
+    val benchmarkScanResult = remember(startInBenchmarkIngestionMode) {
+        if (startInBenchmarkIngestionMode) {
+            createBenchmarkScanResult(context)
+        } else {
+            null
+        }
+    }
+    val startDestination = if (startInBenchmarkReviewMode || startInBenchmarkIngestionMode) {
         AppNavigationContract.reviewRoute
     } else {
         AppNavigationContract.homeRoute
@@ -197,6 +205,11 @@ fun AppNavigation(
                             reviewViewModel.setRestoredSession(benchmarkReviewSession)
                         }
                     }
+                    if (benchmarkScanResult != null && !reviewUiState.hasSession) {
+                        LaunchedEffect(benchmarkScanResult.pageUris.size) {
+                            reviewViewModel.setScanResult(benchmarkScanResult)
+                        }
+                    }
                     ReviewScreen(
                         viewModel = reviewViewModel,
                         onExportSuccess = { format, target ->
@@ -290,6 +303,15 @@ private fun createBenchmarkReviewSession(context: Context): ScanSession {
                 originalSourceUri = pageUri,
             )
         },
+    )
+}
+
+private fun createBenchmarkScanResult(context: Context): ScanResultPayload {
+    val pageUri = Uri.parse(
+        "android.resource://${context.packageName}/${R.mipmap.ic_launcher_foreground}",
+    )
+    return ScanResultPayload(
+        pageUris = List(6) { pageUri },
     )
 }
 
