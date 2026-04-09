@@ -79,6 +79,50 @@ class StorageManagerMediaStoreTest {
         }
     }
 
+    @Test
+    fun saveUrisToPdf_insertsPdfIntoDocumentsPixelScanner() = runBlocking {
+        val sourceUris = listOf(
+            createSourceJpeg("storage-manager-media-store-test-a.jpg"),
+            createSourceJpeg("storage-manager-media-store-test-b.jpg"),
+        ).map(Uri::fromFile)
+        val storageManager = StorageManager(context)
+
+        val result = storageManager.saveUrisToPdf(
+            sourceUris = sourceUris,
+            fileName = "PixelScanner_instrumentation_test.pdf",
+        )
+
+        assertTrue(result is ExportOperationResult.Success)
+        val insertedUri = (result as ExportOperationResult.Success).outputUri
+        insertedUris += insertedUri
+
+        val projection = arrayOf(
+            MediaStore.MediaColumns.DISPLAY_NAME,
+            MediaStore.MediaColumns.RELATIVE_PATH,
+            MediaStore.MediaColumns.MIME_TYPE,
+        )
+        context.contentResolver.query(
+            insertedUri,
+            projection,
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            val displayNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+            val relativePathColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
+            val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
+
+            assertEquals("PixelScanner_instrumentation_test.pdf", cursor.getString(displayNameColumn))
+            assertEquals("application/pdf", cursor.getString(mimeTypeColumn))
+            val relativePath = cursor.getString(relativePathColumn)
+            assertTrue(
+                relativePath == "Documents/PixelScanner" ||
+                    relativePath == "Documents/PixelScanner/",
+            )
+        }
+    }
+
     private fun createSourceJpeg(fileName: String): File {
         val file = File(context.cacheDir, fileName)
         tempFiles += file

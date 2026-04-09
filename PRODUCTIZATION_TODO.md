@@ -621,7 +621,7 @@
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ToggleEnhancementUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ToggleEnhancementUseCaseTest.kt)
   - [x] 測試 background export 分流條件。
-- [~] 建立 repository 層測試。
+- [x] 建立 repository 層測試。
   - 驗收標準：MediaStore、temp file、session metadata、PDF rebuild 等流程有 fake 或 instrumentation 覆蓋。
   - [x] 建立 fake repositories。
     - 目前已有 `FakeExportRepository` 供 ViewModel / use case 測試使用。
@@ -630,7 +630,7 @@
   - [x] 建立 session metadata 測試。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/core/storage/AndroidSessionMetadataRepositoryTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/core/storage/AndroidSessionMetadataRepositoryTest.kt)
   - [x] 建立 MediaStore instrumentation 測試。
-  - [ ] 建立 PDF export instrumentation 測試。
+  - [x] 建立 PDF export instrumentation 測試。
 - [x] 建立 Compose UI tests。
   - 驗收標準：首頁、review 頁、刪除復原、格式切換、loading/error 狀態可驗證。
   - [x] 測試首頁主要 CTA。
