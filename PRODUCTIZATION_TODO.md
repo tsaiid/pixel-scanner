@@ -728,14 +728,14 @@
   - [x] 補上目前限制。
   - [x] 補上建置需求。
   - [x] 補上架構簡圖或說明。
-- [ ] 撰寫 architecture decision records。
+- [x] 撰寫 architecture decision records。
   - 主題：ML Kit 掃描限制、session 模型、preview/export 雙 pipeline、PDF 策略、背景匯出策略。
   - 驗收標準：關鍵決策有留痕，不依賴口頭傳承。
-  - [ ] 撰寫 ML Kit session limitation ADR。
-  - [ ] 撰寫 scan session model ADR。
-  - [ ] 撰寫 image pipeline ADR。
-  - [ ] 撰寫 export strategy ADR。
-  - [ ] 撰寫 background export ADR。
+  - [x] 撰寫 ML Kit session limitation ADR。
+  - [x] 撰寫 scan session model ADR。
+  - [x] 撰寫 image pipeline ADR。
+  - [x] 撰寫 export strategy ADR。
+  - [x] 撰寫 background export ADR。
 - [ ] 建立 contributor guide。
   - 驗收標準：明確說明 module 邊界、命名慣例、測試要求、UI 規範。
   - [ ] 定義 package / module 邊界。
