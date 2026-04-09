@@ -583,7 +583,8 @@
   - [ ] 驗證 pager 與縮圖列分離後的重組數。
 - [ ] 檢查 Coil 載入策略。
   - 驗收標準：預覽頁使用合適的大小、快取與 placeholder，不浪費解碼成本。
-  - [ ] 定義主預覽尺寸需求。
+  - [x] 定義主預覽尺寸需求。
+    - 參考文件：[`docs/coil-load-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/coil-load-strategy.md)
   - [ ] 定義縮圖尺寸需求。
   - [ ] 為不同用途設定不同 request。
   - [ ] 驗證 memory cache / disk cache 行為。
