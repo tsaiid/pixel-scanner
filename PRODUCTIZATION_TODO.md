@@ -632,10 +632,11 @@
   - [ ] 建立 PDF export instrumentation 測試。
 - [~] 建立 Compose UI tests。
   - 驗收標準：首頁、review 頁、刪除復原、格式切換、loading/error 狀態可驗證。
-  - [ ] 測試首頁主要 CTA。
+  - [x] 測試首頁主要 CTA。
   - [x] 測試 review 頁主預覽與縮圖列。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt)
   - [ ] 測試刪除與 undo。
   - [ ] 測試 export format 切換。
   - [x] 測試 error / loading UI。
