@@ -736,12 +736,12 @@
   - [x] 撰寫 image pipeline ADR。
   - [x] 撰寫 export strategy ADR。
   - [x] 撰寫 background export ADR。
-- [ ] 建立 contributor guide。
+- [x] 建立 contributor guide。
   - 驗收標準：明確說明 module 邊界、命名慣例、測試要求、UI 規範。
-  - [ ] 定義 package / module 邊界。
-  - [ ] 定義命名慣例。
-  - [ ] 定義 PR 要求。
-  - [ ] 定義測試最低要求。
+  - [x] 定義 package / module 邊界。
+  - [x] 定義命名慣例。
+  - [x] 定義 PR 要求。
+  - [x] 定義測試最低要求。
 - [x] 維護 release checklist。
   - 驗收標準：每次上線前知道該檢查哪些項目。
   - [x] 列出 release build 檢查項。
