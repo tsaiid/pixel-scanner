@@ -652,13 +652,13 @@
   - [ ] 蒐集旋轉與傾斜樣本。
   - [ ] 蒐集高解析度大圖樣本。
   - [ ] 蒐集 50+ 頁樣本。
-- [ ] 建立手動 QA checklist。
+- [x] 建立手動 QA checklist。
   - 驗收標準：每次 release 前可一致性驗證核心流程。
-  - [ ] 建立首頁 QA。
-  - [ ] 建立掃描流程 QA。
-  - [ ] 建立 review 編輯 QA。
-  - [ ] 建立 export QA。
-  - [ ] 建立效能與記憶體 QA。
+  - [x] 建立首頁 QA。
+  - [x] 建立掃描流程 QA。
+  - [x] 建立 review 編輯 QA。
+  - [x] 建立 export QA。
+  - [x] 建立效能與記憶體 QA。
 
 ## Phase 10: Build, Tooling, And Delivery
 
