@@ -678,11 +678,12 @@
   - [x] 查核相容矩陣。
   - [x] 升級至選定版本組合。
   - [x] 更新文件中的版本描述。
-- [ ] 檢查是否需要恢復 `org.jetbrains.kotlin.android` plugin 聲明或調整現有 plugin 配置。
+- [x] 檢查是否需要恢復 `org.jetbrains.kotlin.android` plugin 聲明或調整現有 plugin 配置。
   - 驗收標準：build 設定一致、可被新成員快速理解。
-  - [ ] 釐清目前 plugin 配置依賴。
-  - [ ] 決定保留或恢復 Kotlin Android plugin。
-  - [ ] 將選擇寫入 build note。
+  - [x] 釐清目前 plugin 配置依賴。
+  - [x] 決定保留或恢復 Kotlin Android plugin。
+  - [x] 將選擇寫入 build note。
+    - 決策：在 AGP 9.0.0 下維持 `org.jetbrains.kotlin.plugin.compose` 即可；`org.jetbrains.kotlin.android` 不再套用，對應 alias 也已移除。
 - [ ] 將 Java / Kotlin target 升到較合理版本。
   - 驗收標準：與當前 Android toolchain 一致，避免停留在 1.8 慣性設定。
   - [ ] 決定 JVM target。
