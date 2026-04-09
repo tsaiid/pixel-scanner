@@ -50,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.Immutable
@@ -315,7 +316,7 @@ private data class ReviewCommandBarState(
 )
 
 @Immutable
-private data class ReviewWorkspaceState(
+internal data class ReviewWorkspaceState(
     val hasPages: Boolean,
     val hasSession: Boolean,
     val pages: List<ReviewPageUiModel>,
@@ -323,6 +324,18 @@ private data class ReviewWorkspaceState(
     val selectedPage: ReviewPageUiModel?,
     val exportState: com.example.pixelscanner.feature.export.ui.ExportUiState,
     val isProcessing: Boolean,
+)
+
+@Immutable
+internal data class ReviewThumbnailUiModel(
+    val id: String,
+    val displayUri: android.net.Uri,
+)
+
+@Immutable
+internal data class ReviewRecompositionTrace(
+    val onPagerRecomposed: (() -> Unit)? = null,
+    val onThumbnailStripRecomposed: (() -> Unit)? = null,
 )
 
 @Composable
@@ -410,7 +423,7 @@ private fun ReviewCommandBar(
 }
 
 @Composable
-private fun ReviewWorkspace(
+internal fun ReviewWorkspace(
     state: ReviewWorkspaceState,
     pagerState: androidx.compose.foundation.pager.PagerState,
     onExportFormatChange: (ExportFormat) -> Unit,
@@ -422,11 +435,27 @@ private fun ReviewWorkspace(
     onScanMore: () -> Unit,
     onDiscard: () -> Unit,
     onPageSelected: (Int) -> Unit,
+    recompositionTrace: ReviewRecompositionTrace? = null,
     modifier: Modifier = Modifier,
 ) {
     val typography = rememberPixelScannerTypographyTokens()
     if (state.hasPages) {
         val thumbnailListState = rememberLazyListState()
+        val thumbnailPages = remember(
+            state.pages.map { page ->
+                ReviewThumbnailUiModel(
+                    id = page.id,
+                    displayUri = page.displayUri,
+                )
+            }
+        ) {
+            state.pages.map { page ->
+                ReviewThumbnailUiModel(
+                    id = page.id,
+                    displayUri = page.displayUri,
+                )
+            }
+        }
 
         LaunchedEffect(state.currentPage, state.pages.size) {
             if (state.pages.isNotEmpty()) {
@@ -561,37 +590,19 @@ private fun ReviewWorkspace(
                 modifier = Modifier
                     .fillMaxWidth(),
             ) {
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
-                        if (pageIndex < state.pages.size) {
-                            val page = state.pages[pageIndex]
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                AsyncImage(
-                                    model = page.displayUri,
-                                    contentDescription = stringResource(
-                                        id = R.string.review_scanned_page_content_description,
-                                        pageIndex + 1,
-                                    ),
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Fit,
-                                )
-                                if (page.processingState == ProcessingState.PROCESSING) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
-                                        color = PixelScannerColorTokens.reviewTextPrimary,
-                                        strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                ReviewPagerSection(
+                    pages = state.pages,
+                    pagerState = pagerState,
+                    onPagerRecomposed = recompositionTrace?.onPagerRecomposed,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                )
 
                 ReviewThumbnailStrip(
-                    pages = state.pages,
+                    thumbnails = thumbnailPages,
                     currentPage = state.currentPage,
                     listState = thumbnailListState,
                     onPageSelected = onPageSelected,
+                    onThumbnailStripRecomposed = recompositionTrace?.onThumbnailStripRecomposed,
                 )
             }
         }
@@ -638,12 +649,55 @@ private fun ReviewWorkspace(
 }
 
 @Composable
-private fun ReviewThumbnailStrip(
+private fun ReviewPagerSection(
     pages: List<ReviewPageUiModel>,
+    pagerState: androidx.compose.foundation.pager.PagerState,
+    onPagerRecomposed: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    SideEffect {
+        onPagerRecomposed?.invoke()
+    }
+
+    Box(modifier = modifier) {
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
+            if (pageIndex < pages.size) {
+                val page = pages[pageIndex]
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    AsyncImage(
+                        model = page.displayUri,
+                        contentDescription = stringResource(
+                            id = R.string.review_scanned_page_content_description,
+                            pageIndex + 1,
+                        ),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit,
+                    )
+                    if (page.processingState == ProcessingState.PROCESSING) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
+                            color = PixelScannerColorTokens.reviewTextPrimary,
+                            strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewThumbnailStrip(
+    thumbnails: List<ReviewThumbnailUiModel>,
     currentPage: Int,
     listState: androidx.compose.foundation.lazy.LazyListState,
     onPageSelected: (Int) -> Unit,
+    onThumbnailStripRecomposed: (() -> Unit)?,
 ) {
+    SideEffect {
+        onThumbnailStripRecomposed?.invoke()
+    }
+
     val typography = rememberPixelScannerTypographyTokens()
     Column(
         modifier = Modifier
@@ -670,12 +724,12 @@ private fun ReviewThumbnailStrip(
             horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.reviewThumbnailSpacing),
         ) {
             itemsIndexed(
-                items = pages,
+                items = thumbnails,
                 key = { _, page -> page.id },
             ) { pageIndex, page ->
                 ReviewThumbnailItem(
                     pageIndex = pageIndex,
-                    totalPages = pages.size,
+                    totalPages = thumbnails.size,
                     page = page,
                     selected = pageIndex == currentPage,
                     onClick = { onPageSelected(pageIndex) },
@@ -689,7 +743,7 @@ private fun ReviewThumbnailStrip(
 private fun ReviewThumbnailItem(
     pageIndex: Int,
     totalPages: Int,
-    page: ReviewPageUiModel,
+    page: ReviewThumbnailUiModel,
     selected: Boolean,
     onClick: () -> Unit,
 ) {

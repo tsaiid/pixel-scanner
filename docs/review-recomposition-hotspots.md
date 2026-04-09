@@ -33,4 +33,7 @@ This note records the first pass of the `Compose` recomposition check for `Revie
 
 The highest-frequency recomposition source is the screen-wide `uiState` collection at the top of `ReviewScreen`. The next most expensive areas are the pager page subtree and the thumbnail strip, because they are tied to `pages`, `currentPage`, and `processingState` updates that happen during normal review interactions.
 
-This slice intentionally stops at identification. The next step should be to split the screen into smaller state-driven subcomposables or derived state slices, but that is outside the scope of this slice.
+## Verification Update
+
+- The workspace now splits the pager subtree from the thumbnail strip and maps thumbnail data to a smaller immutable model.
+- `ReviewWorkspaceRecompositionTest` verifies that a selected-page `processingState` change recomposes the pager subtree without forcing an extra thumbnail strip recomposition, and that a `currentPage` change still recomposes both.

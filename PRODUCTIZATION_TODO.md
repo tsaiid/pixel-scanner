@@ -580,7 +580,7 @@
   - [x] 找出 review screen 高頻重組來源。
     - 參考文件：[`docs/review-recomposition-hotspots.md`](/Users/tsaiid/git/pixel-scanner/docs/review-recomposition-hotspots.md)
   - [x] 調整 state 結構降低整頁重組。
-  - [ ] 驗證 pager 與縮圖列分離後的重組數。
+  - [x] 驗證 pager 與縮圖列分離後的重組數。
 - [ ] 檢查 Coil 載入策略。
   - 驗收標準：預覽頁使用合適的大小、快取與 placeholder，不浪費解碼成本。
   - [x] 定義主預覽尺寸需求。
