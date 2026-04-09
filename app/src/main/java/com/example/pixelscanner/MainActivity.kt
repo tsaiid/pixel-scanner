@@ -1,6 +1,7 @@
 package com.example.pixelscanner
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ class MainActivity : ComponentActivity() {
             EXTRA_START_IN_BENCHMARK_INGESTION_MODE,
             false,
         )
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             PixelScannerTheme(colorPolicy = PixelScannerColorPolicy.BrandFirst) {
