@@ -233,6 +233,7 @@ fun ReviewScreen(
                             Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
                             TextButton(
                                 onClick = { showRescanConfirmDialog = true },
+                                modifier = Modifier.testTag("review_export_fallback_rescan"),
                             ) {
                                 Text(stringResource(id = R.string.review_action_rescan))
                             }
