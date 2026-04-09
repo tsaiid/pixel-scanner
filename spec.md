@@ -15,6 +15,7 @@ Pixel Scanner 是一款原生 Android 文件掃描應用，核心掃描體驗建
 
 - **Device Class:** 以高階 Android 裝置為主要體驗目標，優先針對 Pixel 系列優化。
 - **OS Target:** 以目前專案 build config 為準，`compileSdk` 與 `targetSdk` 皆為 35；後續若升級 API level，需同步更新 spec 與 README。
+- **Java/Kotlin Target:** 目前專案以 Java / Kotlin JVM target 17 建置；若再調整 bytecode target，需同步更新 spec、README 與 build 設定。
 - **UI Framework:** Jetpack Compose（Material 3）
 - **Primary Scan API:** Google ML Kit Document Scanner API
 - **App Architecture Target:** 分層式架構

@@ -684,11 +684,12 @@
   - [x] 決定保留或恢復 Kotlin Android plugin。
   - [x] 將選擇寫入 build note。
     - 決策：在 AGP 9.0.0 下維持 `org.jetbrains.kotlin.plugin.compose` 即可；`org.jetbrains.kotlin.android` 不再套用，對應 alias 也已移除。
-- [ ] 將 Java / Kotlin target 升到較合理版本。
+- [x] 將 Java / Kotlin target 升到較合理版本。
   - 驗收標準：與當前 Android toolchain 一致，避免停留在 1.8 慣性設定。
-  - [ ] 決定 JVM target。
-  - [ ] 更新 compile options / kotlin options。
-  - [ ] 驗證相依套件相容性。
+  - [x] 決定 JVM target。
+  - [x] 更新 compile options / kotlin options。
+  - [x] 驗證相依套件相容性。
+    - 已將 app 與 benchmark module 的 bytecode target 對齊到 Java / Kotlin JVM 17，並驗證 `assembleDebug` 與 `testDebugUnitTest` 可正常執行。
 - [ ] 補齊 release build 與 shrinker 策略。
   - 驗收標準：release 版可混淆與縮減，且功能正常。
   - [ ] 開啟 release minify。

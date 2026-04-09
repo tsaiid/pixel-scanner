@@ -55,6 +55,7 @@ Current toolchain values are:
 - AGP `9.0.0`
 - Kotlin `2.2.10`
 - Compose BOM `2025.01.00`
+- Java / Kotlin JVM target `17`
 
 ## Build And Run
 
