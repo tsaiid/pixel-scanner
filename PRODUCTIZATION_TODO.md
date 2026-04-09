@@ -776,7 +776,7 @@
 - [x] Milestone 3: review UX 重設
   - [x] 完成 Phase 5 review 新版畫面。
   - [x] 完成 Phase 6 主題與 design token 收斂。
-- [ ] Milestone 4: 長文件穩定性與品質線
+- [~] Milestone 4: 長文件穩定性與品質線
   - [ ] 完成大型匯出背景化策略。
   - [ ] 完成 Phase 8、9、10 的最低可用品質線。
 - [x] Milestone 5: 文件、診斷、發版準備
