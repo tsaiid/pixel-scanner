@@ -18,8 +18,6 @@ import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineResult
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
-import com.example.pixelscanner.core.model.ScannedPage
-import com.example.pixelscanner.core.model.SessionDirtyFlags
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
@@ -39,6 +37,7 @@ import com.example.pixelscanner.domain.SessionIngestionStatus
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.testing.FakeExportRepository
+import com.example.pixelscanner.testing.sampleassets.SampleAssetCatalog
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertEquals
@@ -72,7 +71,10 @@ class ReviewLargeDocumentStressTest {
             ),
         )
         val viewModel = createViewModel(exportRepository)
-        val session = buildSession(pageCount)
+        val session = SampleAssetCatalog.reviewStressSession(
+            context = RuntimeEnvironment.getApplication(),
+            pageCount = pageCount,
+        )
         val appContext = RuntimeEnvironment.getApplication()
 
         viewModel.setRestoredSession(session)
@@ -193,20 +195,6 @@ class ReviewLargeDocumentStressTest {
             resumeSessionUseCase = ResumeSessionUseCase(),
             scanMoreUseCase = ScanMoreUseCase(),
             savedStateHandle = SavedStateHandle(),
-        )
-    }
-
-    private fun buildSession(pageCount: Int): ScanSession {
-        return ScanSession(
-            id = "session_large_document_$pageCount",
-            pages = List(pageCount) { index ->
-                ScannedPage(
-                    id = "page-$index",
-                    originalSourceUri = Uri.parse("content://scanner/page-$index.jpg"),
-                )
-            },
-            originalPdfUri = Uri.parse("content://scanner/original-$pageCount.pdf"),
-            dirtyFlags = SessionDirtyFlags(hasReorderedPages = true),
         )
     }
 }

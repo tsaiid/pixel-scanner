@@ -13,7 +13,6 @@ import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineResult
 import com.example.pixelscanner.core.model.ScanResultPayload
 import com.example.pixelscanner.core.model.ScanSession
-import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.domain.CreateSessionFromScanResultUseCase
 import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
@@ -34,6 +33,7 @@ import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
 import com.example.pixelscanner.testing.FakeExportRepository
+import com.example.pixelscanner.testing.sampleassets.SampleAssetCatalog
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
@@ -50,7 +50,10 @@ class ReviewThumbnailStripLargePageCountTest {
     @Test
     fun `selected thumbnail remains visible in a 100 page session`() {
         val viewModel = createViewModel()
-        val session = buildSession(pageCount = 100)
+        val session = SampleAssetCatalog.reviewStressSession(
+            context = RuntimeEnvironment.getApplication(),
+            pageCount = 100,
+        )
 
         viewModel.setRestoredSession(session)
         viewModel.onEvent(PageChanged(pageIndex = 99))
@@ -139,18 +142,6 @@ class ReviewThumbnailStripLargePageCountTest {
             resumeSessionUseCase = ResumeSessionUseCase(),
             scanMoreUseCase = ScanMoreUseCase(),
             savedStateHandle = SavedStateHandle(),
-        )
-    }
-
-    private fun buildSession(pageCount: Int): ScanSession {
-        return ScanSession(
-            id = "session_large_thumbnail_strip",
-            pages = List(pageCount) { index ->
-                ScannedPage(
-                    id = "page-$index",
-                    originalSourceUri = Uri.parse("content://scanner/page-$index.jpg"),
-                )
-            },
         )
     }
 }

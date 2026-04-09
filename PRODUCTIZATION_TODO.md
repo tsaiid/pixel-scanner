@@ -653,14 +653,15 @@
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenExportFormatTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenExportFormatTest.kt)
   - [x] 測試 error / loading UI。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt)
-- [ ] 加入整合測試樣本資產。
+- [x] 加入整合測試樣本資產。
   - 驗收標準：包含單頁、多頁、低光、陰影、旋轉、超大圖檔、長文件等案例。
-  - [ ] 蒐集單頁樣本。
-  - [ ] 蒐集多頁樣本。
-  - [ ] 蒐集極端陰影樣本。
-  - [ ] 蒐集旋轉與傾斜樣本。
-  - [ ] 蒐集高解析度大圖樣本。
-  - [ ] 蒐集 50+ 頁樣本。
+  - [x] 蒐集單頁樣本。
+  - [x] 蒐集多頁樣本。
+  - [x] 蒐集極端陰影樣本。
+  - [x] 蒐集旋轉與傾斜樣本。
+  - [x] 蒐集高解析度大圖樣本。
+  - [x] 蒐集 50+ 頁樣本。
+    - 這批樣本以 deterministic generated fixtures 實作，供 integration tests 直接引用；說明見 [`docs/integration-sample-assets.md`](/Users/tsaiid/git/pixel-scanner/docs/integration-sample-assets.md)。
 - [x] 建立手動 QA checklist。
   - 驗收標準：每次 release 前可一致性驗證核心流程。
   - [x] 建立首頁 QA。
