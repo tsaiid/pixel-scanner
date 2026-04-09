@@ -1115,7 +1115,11 @@ private fun ReviewPagerSection(
     Box(
         modifier = modifier.onSizeChanged { previewViewportSize = it },
     ) {
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            key = { pageIndex -> pages[pageIndex].id },
+        ) { pageIndex ->
             if (pageIndex < pages.size) {
                 val page = pages[pageIndex]
                 val previewRequest = remember(page.displayUri, previewViewportSize) {
