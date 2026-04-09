@@ -42,6 +42,7 @@ class AndroidSessionMetadataRepository(
             put("hasReorderedPages", hasReorderedPages)
             put("hasRotatedPages", hasRotatedPages)
             put("hasCroppedPages", hasCroppedPages)
+            put("hasAddedPages", hasAddedPages)
         }
     }
 
@@ -63,6 +64,7 @@ class AndroidSessionMetadataRepository(
             hasReorderedPages = optBoolean("hasReorderedPages"),
             hasRotatedPages = optBoolean("hasRotatedPages"),
             hasCroppedPages = optBoolean("hasCroppedPages"),
+            hasAddedPages = optBoolean("hasAddedPages"),
         )
     }
 }

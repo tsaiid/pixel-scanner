@@ -627,10 +627,11 @@
     - 目前已有 `FakeExportRepository` 供 ViewModel / use case 測試使用。
   - [x] 建立 temp file repository 測試。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/core/storage/AndroidTempFileRepositoryTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/core/storage/AndroidTempFileRepositoryTest.kt)
-  - [ ] 建立 session metadata 測試。
+  - [x] 建立 session metadata 測試。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/core/storage/AndroidSessionMetadataRepositoryTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/core/storage/AndroidSessionMetadataRepositoryTest.kt)
   - [ ] 建立 MediaStore instrumentation 測試。
   - [ ] 建立 PDF export instrumentation 測試。
-- [~] 建立 Compose UI tests。
+- [x] 建立 Compose UI tests。
   - 驗收標準：首頁、review 頁、刪除復原、格式切換、loading/error 狀態可驗證。
   - [x] 測試首頁主要 CTA。
   - [x] 測試 review 頁主預覽與縮圖列。
