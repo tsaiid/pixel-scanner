@@ -1,6 +1,7 @@
 package com.example.pixelscanner.feature.review.ui
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -20,15 +21,16 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -117,6 +120,8 @@ fun ReviewScreen(
 ) {
     var showRescanConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showDiscardConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     BackHandler {
         showDiscardConfirmDialog = true
@@ -197,18 +202,20 @@ fun ReviewScreen(
                 .background(PixelScannerColorTokens.reviewSurface)
                 .semantics { testTagsAsResourceId = true }
         ) {
-            ReviewCommandBar(
-                state = commandBarState,
-                onScanMore = { viewModel.onEvent(RequestScanMore) },
-                onRescan = { showRescanConfirmDialog = true },
-                onSaveAll = {
-                    viewModel.onEvent(
-                        if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
-                    )
-                },
-                onCancelExport = { viewModel.onEvent(CancelExport) },
-                onOpenSettings = { context.openAppSettings() },
-            )
+            if (!isLandscape) {
+                ReviewCommandBar(
+                    state = commandBarState,
+                    onScanMore = { viewModel.onEvent(RequestScanMore) },
+                    onRescan = { showRescanConfirmDialog = true },
+                    onSaveAll = {
+                        viewModel.onEvent(
+                            if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
+                        )
+                    },
+                    onCancelExport = { viewModel.onEvent(CancelExport) },
+                    onOpenSettings = { context.openAppSettings() },
+                )
+            }
 
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -246,6 +253,14 @@ fun ReviewScreen(
                         }
                     },
                     onScanMore = { viewModel.onEvent(RequestScanMore) },
+                    onRescan = { showRescanConfirmDialog = true },
+                    onSaveAll = {
+                        viewModel.onEvent(
+                            if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
+                        )
+                    },
+                    onCancelExport = { viewModel.onEvent(CancelExport) },
+                    onOpenSettings = { context.openAppSettings() },
                     onDiscard = { showDiscardConfirmDialog = true },
                     onPageSelected = { pageIndex ->
                         viewModel.onEvent(PageChanged(pageIndex))
@@ -427,6 +442,10 @@ internal fun ReviewWorkspace(
     onMoveRight: () -> Unit,
     onDelete: () -> Unit,
     onScanMore: () -> Unit,
+    onRescan: () -> Unit,
+    onSaveAll: () -> Unit,
+    onCancelExport: () -> Unit,
+    onOpenSettings: () -> Unit,
     onDiscard: () -> Unit,
     onPageSelected: (Int) -> Unit,
     recompositionTrace: ReviewRecompositionTrace? = null,
@@ -434,6 +453,8 @@ internal fun ReviewWorkspace(
 ) {
     val typography = rememberPixelScannerTypographyTokens()
     if (state.hasPages) {
+        val configuration = LocalConfiguration.current
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val thumbnailListState = rememberLazyListState()
         val thumbnailPages = remember(state.pages) {
             state.pages.map { page ->
@@ -451,148 +472,44 @@ internal fun ReviewWorkspace(
             }
         }
 
-        Column(
-            modifier = modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(id = R.string.review_screen_title),
-                color = PixelScannerColorTokens.reviewTextPrimary,
-                style = typography.title,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(
-                text = stringResource(
-                    id = R.string.review_screen_page_counter,
-                    state.currentPage + 1,
-                    state.pages.size,
-                ),
-                color = PixelScannerColorTokens.reviewTextSecondary,
-                style = typography.body,
-                modifier = Modifier.padding(top = PixelScannerSpacingTokens.xxs),
-            )
-
-            ReviewPageStatusChip(
-                page = state.selectedPage,
-                pageIndex = state.currentPage,
+        if (isLandscape) {
+            ReviewWorkspaceLandscape(
+                state = state,
+                pagerState = pagerState,
+                thumbnailPages = thumbnailPages,
+                thumbnailListState = thumbnailListState,
+                onExportFormatChange = onExportFormatChange,
                 onRetryEnhancement = onRetryEnhancement,
-                modifier = Modifier.padding(top = PixelScannerSpacingTokens.reviewThumbnailSpacing),
+                onToggleEnhancement = onToggleEnhancement,
+                onMoveLeft = onMoveLeft,
+                onMoveRight = onMoveRight,
+                onDelete = onDelete,
+                onScanMore = onScanMore,
+                onRescan = onRescan,
+                onSaveAll = onSaveAll,
+                onCancelExport = onCancelExport,
+                onOpenSettings = onOpenSettings,
+                onPageSelected = onPageSelected,
+                recompositionTrace = recompositionTrace,
+                modifier = modifier,
             )
-
-            Row(
-                modifier = Modifier.padding(top = PixelScannerSpacingTokens.sm),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                IconButton(
-                    onClick = onToggleEnhancement,
-                    enabled = state.selectedPage?.processingState != ProcessingState.PROCESSING,
-                    modifier = Modifier
-                        .sizeIn(
-                            minWidth = PixelScannerSpacingTokens.touchTarget,
-                            minHeight = PixelScannerSpacingTokens.touchTarget,
-                        )
-                        .testTag("review_enhance_button"),
-                ) {
-                    if (state.selectedPage?.processingState == ProcessingState.PROCESSING) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(PixelScannerSpacingTokens.sm)
-                                .size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
-                            color = PixelScannerColorTokens.reviewTextPrimary,
-                            strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = stringResource(id = R.string.review_enhance_content_description),
-                            tint = if (state.selectedPage?.isEnhanced == true) {
-                                PixelScannerColorTokens.brandAccent
-                            } else {
-                                PixelScannerColorTokens.reviewTextPrimary
-                            },
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
-
-                IconButton(
-                    onClick = onMoveLeft,
-                    enabled = state.currentPage > 0 && !state.exportState.isExporting && !state.isProcessing,
-                    modifier = Modifier.sizeIn(
-                        minWidth = PixelScannerSpacingTokens.touchTarget,
-                        minHeight = PixelScannerSpacingTokens.touchTarget,
-                    ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowLeft,
-                        contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
-                        tint = PixelScannerColorTokens.reviewTextPrimary,
-                    )
-                }
-
-                IconButton(
-                    onClick = onMoveRight,
-                    enabled = state.hasPages &&
-                        state.currentPage < state.pages.lastIndex &&
-                        !state.exportState.isExporting &&
-                        !state.isProcessing,
-                    modifier = Modifier.sizeIn(
-                        minWidth = PixelScannerSpacingTokens.touchTarget,
-                        minHeight = PixelScannerSpacingTokens.touchTarget,
-                    ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowRight,
-                        contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
-                        tint = PixelScannerColorTokens.reviewTextPrimary,
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.xxl))
-
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.sizeIn(
-                        minWidth = PixelScannerSpacingTokens.touchTarget,
-                        minHeight = PixelScannerSpacingTokens.touchTarget,
-                    ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(id = R.string.review_delete_page_content_description),
-                        tint = PixelScannerColorTokens.reviewDelete,
-                    )
-                }
-            }
-
-            ExportFormatTabs(
-                selectedFormat = state.exportState.format,
-                onSelectFormat = onExportFormatChange,
+        } else {
+            ReviewWorkspacePortrait(
+                state = state,
+                pagerState = pagerState,
+                thumbnailPages = thumbnailPages,
+                thumbnailListState = thumbnailListState,
+                onExportFormatChange = onExportFormatChange,
+                onRetryEnhancement = onRetryEnhancement,
+                onToggleEnhancement = onToggleEnhancement,
+                onMoveLeft = onMoveLeft,
+                onMoveRight = onMoveRight,
+                onDelete = onDelete,
+                onPageSelected = onPageSelected,
+                recompositionTrace = recompositionTrace,
+                modifier = modifier,
+                typography = typography,
             )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                ReviewPagerSection(
-                    pages = state.pages,
-                    pagerState = pagerState,
-                    onPagerRecomposed = recompositionTrace?.onPagerRecomposed,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                )
-
-                ReviewThumbnailStrip(
-                    thumbnails = thumbnailPages,
-                    currentPage = state.currentPage,
-                    listState = thumbnailListState,
-                    onPageSelected = onPageSelected,
-                    onThumbnailStripRecomposed = recompositionTrace?.onThumbnailStripRecomposed,
-                )
-            }
         }
     } else {
         Box(
@@ -633,6 +550,552 @@ internal fun ReviewWorkspace(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ReviewWorkspacePortrait(
+    state: ReviewWorkspaceState,
+    pagerState: androidx.compose.foundation.pager.PagerState,
+    thumbnailPages: List<ReviewThumbnailUiModel>,
+    thumbnailListState: androidx.compose.foundation.lazy.LazyListState,
+    onExportFormatChange: (ExportFormat) -> Unit,
+    onRetryEnhancement: (() -> Unit)?,
+    onToggleEnhancement: () -> Unit,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
+    onDelete: () -> Unit,
+    onPageSelected: (Int) -> Unit,
+    recompositionTrace: ReviewRecompositionTrace?,
+    typography: com.example.pixelscanner.ui.theme.PixelScannerTypographyTokens,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        ReviewWorkspaceHeader(
+            state = state,
+            onRetryEnhancement = onRetryEnhancement,
+            typography = typography,
+        )
+
+        ReviewPageActionRow(
+            state = state,
+            onToggleEnhancement = onToggleEnhancement,
+            onMoveLeft = onMoveLeft,
+            onMoveRight = onMoveRight,
+            onDelete = onDelete,
+            modifier = Modifier.padding(top = PixelScannerSpacingTokens.sm),
+        )
+
+        ExportFormatTabs(
+            selectedFormat = state.exportState.format,
+            onSelectFormat = onExportFormatChange,
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        ) {
+            ReviewPagerSection(
+                pages = state.pages,
+                pagerState = pagerState,
+                onPagerRecomposed = recompositionTrace?.onPagerRecomposed,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+            )
+
+            ReviewThumbnailStrip(
+                thumbnails = thumbnailPages,
+                currentPage = state.currentPage,
+                listState = thumbnailListState,
+                onPageSelected = onPageSelected,
+                onThumbnailStripRecomposed = recompositionTrace?.onThumbnailStripRecomposed,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewWorkspaceLandscape(
+    state: ReviewWorkspaceState,
+    pagerState: androidx.compose.foundation.pager.PagerState,
+    thumbnailPages: List<ReviewThumbnailUiModel>,
+    thumbnailListState: androidx.compose.foundation.lazy.LazyListState,
+    onExportFormatChange: (ExportFormat) -> Unit,
+    onRetryEnhancement: (() -> Unit)?,
+    onToggleEnhancement: () -> Unit,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
+    onDelete: () -> Unit,
+    onScanMore: () -> Unit,
+    onRescan: () -> Unit,
+    onSaveAll: () -> Unit,
+    onCancelExport: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onPageSelected: (Int) -> Unit,
+    recompositionTrace: ReviewRecompositionTrace?,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(
+                horizontal = PixelScannerSpacingTokens.md,
+                vertical = PixelScannerSpacingTokens.sm,
+            ),
+    ) {
+        ReviewLandscapePrimaryRail(
+            state = state,
+            onScanMore = onScanMore,
+            onRescan = onRescan,
+            onSaveAll = onSaveAll,
+            onCancelExport = onCancelExport,
+            onOpenSettings = onOpenSettings,
+            modifier = Modifier
+                .width(PixelScannerSpacingTokens.xxxl * 2 + PixelScannerSpacingTokens.lg)
+                .fillMaxSize(),
+        )
+
+        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+
+        ReviewLandscapeFormatRail(
+            selectedFormat = state.exportState.format,
+            onSelectFormat = onExportFormatChange,
+            modifier = Modifier
+                .width(PixelScannerSpacingTokens.xxxl * 2)
+                .fillMaxSize(),
+        )
+
+        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
+
+        ReviewLandscapeInfoRail(
+            state = state,
+            onRetryEnhancement = onRetryEnhancement,
+            modifier = Modifier
+                .width(PixelScannerSpacingTokens.xxxl * 2)
+                .fillMaxSize(),
+        )
+
+        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ReviewPagerSection(
+                pages = state.pages,
+                pagerState = pagerState,
+                onPagerRecomposed = recompositionTrace?.onPagerRecomposed,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(vertical = PixelScannerSpacingTokens.sm),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
+
+        ReviewThumbnailStripVertical(
+            thumbnails = thumbnailPages,
+            currentPage = state.currentPage,
+            listState = thumbnailListState,
+            onPageSelected = onPageSelected,
+            onThumbnailStripRecomposed = recompositionTrace?.onThumbnailStripRecomposed,
+            modifier = Modifier
+                .width(PixelScannerSpacingTokens.reviewThumbnailWidth + PixelScannerSpacingTokens.xl)
+                .fillMaxSize(),
+        )
+
+        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
+
+        ReviewLandscapeActionRail(
+            state = state,
+            onToggleEnhancement = onToggleEnhancement,
+            onMoveLeft = onMoveLeft,
+            onMoveRight = onMoveRight,
+            onDelete = onDelete,
+            modifier = Modifier
+                .width(PixelScannerSpacingTokens.xxxl * 2)
+                .fillMaxSize(),
+        )
+    }
+}
+
+@Composable
+private fun ReviewWorkspaceHeader(
+    state: ReviewWorkspaceState,
+    onRetryEnhancement: (() -> Unit)?,
+    typography: com.example.pixelscanner.ui.theme.PixelScannerTypographyTokens,
+) {
+    Text(
+        text = stringResource(id = R.string.review_screen_title),
+        color = PixelScannerColorTokens.reviewTextPrimary,
+        style = typography.title,
+        modifier = Modifier.semantics { heading() },
+    )
+    Text(
+        text = stringResource(
+            id = R.string.review_screen_page_counter,
+            state.currentPage + 1,
+            state.pages.size,
+        ),
+        color = PixelScannerColorTokens.reviewTextSecondary,
+        style = typography.body,
+        modifier = Modifier.padding(top = PixelScannerSpacingTokens.xxs),
+    )
+
+    ReviewPageStatusChip(
+        page = state.selectedPage,
+        pageIndex = state.currentPage,
+        onRetryEnhancement = onRetryEnhancement,
+        modifier = Modifier.padding(top = PixelScannerSpacingTokens.reviewThumbnailSpacing),
+    )
+}
+
+@Composable
+private fun ReviewPageActionRow(
+    state: ReviewWorkspaceState,
+    onToggleEnhancement: () -> Unit,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        ReviewEnhanceActionButton(
+            page = state.selectedPage,
+            onClick = onToggleEnhancement,
+            modifier = Modifier.testTag("review_enhance_button"),
+        )
+
+        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
+
+        IconButton(
+            onClick = onMoveLeft,
+            enabled = state.currentPage > 0 && !state.exportState.isExporting && !state.isProcessing,
+            modifier = Modifier.sizeIn(
+                minWidth = PixelScannerSpacingTokens.touchTarget,
+                minHeight = PixelScannerSpacingTokens.touchTarget,
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
+                tint = PixelScannerColorTokens.reviewTextPrimary,
+            )
+        }
+
+        IconButton(
+            onClick = onMoveRight,
+            enabled = state.hasPages &&
+                state.currentPage < state.pages.lastIndex &&
+                !state.exportState.isExporting &&
+                !state.isProcessing,
+            modifier = Modifier.sizeIn(
+                minWidth = PixelScannerSpacingTokens.touchTarget,
+                minHeight = PixelScannerSpacingTokens.touchTarget,
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
+                tint = PixelScannerColorTokens.reviewTextPrimary,
+            )
+        }
+
+        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.xxl))
+
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier.sizeIn(
+                minWidth = PixelScannerSpacingTokens.touchTarget,
+                minHeight = PixelScannerSpacingTokens.touchTarget,
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(id = R.string.review_delete_page_content_description),
+                tint = PixelScannerColorTokens.reviewDelete,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewLandscapePrimaryRail(
+    state: ReviewWorkspaceState,
+    onScanMore: () -> Unit,
+    onRescan: () -> Unit,
+    onSaveAll: () -> Unit,
+    onCancelExport: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Button(
+            onClick = onScanMore,
+            enabled = state.hasPages && !state.exportState.isExporting && !state.isProcessing,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PixelScannerColorTokens.reviewActionContainer,
+                contentColor = PixelScannerColorTokens.reviewActionContent,
+            ),
+        ) {
+            Text(stringResource(id = R.string.review_action_scan_more))
+        }
+        TextButton(
+            onClick = onRescan,
+            enabled = !state.exportState.isExporting && !state.isProcessing,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(id = R.string.review_action_rescan))
+        }
+        ExportSaveButton(
+            exportState = state.exportState,
+            onSaveAll = onSaveAll,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("review_save_button"),
+        )
+        if (state.exportState.isExporting) {
+            ExportCancelButton(
+                onCancel = onCancelExport,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else if (state.exportState.fallbackAction == ExportFallbackAction.DISCARD_AND_RESCAN) {
+            TextButton(
+                onClick = onRescan,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("review_export_fallback_rescan"),
+            ) {
+                Text(stringResource(id = R.string.review_action_rescan))
+            }
+        } else if (state.exportState.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
+            TextButton(
+                onClick = onOpenSettings,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("review_export_fallback_settings"),
+            ) {
+                Text(stringResource(id = R.string.export_fallback_open_settings))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewLandscapeFormatRail(
+    selectedFormat: ExportFormat,
+    onSelectFormat: (ExportFormat) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        ReviewFormatRailButton(
+            text = stringResource(id = R.string.export_format_jpeg),
+            selected = selectedFormat == ExportFormat.IMAGE,
+            onClick = { onSelectFormat(ExportFormat.IMAGE) },
+            modifier = Modifier.testTag("review_export_format_jpeg"),
+        )
+        ReviewFormatRailButton(
+            text = stringResource(id = R.string.export_format_pdf),
+            selected = selectedFormat == ExportFormat.PDF,
+            onClick = { onSelectFormat(ExportFormat.PDF) },
+            modifier = Modifier.testTag("review_export_format_pdf"),
+        )
+    }
+}
+
+@Composable
+private fun ReviewLandscapeInfoRail(
+    state: ReviewWorkspaceState,
+    onRetryEnhancement: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val typography = rememberPixelScannerTypographyTokens()
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(id = R.string.review_screen_title),
+            color = PixelScannerColorTokens.reviewTextPrimary,
+            style = typography.body,
+            modifier = Modifier.semantics { heading() },
+        )
+        Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.xs))
+        Text(
+            text = stringResource(
+                id = R.string.review_screen_page_counter,
+                state.currentPage + 1,
+                state.pages.size,
+            ),
+            color = PixelScannerColorTokens.reviewTextSecondary,
+            style = typography.title,
+        )
+        Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.md))
+        ReviewPageStatusChip(
+            page = state.selectedPage,
+            pageIndex = state.currentPage,
+            onRetryEnhancement = onRetryEnhancement,
+        )
+    }
+}
+
+@Composable
+private fun ReviewLandscapeActionRail(
+    state: ReviewWorkspaceState,
+    onToggleEnhancement: () -> Unit,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        ReviewEnhanceActionButton(
+            page = state.selectedPage,
+            onClick = onToggleEnhancement,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("review_enhance_button"),
+        )
+
+        Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.sm))
+
+        IconButton(
+            onClick = onMoveLeft,
+            enabled = state.currentPage > 0 && !state.exportState.isExporting && !state.isProcessing,
+            modifier = Modifier
+                .fillMaxWidth()
+                .sizeIn(minHeight = PixelScannerSpacingTokens.touchTarget),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
+                tint = PixelScannerColorTokens.reviewTextPrimary,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.sm))
+
+        IconButton(
+            onClick = onMoveRight,
+            enabled = state.hasPages &&
+                state.currentPage < state.pages.lastIndex &&
+                !state.exportState.isExporting &&
+                !state.isProcessing,
+            modifier = Modifier
+                .fillMaxWidth()
+                .sizeIn(minHeight = PixelScannerSpacingTokens.touchTarget),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
+                tint = PixelScannerColorTokens.reviewTextPrimary,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.sm))
+
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier
+                .fillMaxWidth()
+                .sizeIn(minHeight = PixelScannerSpacingTokens.touchTarget),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(id = R.string.review_delete_page_content_description),
+                tint = PixelScannerColorTokens.reviewDelete,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewEnhanceActionButton(
+    page: ReviewPageUiModel?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    IconButton(
+        onClick = onClick,
+        enabled = page?.processingState != ProcessingState.PROCESSING,
+        modifier = modifier.sizeIn(
+            minWidth = PixelScannerSpacingTokens.touchTarget,
+            minHeight = PixelScannerSpacingTokens.touchTarget,
+        ),
+    ) {
+        if (page?.processingState == ProcessingState.PROCESSING) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .padding(PixelScannerSpacingTokens.sm)
+                    .size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
+                color = PixelScannerColorTokens.reviewTextPrimary,
+                strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = stringResource(id = R.string.review_enhance_content_description),
+                tint = if (page?.isEnhanced == true) {
+                    PixelScannerColorTokens.brandAccent
+                } else {
+                    PixelScannerColorTokens.reviewTextPrimary
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewFormatRailButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val typography = rememberPixelScannerTypographyTokens()
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected) {
+                PixelScannerColorTokens.brandAccent
+            } else {
+                PixelScannerColorTokens.reviewSurfaceRaised
+            },
+            contentColor = if (selected) {
+                PixelScannerColorTokens.reviewSurface
+            } else {
+                PixelScannerColorTokens.reviewTextPrimary
+            },
+        ),
+    ) {
+        Text(text = text, style = typography.label)
     }
 }
 
@@ -738,6 +1201,71 @@ private fun ReviewThumbnailStrip(
                 .testTag("review_thumbnail_strip"),
             contentPadding = PaddingValues(end = PixelScannerSpacingTokens.lg),
             horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.reviewThumbnailSpacing),
+        ) {
+            itemsIndexed(
+                items = thumbnails,
+                key = { _, page -> page.id },
+            ) { pageIndex, page ->
+                ReviewThumbnailItem(
+                    pageIndex = pageIndex,
+                    totalPages = thumbnails.size,
+                    page = page,
+                    thumbnailSize = thumbnailSize,
+                    selected = pageIndex == currentPage,
+                    onClick = { onPageSelected(pageIndex) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewThumbnailStripVertical(
+    thumbnails: List<ReviewThumbnailUiModel>,
+    currentPage: Int,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    onPageSelected: (Int) -> Unit,
+    onThumbnailStripRecomposed: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    SideEffect {
+        onThumbnailStripRecomposed?.invoke()
+    }
+
+    val density = LocalDensity.current
+    val thumbnailSize = remember(density) {
+        with(density) {
+            IntSize(
+                PixelScannerSpacingTokens.reviewThumbnailWidth.roundToPx(),
+                PixelScannerSpacingTokens.reviewThumbnailHeight.roundToPx(),
+            )
+        }
+    }
+    val typography = rememberPixelScannerTypographyTokens()
+    Column(
+        modifier = modifier
+            .background(PixelScannerColorTokens.reviewSurfaceRaised)
+            .padding(
+                horizontal = PixelScannerSpacingTokens.sm,
+                vertical = PixelScannerSpacingTokens.md,
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(id = R.string.review_thumbnail_strip_title),
+            color = PixelScannerColorTokens.reviewTextSecondary,
+            style = typography.label,
+            modifier = Modifier.semantics { heading() },
+        )
+        Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.sm))
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("review_thumbnail_strip"),
+            contentPadding = PaddingValues(bottom = PixelScannerSpacingTokens.lg),
+            verticalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.reviewThumbnailSpacing),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             itemsIndexed(
                 items = thumbnails,
