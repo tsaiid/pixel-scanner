@@ -707,11 +707,11 @@
   - [x] 定義 log tag 規則。
   - [x] 定義哪些事件要記錄。
   - [x] 定義 release build log 降級策略。
-- [ ] 設計非侵入式錯誤統計策略。
+- [x] 設計非侵入式錯誤統計策略。
   - 驗收標準：在不違反隱私前提下，能知道匯出或處理失敗率。
-  - [ ] 定義匿名事件模型。
-  - [ ] 定義不收集的敏感資料。
-  - [ ] 決定是否只做本地 debug 統計或接入遙測。
+  - [x] 定義匿名事件模型。
+  - [x] 定義不收集的敏感資料。
+  - [x] 決定是否只做本地 debug 統計或接入遙測。
 - [x] 為性能關鍵路徑加入 timing logs。
   - 驗收標準：可追蹤掃描返回、session ingestion、預覽處理、匯出耗時。
   - [x] 為 scanner return 加 timing。
@@ -763,8 +763,8 @@
 - [ ] Milestone 4: 長文件穩定性與品質線
   - [ ] 完成大型匯出背景化策略。
   - [ ] 完成 Phase 8、9、10 的最低可用品質線。
-- [ ] Milestone 5: 文件、診斷、發版準備
-  - [ ] 完成 Phase 11、12 與 release checklist。
+- [x] Milestone 5: 文件、診斷、發版準備
+  - [x] 完成 Phase 11、12 與 release checklist。
 
 ## Immediate Next Slice
 
