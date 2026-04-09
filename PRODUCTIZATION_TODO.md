@@ -568,11 +568,13 @@
   - [x] 新增 enhancement toggle benchmark。
   - [x] 新增 session ingestion benchmark。
   - [x] 新增 export benchmark。
-- [~] 增加 Baseline Profile。
+- [!] 增加 Baseline Profile。
   - 驗收標準：降低實機冷啟動與主要互動卡頓。
   - [x] 建立 baseline profile 規則。
   - [x] 覆蓋首頁、掃描返回、review、export。
-  - [ ] 驗證 profile 成效。
+  - [!] 驗證 profile 成效。
+    - 目前阻塞：這個 workspace 沒有可用的 `adb` 指令，也沒有確認可用的實機或 emulator，因此無法執行 connected device 的 profile 成效驗證。
+    - 參考文件：[`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)
 - [ ] 對 Compose 畫面做 recomposition 檢查。
   - 驗收標準：大圖切換、processing state 更新不造成不必要重組。
   - [ ] 找出 review screen 高頻重組來源。
