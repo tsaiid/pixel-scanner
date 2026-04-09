@@ -52,6 +52,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -118,12 +119,25 @@ fun ReviewScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val selectedPage = uiState.selectedPage
+    val commandBarState = ReviewCommandBarState(
+        hasPages = uiState.hasPages,
+        exportState = uiState.export,
+        isProcessing = uiState.isProcessing,
+    )
+    val workspaceState = ReviewWorkspaceState(
+        hasPages = uiState.hasPages,
+        hasSession = uiState.hasSession,
+        pages = uiState.pages,
+        currentPage = uiState.currentPage,
+        selectedPage = selectedPage,
+        exportState = uiState.export,
+        isProcessing = uiState.isProcessing,
+    )
     val pagerState = rememberPagerState(
         initialPage = uiState.currentPage,
         pageCount = { uiState.pages.size }
     )
     val snackbarHostState = remember { SnackbarHostState() }
-    val typography = rememberPixelScannerTypographyTokens()
 
     LaunchedEffect(viewModel, snackbarHostState) {
         viewModel.effects.collect { effect ->
@@ -177,323 +191,61 @@ fun ReviewScreen(
                 .background(PixelScannerColorTokens.reviewSurface)
                 .semantics { testTagsAsResourceId = true }
         ) {
-            // 1. Navigation Row (Rescan & Save All)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = PixelScannerSpacingTokens.lg,
-                        vertical = PixelScannerSpacingTokens.sm,
+            ReviewCommandBar(
+                state = commandBarState,
+                onScanMore = { viewModel.onEvent(RequestScanMore) },
+                onRescan = { showRescanConfirmDialog = true },
+                onDiscard = { showDiscardConfirmDialog = true },
+                onSaveAll = {
+                    viewModel.onEvent(
+                        if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
                     )
-            ) {
-                Row(
-                    modifier = Modifier.align(Alignment.CenterStart),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(
-                        onClick = { viewModel.onEvent(RequestScanMore) },
-                        enabled = uiState.hasPages && !uiState.export.isExporting && !uiState.isProcessing,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = PixelScannerColorTokens.reviewActionContainer,
-                            contentColor = PixelScannerColorTokens.reviewActionContent
-                        )
-                    ) {
-                        Text(stringResource(id = R.string.review_action_scan_more))
-                    }
-                    Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
-                    TextButton(
-                        onClick = { showRescanConfirmDialog = true },
-                        enabled = !uiState.export.isExporting && !uiState.isProcessing,
-                    ) {
-                        Text(stringResource(id = R.string.review_action_rescan))
-                    }
-                    Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
-                    TextButton(
-                        onClick = { showDiscardConfirmDialog = true },
-                        enabled = !uiState.export.isExporting && !uiState.isProcessing,
-                    ) {
-                        Text(stringResource(id = R.string.review_action_discard_session))
-                    }
-                }
-
-                if (uiState.hasPages) {
-                    Row(
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        ExportSaveButton(
-                            exportState = uiState.export,
-                            onSaveAll = {
-                                viewModel.onEvent(
-                                    if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
-                                )
-                            },
-                            modifier = Modifier.testTag("review_save_button"),
-                        )
-                        if (uiState.export.isExporting) {
-                            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
-                            ExportCancelButton(
-                                onCancel = { viewModel.onEvent(CancelExport) },
-                            )
-                        } else if (uiState.export.fallbackAction == ExportFallbackAction.DISCARD_AND_RESCAN) {
-                            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
-                            TextButton(
-                                onClick = { showRescanConfirmDialog = true },
-                                modifier = Modifier.testTag("review_export_fallback_rescan"),
-                            ) {
-                                Text(stringResource(id = R.string.review_action_rescan))
-                            }
-                        } else if (uiState.export.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
-                            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
-                            TextButton(
-                                onClick = { context.openAppSettings() },
-                                modifier = Modifier.testTag("review_export_fallback_settings"),
-                            ) {
-                                Text(stringResource(id = R.string.export_fallback_open_settings))
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (uiState.hasPages) {
-                // 2, 3, 4. Centered Info & Actions
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.review_screen_title),
-                        color = PixelScannerColorTokens.reviewTextPrimary,
-                        style = typography.title,
-                        modifier = Modifier.semantics { heading() }
-                    )
-                    Text(
-                        text = stringResource(
-                            id = R.string.review_screen_page_counter,
-                            uiState.currentPage + 1,
-                            uiState.pages.size
-                        ),
-                        color = PixelScannerColorTokens.reviewTextSecondary,
-                        style = typography.body,
-                        modifier = Modifier.padding(top = PixelScannerSpacingTokens.xxs)
-                    )
-
-                    ReviewPageStatusChip(
-                        page = selectedPage,
-                        pageIndex = uiState.currentPage,
-                        onRetryEnhancement = selectedPage?.let { currentPage ->
-                            {
-                                viewModel.onEvent(
-                                    RetryEnhancement(
-                                        pageId = currentPage.id,
-                                        context = context,
-                                    ),
-                                )
-                            }
-                        },
-                        modifier = Modifier.padding(top = PixelScannerSpacingTokens.reviewThumbnailSpacing),
-                    )
-
-                    Row(
-                        modifier = Modifier.padding(top = PixelScannerSpacingTokens.sm),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        // Magic Wand (Enhance)
-                        IconButton(
-                            onClick = {
-                                viewModel.onEvent(
-                                    ToggleEnhancement(
-                                        pageIndex = uiState.currentPage,
-                                        context = context,
-                                    )
-                                )
-                            },
-                            enabled = selectedPage?.processingState != ProcessingState.PROCESSING,
-                            modifier = Modifier.sizeIn(
-                                minWidth = PixelScannerSpacingTokens.touchTarget,
-                                minHeight = PixelScannerSpacingTokens.touchTarget,
-                            ).testTag("review_enhance_button"),
-                        ) {
-                            if (selectedPage?.processingState == ProcessingState.PROCESSING) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .padding(PixelScannerSpacingTokens.sm)
-                                        .size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
-                                    color = PixelScannerColorTokens.reviewTextPrimary,
-                                    strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke
-                                )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Default.AutoAwesome,
-                                        contentDescription = stringResource(id = R.string.review_enhance_content_description),
-                                        tint = if (uiState.selectedPage?.isEnhanced == true) {
-                                            PixelScannerColorTokens.brandAccent
-                                        } else {
-                                            PixelScannerColorTokens.reviewTextPrimary
-                                        }
-                                    )
-                                }
-                        }
-
-                        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
-
-                        IconButton(
-                            onClick = { viewModel.onEvent(MovePageLeft) },
-                            enabled = uiState.currentPage > 0 && !uiState.export.isExporting && !uiState.isProcessing,
-                            modifier = Modifier.sizeIn(
-                                minWidth = PixelScannerSpacingTokens.touchTarget,
-                                minHeight = PixelScannerSpacingTokens.touchTarget,
-                            ),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowLeft,
-                                contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
-                                tint = PixelScannerColorTokens.reviewTextPrimary,
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { viewModel.onEvent(MovePageRight) },
-                            enabled = uiState.hasPages &&
-                                uiState.currentPage < uiState.pages.lastIndex &&
-                                !uiState.export.isExporting &&
-                                !uiState.isProcessing,
-                            modifier = Modifier.sizeIn(
-                                minWidth = PixelScannerSpacingTokens.touchTarget,
-                                minHeight = PixelScannerSpacingTokens.touchTarget,
-                            ),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowRight,
-                                contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
-                                tint = PixelScannerColorTokens.reviewTextPrimary,
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.xxl))
-
-                        // Delete
-                        IconButton(
-                            onClick = {
-                                val pageToDelete = uiState.selectedPage
-                                val indexToDelete = uiState.currentPage
-                                if (pageToDelete != null) {
-                                    viewModel.onEvent(DeletePage(indexToDelete))
-                                }
-                            },
-                            modifier = Modifier.sizeIn(
-                                minWidth = PixelScannerSpacingTokens.touchTarget,
-                                minHeight = PixelScannerSpacingTokens.touchTarget,
-                            ),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = stringResource(id = R.string.review_delete_page_content_description),
-                                tint = PixelScannerColorTokens.reviewDelete
-                            )
-                        }
-                    }
-                }
-            }
-
-            ExportFormatTabs(
-                selectedFormat = uiState.export.format,
-                onSelectFormat = { viewModel.onEvent(ChangeExportFormat(it)) },
+                },
+                onCancelExport = { viewModel.onEvent(CancelExport) },
+                onOpenSettings = { context.openAppSettings() },
             )
 
-            if (uiState.hasPages) {
-                val thumbnailListState = rememberLazyListState()
-
-                LaunchedEffect(uiState.currentPage, uiState.pages.size) {
-                    if (uiState.pages.isNotEmpty()) {
-                        val targetIndex = uiState.currentPage.coerceIn(0, uiState.pages.lastIndex)
-                        thumbnailListState.scrollToItem(targetIndex)
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                ) {
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
-                            // Guard against index out of bounds during deletion animation
-                            if (pageIndex < uiState.pages.size) {
-                                val page = uiState.pages[pageIndex]
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    AsyncImage(
-                                        model = page.displayUri,
-                                        contentDescription = stringResource(
-                                            id = R.string.review_scanned_page_content_description,
-                                            pageIndex + 1
-                                        ),
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Fit
-                                    )
-                                    if (page.processingState == ProcessingState.PROCESSING) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
-                                            color = PixelScannerColorTokens.reviewTextPrimary,
-                                            strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke
-                                        )
-                                    }
-                                }
-                            }
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            ) {
+                ReviewWorkspace(
+                    state = workspaceState,
+                    pagerState = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    onExportFormatChange = { viewModel.onEvent(ChangeExportFormat(it)) },
+                    onRetryEnhancement = selectedPage?.let { currentPage ->
+                        {
+                            viewModel.onEvent(
+                                RetryEnhancement(
+                                    pageId = currentPage.id,
+                                    context = context,
+                                ),
+                            )
                         }
-                    }
-
-                    ReviewThumbnailStrip(
-                        pages = uiState.pages,
-                        currentPage = uiState.currentPage,
-                        listState = thumbnailListState,
-                        onPageSelected = { pageIndex ->
-                            viewModel.onEvent(PageChanged(pageIndex))
-                        },
-                    )
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val emptyStateMessage = if (uiState.hasSession) {
-                            R.string.review_empty_session_message
-                        } else {
-                            R.string.review_empty_state_message
-                        }
-                        Text(
-                            stringResource(id = emptyStateMessage),
-                            color = PixelScannerColorTokens.reviewTextPrimary,
+                    },
+                    onToggleEnhancement = {
+                        viewModel.onEvent(
+                            ToggleEnhancement(
+                                pageIndex = uiState.currentPage,
+                                context = context,
+                            )
                         )
-                        if (uiState.hasSession) {
-                            Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.lg))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
-                            ) {
-                                Button(
-                                    onClick = { viewModel.onEvent(RequestScanMore) },
-                                    enabled = !uiState.export.isExporting && !uiState.isProcessing,
-                                    modifier = Modifier.testTag("review_empty_scan_more"),
-                                ) {
-                                    Text(stringResource(id = R.string.review_action_scan_more))
-                                }
-                                TextButton(
-                                    onClick = { showDiscardConfirmDialog = true },
-                                    enabled = !uiState.export.isExporting && !uiState.isProcessing,
-                                    modifier = Modifier.testTag("review_empty_discard_session"),
-                                ) {
-                                    Text(stringResource(id = R.string.review_action_discard_session))
-                                }
-                            }
+                    },
+                    onMoveLeft = { viewModel.onEvent(MovePageLeft) },
+                    onMoveRight = { viewModel.onEvent(MovePageRight) },
+                    onDelete = {
+                        val pageToDelete = uiState.selectedPage
+                        val indexToDelete = uiState.currentPage
+                        if (pageToDelete != null) {
+                            viewModel.onEvent(DeletePage(indexToDelete))
                         }
-                    }
-                }
+                    },
+                    onScanMore = { viewModel.onEvent(RequestScanMore) },
+                    onDiscard = { showDiscardConfirmDialog = true },
+                    onPageSelected = { pageIndex ->
+                        viewModel.onEvent(PageChanged(pageIndex))
+                    },
+                )
             }
         }
     }
@@ -552,6 +304,336 @@ private fun android.content.Context.openAppSettings() {
     }
     runCatching {
         startActivity(intent)
+    }
+}
+
+@Immutable
+private data class ReviewCommandBarState(
+    val hasPages: Boolean,
+    val exportState: com.example.pixelscanner.feature.export.ui.ExportUiState,
+    val isProcessing: Boolean,
+)
+
+@Immutable
+private data class ReviewWorkspaceState(
+    val hasPages: Boolean,
+    val hasSession: Boolean,
+    val pages: List<ReviewPageUiModel>,
+    val currentPage: Int,
+    val selectedPage: ReviewPageUiModel?,
+    val exportState: com.example.pixelscanner.feature.export.ui.ExportUiState,
+    val isProcessing: Boolean,
+)
+
+@Composable
+private fun ReviewCommandBar(
+    state: ReviewCommandBarState,
+    onScanMore: () -> Unit,
+    onRescan: () -> Unit,
+    onDiscard: () -> Unit,
+    onSaveAll: () -> Unit,
+    onCancelExport: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = PixelScannerSpacingTokens.lg,
+                vertical = PixelScannerSpacingTokens.sm,
+            )
+    ) {
+        Row(
+            modifier = Modifier.align(Alignment.CenterStart),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(
+                onClick = onScanMore,
+                enabled = state.hasPages && !state.exportState.isExporting && !state.isProcessing,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PixelScannerColorTokens.reviewActionContainer,
+                    contentColor = PixelScannerColorTokens.reviewActionContent,
+                )
+            ) {
+                Text(stringResource(id = R.string.review_action_scan_more))
+            }
+            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+            TextButton(
+                onClick = onRescan,
+                enabled = !state.exportState.isExporting && !state.isProcessing,
+            ) {
+                Text(stringResource(id = R.string.review_action_rescan))
+            }
+            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+            TextButton(
+                onClick = onDiscard,
+                enabled = !state.exportState.isExporting && !state.isProcessing,
+            ) {
+                Text(stringResource(id = R.string.review_action_discard_session))
+            }
+        }
+
+        if (state.hasPages) {
+            Row(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ExportSaveButton(
+                    exportState = state.exportState,
+                    onSaveAll = onSaveAll,
+                    modifier = Modifier.testTag("review_save_button"),
+                )
+                if (state.exportState.isExporting) {
+                    Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+                    ExportCancelButton(onCancel = onCancelExport)
+                } else if (state.exportState.fallbackAction == ExportFallbackAction.DISCARD_AND_RESCAN) {
+                    Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+                    TextButton(
+                        onClick = onRescan,
+                        modifier = Modifier.testTag("review_export_fallback_rescan"),
+                    ) {
+                        Text(stringResource(id = R.string.review_action_rescan))
+                    }
+                } else if (state.exportState.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
+                    Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+                    TextButton(
+                        onClick = onOpenSettings,
+                        modifier = Modifier.testTag("review_export_fallback_settings"),
+                    ) {
+                        Text(stringResource(id = R.string.export_fallback_open_settings))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewWorkspace(
+    state: ReviewWorkspaceState,
+    pagerState: androidx.compose.foundation.pager.PagerState,
+    onExportFormatChange: (ExportFormat) -> Unit,
+    onRetryEnhancement: (() -> Unit)?,
+    onToggleEnhancement: () -> Unit,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
+    onDelete: () -> Unit,
+    onScanMore: () -> Unit,
+    onDiscard: () -> Unit,
+    onPageSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val typography = rememberPixelScannerTypographyTokens()
+    if (state.hasPages) {
+        val thumbnailListState = rememberLazyListState()
+
+        LaunchedEffect(state.currentPage, state.pages.size) {
+            if (state.pages.isNotEmpty()) {
+                val targetIndex = state.currentPage.coerceIn(0, state.pages.lastIndex)
+                thumbnailListState.scrollToItem(targetIndex)
+            }
+        }
+
+        Column(
+            modifier = modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(id = R.string.review_screen_title),
+                color = PixelScannerColorTokens.reviewTextPrimary,
+                style = typography.title,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = stringResource(
+                    id = R.string.review_screen_page_counter,
+                    state.currentPage + 1,
+                    state.pages.size,
+                ),
+                color = PixelScannerColorTokens.reviewTextSecondary,
+                style = typography.body,
+                modifier = Modifier.padding(top = PixelScannerSpacingTokens.xxs),
+            )
+
+            ReviewPageStatusChip(
+                page = state.selectedPage,
+                pageIndex = state.currentPage,
+                onRetryEnhancement = onRetryEnhancement,
+                modifier = Modifier.padding(top = PixelScannerSpacingTokens.reviewThumbnailSpacing),
+            )
+
+            Row(
+                modifier = Modifier.padding(top = PixelScannerSpacingTokens.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                IconButton(
+                    onClick = onToggleEnhancement,
+                    enabled = state.selectedPage?.processingState != ProcessingState.PROCESSING,
+                    modifier = Modifier
+                        .sizeIn(
+                            minWidth = PixelScannerSpacingTokens.touchTarget,
+                            minHeight = PixelScannerSpacingTokens.touchTarget,
+                        )
+                        .testTag("review_enhance_button"),
+                ) {
+                    if (state.selectedPage?.processingState == ProcessingState.PROCESSING) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .padding(PixelScannerSpacingTokens.sm)
+                                .size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
+                            color = PixelScannerColorTokens.reviewTextPrimary,
+                            strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = stringResource(id = R.string.review_enhance_content_description),
+                            tint = if (state.selectedPage?.isEnhanced == true) {
+                                PixelScannerColorTokens.brandAccent
+                            } else {
+                                PixelScannerColorTokens.reviewTextPrimary
+                            },
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.md))
+
+                IconButton(
+                    onClick = onMoveLeft,
+                    enabled = state.currentPage > 0 && !state.exportState.isExporting && !state.isProcessing,
+                    modifier = Modifier.sizeIn(
+                        minWidth = PixelScannerSpacingTokens.touchTarget,
+                        minHeight = PixelScannerSpacingTokens.touchTarget,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowLeft,
+                        contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
+                        tint = PixelScannerColorTokens.reviewTextPrimary,
+                    )
+                }
+
+                IconButton(
+                    onClick = onMoveRight,
+                    enabled = state.hasPages &&
+                        state.currentPage < state.pages.lastIndex &&
+                        !state.exportState.isExporting &&
+                        !state.isProcessing,
+                    modifier = Modifier.sizeIn(
+                        minWidth = PixelScannerSpacingTokens.touchTarget,
+                        minHeight = PixelScannerSpacingTokens.touchTarget,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
+                        tint = PixelScannerColorTokens.reviewTextPrimary,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.xxl))
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.sizeIn(
+                        minWidth = PixelScannerSpacingTokens.touchTarget,
+                        minHeight = PixelScannerSpacingTokens.touchTarget,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(id = R.string.review_delete_page_content_description),
+                        tint = PixelScannerColorTokens.reviewDelete,
+                    )
+                }
+            }
+
+            ExportFormatTabs(
+                selectedFormat = state.exportState.format,
+                onSelectFormat = onExportFormatChange,
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { pageIndex ->
+                        if (pageIndex < state.pages.size) {
+                            val page = state.pages[pageIndex]
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                AsyncImage(
+                                    model = page.displayUri,
+                                    contentDescription = stringResource(
+                                        id = R.string.review_scanned_page_content_description,
+                                        pageIndex + 1,
+                                    ),
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit,
+                                )
+                                if (page.processingState == ProcessingState.PROCESSING) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
+                                        color = PixelScannerColorTokens.reviewTextPrimary,
+                                        strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ReviewThumbnailStrip(
+                    pages = state.pages,
+                    currentPage = state.currentPage,
+                    listState = thumbnailListState,
+                    onPageSelected = onPageSelected,
+                )
+            }
+        }
+    } else {
+        Box(
+            modifier = modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val emptyStateMessage = if (state.hasSession) {
+                    R.string.review_empty_session_message
+                } else {
+                    R.string.review_empty_state_message
+                }
+                Text(
+                    stringResource(id = emptyStateMessage),
+                    color = PixelScannerColorTokens.reviewTextPrimary,
+                )
+                if (state.hasSession) {
+                    Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.lg))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
+                    ) {
+                        Button(
+                            onClick = onScanMore,
+                            enabled = !state.exportState.isExporting && !state.isProcessing,
+                            modifier = Modifier.testTag("review_empty_scan_more"),
+                        ) {
+                            Text(stringResource(id = R.string.review_action_scan_more))
+                        }
+                        TextButton(
+                            onClick = onDiscard,
+                            enabled = !state.exportState.isExporting && !state.isProcessing,
+                            modifier = Modifier.testTag("review_empty_discard_session"),
+                        ) {
+                            Text(stringResource(id = R.string.review_action_discard_session))
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
