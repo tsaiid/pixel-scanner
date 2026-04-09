@@ -313,7 +313,7 @@ fun ReviewScreen(
                             modifier = Modifier.sizeIn(
                                 minWidth = PixelScannerSpacingTokens.touchTarget,
                                 minHeight = PixelScannerSpacingTokens.touchTarget,
-                            ),
+                            ).testTag("review_enhance_button"),
                         ) {
                             if (selectedPage?.processingState == ProcessingState.PROCESSING) {
                                 CircularProgressIndicator(

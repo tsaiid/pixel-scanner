@@ -565,7 +565,7 @@
   - [x] 建立 benchmark module。
   - [x] 新增冷啟動 benchmark。
   - [x] 新增 review 切頁 benchmark。
-  - [ ] 新增 enhancement toggle benchmark。
+  - [x] 新增 enhancement toggle benchmark。
   - [ ] 新增 session ingestion benchmark。
   - [ ] 新增 export benchmark。
 - [ ] 增加 Baseline Profile。
