@@ -742,11 +742,12 @@
   - [ ] 定義命名慣例。
   - [ ] 定義 PR 要求。
   - [ ] 定義測試最低要求。
-- [ ] 維護 release checklist。
+- [x] 維護 release checklist。
   - 驗收標準：每次上線前知道該檢查哪些項目。
-  - [ ] 列出 release build 檢查項。
-  - [ ] 列出 QA 檢查項。
-  - [ ] 列出文件更新檢查項。
+  - [x] 列出 release build 檢查項。
+  - [x] 列出 QA 檢查項。
+  - [x] 列出文件更新檢查項。
+    - 參考文件：[`docs/release-checklist.md`](/Users/tsaiid/git/pixel-scanner/docs/release-checklist.md)
 
 ## Suggested Execution Order
 
