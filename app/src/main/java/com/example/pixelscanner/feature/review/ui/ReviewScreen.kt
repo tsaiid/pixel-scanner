@@ -25,12 +25,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -691,6 +694,7 @@ private fun ReviewWorkspaceLandscape(
             ReviewPagerSection(
                 pages = state.pages,
                 pagerState = pagerState,
+                isVertical = true,
                 onPagerRecomposed = recompositionTrace?.onPagerRecomposed,
                 modifier = Modifier
                     .weight(1f)
@@ -855,14 +859,14 @@ private fun ReviewLandscapePrimaryRail(
                 contentColor = PixelScannerColorTokens.reviewActionContent,
             ),
         ) {
-            Text(stringResource(id = R.string.review_action_scan_more))
+            Text(text = stringResource(id = R.string.review_action_scan_more))
         }
         TextButton(
             onClick = onRescan,
             enabled = !state.exportState.isExporting && !state.isProcessing,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(id = R.string.review_action_rescan))
+            Text(text = stringResource(id = R.string.review_action_rescan))
         }
         ExportSaveButton(
             exportState = state.exportState,
@@ -883,7 +887,7 @@ private fun ReviewLandscapePrimaryRail(
                     .fillMaxWidth()
                     .testTag("review_export_fallback_rescan"),
             ) {
-                Text(stringResource(id = R.string.review_action_rescan))
+                Text(text = stringResource(id = R.string.review_action_rescan))
             }
         } else if (state.exportState.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
             TextButton(
@@ -892,7 +896,7 @@ private fun ReviewLandscapePrimaryRail(
                     .fillMaxWidth()
                     .testTag("review_export_fallback_settings"),
             ) {
-                Text(stringResource(id = R.string.export_fallback_open_settings))
+                Text(text = stringResource(id = R.string.export_fallback_open_settings))
             }
         }
     }
@@ -993,8 +997,8 @@ private fun ReviewLandscapeActionRail(
                 .sizeIn(minHeight = PixelScannerSpacingTokens.touchTarget),
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = stringResource(id = R.string.review_move_page_left_content_description),
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = stringResource(id = R.string.review_move_page_up_content_description),
                 tint = PixelScannerColorTokens.reviewTextPrimary,
             )
         }
@@ -1012,8 +1016,8 @@ private fun ReviewLandscapeActionRail(
                 .sizeIn(minHeight = PixelScannerSpacingTokens.touchTarget),
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(id = R.string.review_move_page_right_content_description),
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = stringResource(id = R.string.review_move_page_down_content_description),
                 tint = PixelScannerColorTokens.reviewTextPrimary,
             )
         }
@@ -1103,6 +1107,7 @@ private fun ReviewFormatRailButton(
 private fun ReviewPagerSection(
     pages: List<ReviewPageUiModel>,
     pagerState: androidx.compose.foundation.pager.PagerState,
+    isVertical: Boolean = false,
     onPagerRecomposed: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -1115,47 +1120,79 @@ private fun ReviewPagerSection(
     Box(
         modifier = modifier.onSizeChanged { previewViewportSize = it },
     ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            key = { pageIndex -> pages[pageIndex].id },
-        ) { pageIndex ->
-            if (pageIndex < pages.size) {
-                val page = pages[pageIndex]
-                val previewRequest = remember(page.displayUri, previewViewportSize) {
-                    val viewportSize = previewViewportSize.takeIf { it.width > 0 && it.height > 0 }
-                    if (viewportSize != null) {
-                        buildReviewPreviewImageRequest(
-                            context = context,
-                            data = page.displayUri,
-                            viewportSize = viewportSize,
-                        )
-                    } else {
-                        null
-                    }
-                }
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    if (previewRequest != null) {
-                        AsyncImage(
-                            model = previewRequest,
-                            placeholder = ColorPainter(PixelScannerColorTokens.reviewSurfaceRaised),
-                            contentDescription = stringResource(
-                                id = R.string.review_scanned_page_content_description,
-                                pageIndex + 1,
-                            ),
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit,
-                        )
-                    }
-                    if (page.processingState == ProcessingState.PROCESSING) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
-                            color = PixelScannerColorTokens.reviewTextPrimary,
-                            strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
-                        )
-                    }
-                }
+        val pagerModifier = Modifier.fillMaxSize()
+        val pagerKey: (Int) -> Any = { pageIndex -> pages[pageIndex].id }
+        if (isVertical) {
+            VerticalPager(
+                state = pagerState,
+                modifier = pagerModifier,
+                key = pagerKey,
+            ) { pageIndex ->
+                ReviewPagerPage(
+                    pages = pages,
+                    pageIndex = pageIndex,
+                    context = context,
+                    previewViewportSize = previewViewportSize,
+                )
             }
+        } else {
+            HorizontalPager(
+                state = pagerState,
+                modifier = pagerModifier,
+                key = pagerKey,
+            ) { pageIndex ->
+                ReviewPagerPage(
+                    pages = pages,
+                    pageIndex = pageIndex,
+                    context = context,
+                    previewViewportSize = previewViewportSize,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewPagerPage(
+    pages: List<ReviewPageUiModel>,
+    pageIndex: Int,
+    context: android.content.Context,
+    previewViewportSize: IntSize,
+) {
+    if (pageIndex >= pages.size) return
+
+    val page = pages[pageIndex]
+    val previewRequest = remember(page.displayUri, previewViewportSize) {
+        val viewportSize = previewViewportSize.takeIf { it.width > 0 && it.height > 0 }
+        if (viewportSize != null) {
+            buildReviewPreviewImageRequest(
+                context = context,
+                data = page.displayUri,
+                viewportSize = viewportSize,
+            )
+        } else {
+            null
+        }
+    }
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (previewRequest != null) {
+            AsyncImage(
+                model = previewRequest,
+                placeholder = ColorPainter(PixelScannerColorTokens.reviewSurfaceRaised),
+                contentDescription = stringResource(
+                    id = R.string.review_scanned_page_content_description,
+                    pageIndex + 1,
+                ),
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit,
+            )
+        }
+        if (page.processingState == ProcessingState.PROCESSING) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusIndicatorSize),
+                color = PixelScannerColorTokens.reviewTextPrimary,
+                strokeWidth = PixelScannerSpacingTokens.reviewPageStatusIndicatorStroke,
+            )
         }
     }
 }

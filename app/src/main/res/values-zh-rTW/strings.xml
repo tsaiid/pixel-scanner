@@ -10,6 +10,8 @@
     <string name="review_enhance_content_description">增強</string>
     <string name="review_move_page_left_content_description">頁面向左移動</string>
     <string name="review_move_page_right_content_description">頁面向右移動</string>
+    <string name="review_move_page_up_content_description">頁面向上移動</string>
+    <string name="review_move_page_down_content_description">頁面向下移動</string>
     <string name="review_delete_page_content_description">刪除頁面</string>
     <string name="review_scanned_page_content_description">掃描頁面 %1$d</string>
     <string name="review_thumbnail_content_description">第 %1$d 頁，共 %2$d 頁</string>

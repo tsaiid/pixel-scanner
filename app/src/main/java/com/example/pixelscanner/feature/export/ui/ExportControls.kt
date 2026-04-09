@@ -26,7 +26,6 @@ fun ExportSaveButton(
     onSaveAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val typography = rememberPixelScannerTypographyTokens()
     val context = LocalContext.current
     Button(
         onClick = onSaveAll,
@@ -52,7 +51,6 @@ fun ExportSaveButton(
                 else ->
                     stringResource(id = R.string.export_save_button_pdf)
             },
-            style = typography.label,
         )
     }
 }
