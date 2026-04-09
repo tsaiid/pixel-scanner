@@ -577,7 +577,8 @@
     - 參考文件：[`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)
 - [ ] 對 Compose 畫面做 recomposition 檢查。
   - 驗收標準：大圖切換、processing state 更新不造成不必要重組。
-  - [ ] 找出 review screen 高頻重組來源。
+  - [x] 找出 review screen 高頻重組來源。
+    - 參考文件：[`docs/review-recomposition-hotspots.md`](/Users/tsaiid/git/pixel-scanner/docs/review-recomposition-hotspots.md)
   - [ ] 調整 state 結構降低整頁重組。
   - [ ] 驗證 pager 與縮圖列分離後的重組數。
 - [ ] 檢查 Coil 載入策略。
