@@ -637,7 +637,8 @@
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt)
-  - [ ] 測試刪除與 undo。
+  - [x] 測試刪除與 undo。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenDeleteUndoTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenDeleteUndoTest.kt)
   - [ ] 測試 export format 切換。
   - [x] 測試 error / loading UI。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt)
