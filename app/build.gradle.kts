@@ -8,6 +8,9 @@ android {
     namespace = "com.example.pixelscanner"
     compileSdk = 34
     ndkVersion = "27.0.12077973"
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 
     defaultConfig {
         applicationId = "com.example.pixelscanner"

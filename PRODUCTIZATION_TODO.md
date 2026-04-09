@@ -683,14 +683,16 @@
   - [ ] 開啟 release minify。
   - [ ] 補齊必要 keep rules。
   - [ ] 驗證 ML Kit、Coil、Compose 在 release 正常。
-- [ ] 建立 CI。
+- [x] 建立 CI。
   - 至少包含：lint、unit tests、assemble debug、必要時 instrumentation smoke test。
   - 驗收標準：每次 PR 都能自動驗證基本品質。
-  - [ ] 建立 CI workflow。
-  - [ ] 加入 assemble debug。
-  - [ ] 加入單元測試。
-  - [ ] 加入 lint。
+  - [x] 建立 CI workflow。
+  - [x] 加入 assemble debug。
+  - [x] 加入單元測試。
+  - [x] 加入 lint。
+    - `lintDebug` currently passes with `app/lint-baseline.xml` filtering pre-existing lint debt.
   - [ ] 視可行性加入 smoke test。
+    - 目前 GitHub Actions workflow 只先覆蓋 host-side validation；instrumentation smoke test 仍需要 emulator / device strategy，暫不列入本 slice。
 - [ ] 補上 static analysis。
   - 建議可選：ktlint、detekt、dependency analysis。
   - 驗收標準：風格與常見錯誤有自動檢查。
