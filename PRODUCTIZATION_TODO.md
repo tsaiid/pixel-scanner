@@ -571,7 +571,7 @@
 - [~] 增加 Baseline Profile。
   - 驗收標準：降低實機冷啟動與主要互動卡頓。
   - [x] 建立 baseline profile 規則。
-  - [ ] 覆蓋首頁、掃描返回、review、export。
+  - [x] 覆蓋首頁、掃描返回、review、export。
   - [ ] 驗證 profile 成效。
 - [ ] 對 Compose 畫面做 recomposition 檢查。
   - 驗收標準：大圖切換、processing state 更新不造成不必要重組。
