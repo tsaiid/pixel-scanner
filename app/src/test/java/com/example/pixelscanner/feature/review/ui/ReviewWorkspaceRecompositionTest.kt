@@ -53,6 +53,10 @@ class ReviewWorkspaceRecompositionTest {
                 onDelete = {},
                 onScanMore = {},
                 onDiscard = {},
+                onRescan = {},
+                onSaveAll = {},
+                onCancelExport = {},
+                onOpenSettings = {},
                 onPageSelected = {},
                 recompositionTrace = recompositionTrace,
             )

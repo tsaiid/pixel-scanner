@@ -60,9 +60,13 @@ class AndroidSessionIngestionRepository(
         sessionOriginalDir.mkdirs()
         val pageMappings = mutableListOf<SessionIngestionMapping>()
         val failures = mutableListOf<SessionIngestionFailure>()
+        val appendedPageStartIndex = (session.pages.size - scanResult.pageUris.size).coerceAtLeast(0)
 
         scanResult.pageUris.forEachIndexed { index, sourceUri ->
-            val destinationFile = File(sessionOriginalDir, "page_${index + 1}.jpg")
+            val destinationFile = File(
+                sessionOriginalDir,
+                "page_${appendedPageStartIndex + index + 1}.jpg",
+            )
             val result = runCatching {
                 copyUriToFile(sourceUri, destinationFile)
             }
