@@ -93,6 +93,7 @@ class ReviewViewModel(
                 index = event.pageIndex,
                 context = event.context,
             )
+            is ReviewUiEvent.RetryExport -> retryExport(event.context)
             is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
             is ReviewUiEvent.MovePageLeft -> movePage(-1)
@@ -388,6 +389,12 @@ class ReviewViewModel(
                 }
             }
         }
+    }
+
+    private fun retryExport(context: Context) {
+        val lastResult = _uiState.value.export.lastResult?.result
+        if (lastResult !is ExportResult.Failure) return
+        saveAll(context)
     }
 
     private fun applySessionUpdate(

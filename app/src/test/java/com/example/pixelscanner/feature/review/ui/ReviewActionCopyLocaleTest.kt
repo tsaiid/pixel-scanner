@@ -48,6 +48,8 @@ class ReviewActionCopyLocaleTest {
         val exportLabels = listOf(
             context.getString(R.string.export_save_button_jpeg),
             context.getString(R.string.export_save_button_pdf),
+            context.getString(R.string.export_retry_button_jpeg),
+            context.getString(R.string.export_retry_button_pdf),
         )
 
         reviewActionLabels.forEach { label ->

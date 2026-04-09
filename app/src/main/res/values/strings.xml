@@ -44,6 +44,8 @@
     <string name="export_save_button_saving">Saving...</string>
     <string name="export_save_button_jpeg">Save as JPEG</string>
     <string name="export_save_button_pdf">Save as PDF</string>
+    <string name="export_retry_button_jpeg">Redo JPG</string>
+    <string name="export_retry_button_pdf">Redo PDF</string>
     <string name="export_format_jpeg">JPEG</string>
     <string name="export_format_pdf">PDF</string>
     <string name="export_post_action_open">Open</string>

@@ -38,6 +38,12 @@ fun ExportSaveButton(
                         ?: stringResource(id = R.string.export_save_button_saving)
                 }
 
+                exportState.canRetry && exportState.format == ExportFormat.IMAGE ->
+                    stringResource(id = R.string.export_retry_button_jpeg)
+
+                exportState.canRetry ->
+                    stringResource(id = R.string.export_retry_button_pdf)
+
                 exportState.format == ExportFormat.IMAGE ->
                     stringResource(id = R.string.export_save_button_jpeg)
 

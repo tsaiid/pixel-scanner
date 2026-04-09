@@ -83,6 +83,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.MovePageLeft
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.MovePageRight
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RetryExport
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RetryEnhancement
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestDiscardSession
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.RequestRescan
@@ -210,7 +211,11 @@ fun ReviewScreen(
                 if (uiState.hasPages) {
                     ExportSaveButton(
                         exportState = uiState.export,
-                        onSaveAll = { viewModel.onEvent(SaveAll(context)) },
+                        onSaveAll = {
+                            viewModel.onEvent(
+                                if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
+                            )
+                        },
                         modifier = Modifier.align(Alignment.CenterEnd),
                     )
                 }

@@ -8,6 +8,7 @@ import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportOperationResult
+import com.example.pixelscanner.core.model.ExportResult
 import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.ExportWriteFailure
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
@@ -23,6 +24,7 @@ import com.example.pixelscanner.domain.DeletePageUseCase
 import com.example.pixelscanner.domain.DiscardSessionUseCase
 import com.example.pixelscanner.domain.EagerSessionIngestionUseCase
 import com.example.pixelscanner.domain.ExportArtifactCacheRepository
+import com.example.pixelscanner.domain.ExportRepository
 import com.example.pixelscanner.domain.ExportSessionUseCase
 import com.example.pixelscanner.domain.ImageProcessingRepository
 import com.example.pixelscanner.domain.PreviewCacheCleanupRepository
@@ -39,7 +41,11 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
 import com.example.pixelscanner.testing.FakeExportRepository
+import com.example.pixelscanner.testing.ExportImageRequest
+import com.example.pixelscanner.testing.ExportPdfBuildRequest
+import com.example.pixelscanner.testing.ExportPdfRequest
 import java.io.File
+import java.util.ArrayDeque
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -347,6 +353,66 @@ class ReviewViewModelTest {
     }
 
     @Test
+    fun `failed export can be retried explicitly and succeeds on the second attempt`() = runBlocking {
+        val exportRepository = SequencedPdfExportRepository(
+            results = ArrayDeque(
+                listOf(
+                    ExportOperationResult.Failure(
+                        ExportWriteFailure(details = "Failed to write review export"),
+                    ),
+                    ExportOperationResult.Success(
+                        outputUri = Uri.parse("content://exports/retry-success.pdf"),
+                    ),
+                ),
+            ),
+        )
+        val viewModel = createViewModel(exportRepository = exportRepository)
+        val session = loadedSession(sessionId = "session_review_export_retry")
+        val effectEvents = mutableListOf<ReviewUiEffect>()
+        val retrySuccessEffect = CompletableDeferred<ReviewUiEffect.ExportSucceeded>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                effectEvents += effect
+                if (effect is ReviewUiEffect.ExportSucceeded && !retrySuccessEffect.isCompleted) {
+                    retrySuccessEffect.complete(effect)
+                }
+            }
+        }
+
+        try {
+            viewModel.setRestoredSession(session)
+            viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+            val context = RuntimeEnvironment.getApplication()
+
+            viewModel.onEvent(ReviewUiEvent.SaveAll(context))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertTrue(viewModel.uiState.value.export.canRetry)
+            assertTrue(viewModel.uiState.value.export.lastResult?.result is ExportResult.Failure)
+
+            viewModel.onEvent(ReviewUiEvent.RetryExport(context))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val successEffect = withTimeout(1_000) { retrySuccessEffect.await() }
+            assertEquals(2, exportRepository.savedPdfRequests.size)
+            assertFalse(viewModel.uiState.value.export.canRetry)
+            assertTrue(viewModel.uiState.value.export.lastResult?.result is ExportResult.Success)
+            assertEquals(
+                ReviewUiEffect.ExportSucceeded(
+                    ExportFormat.PDF,
+                    com.example.pixelscanner.core.model.ExportPostActionTarget(
+                        outputUris = listOf(Uri.parse("content://exports/retry-success.pdf")),
+                        mimeType = "application/pdf",
+                    ),
+                ),
+                successEffect,
+            )
+        } finally {
+            effectJob.cancel()
+        }
+    }
+
+    @Test
     fun `restores saveable state across configuration change style recreation`() {
         val savedStateHandle = SavedStateHandle()
         savedStateHandle[KEY_CURRENT_PAGE] = 1
@@ -623,6 +689,41 @@ class ReviewViewModelTest {
                 cacheKey = com.example.pixelscanner.core.model.PipelineCacheKey("retry-${request.pageId}"),
                 outputUri = Uri.parse("content://scanner/enhanced-${request.pageId}.jpg"),
             )
+        }
+    }
+
+    private class SequencedPdfExportRepository(
+        private val results: ArrayDeque<ExportOperationResult>,
+    ) : ExportRepository {
+        val copiedPdfRequests = mutableListOf<ExportPdfRequest>()
+        val savedUriRequests = mutableListOf<ExportImageRequest>()
+        val savedPdfRequests = mutableListOf<ExportPdfBuildRequest>()
+
+        override suspend fun copyPdfToDocuments(
+            context: Context,
+            sourceUri: Uri,
+            fileName: String,
+        ): ExportOperationResult {
+            copiedPdfRequests += ExportPdfRequest(sourceUri, fileName)
+            return results.removeFirst()
+        }
+
+        override suspend fun saveUriToGallery(
+            context: Context,
+            sourceUri: Uri,
+            fileName: String,
+        ): ExportOperationResult {
+            savedUriRequests += ExportImageRequest(sourceUri, fileName)
+            return results.removeFirst()
+        }
+
+        override suspend fun saveUrisToPdf(
+            context: Context,
+            sourceUris: List<Uri>,
+            fileName: String,
+        ): ExportOperationResult {
+            savedPdfRequests += ExportPdfBuildRequest(sourceUris, fileName)
+            return results.removeFirst()
         }
     }
 
