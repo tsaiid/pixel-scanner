@@ -11,13 +11,13 @@ This note tracks the current nonrecoverable error cases in the review/export flo
 
 - `ExportPermissionDeniedFailure`
   - Meaning: the destination write path cannot proceed because storage permission or resolver access is denied.
-  - User-facing fallback: remain in review and surface a permission-specific recovery action once the destination policy is finalized.
-  - Current status: not yet implemented.
+  - User-facing fallback: open app settings so the user can fix the permission or access issue, then retry export.
+  - Current status: implemented as an explicit `Open Settings` CTA.
 
 - `ExportNoPagesFailure`
   - Meaning: the session has no active pages left to export.
   - User-facing fallback: return to scanning or discard the empty session.
-  - Current status: review empty-state handling exists, but no dedicated export fallback CTA is exposed.
+  - Current status: implemented through the empty-session actions shown in review.
 
 ## Design Constraints
 

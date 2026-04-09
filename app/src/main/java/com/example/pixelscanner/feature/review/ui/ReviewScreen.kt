@@ -1,5 +1,7 @@
 package com.example.pixelscanner.feature.review.ui
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -237,6 +239,14 @@ fun ReviewScreen(
                             ) {
                                 Text(stringResource(id = R.string.review_action_rescan))
                             }
+                        } else if (uiState.export.fallbackAction == ExportFallbackAction.OPEN_SETTINGS) {
+                            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+                            TextButton(
+                                onClick = { context.openAppSettings() },
+                                modifier = Modifier.testTag("review_export_fallback_settings"),
+                            ) {
+                                Text(stringResource(id = R.string.export_fallback_open_settings))
+                            }
                         }
                     }
                 }
@@ -440,24 +450,47 @@ fun ReviewScreen(
                         },
                     )
                 }
-    } else {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            val emptyStateMessage = if (uiState.hasSession) {
-                R.string.review_empty_session_message
             } else {
-                R.string.review_empty_state_message
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val emptyStateMessage = if (uiState.hasSession) {
+                            R.string.review_empty_session_message
+                        } else {
+                            R.string.review_empty_state_message
+                        }
+                        Text(
+                            stringResource(id = emptyStateMessage),
+                            color = PixelScannerColorTokens.reviewTextPrimary,
+                        )
+                        if (uiState.hasSession) {
+                            Spacer(modifier = Modifier.height(PixelScannerSpacingTokens.lg))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(PixelScannerSpacingTokens.sm),
+                            ) {
+                                Button(
+                                    onClick = { viewModel.onEvent(RequestScanMore) },
+                                    enabled = !uiState.export.isExporting && !uiState.isProcessing,
+                                    modifier = Modifier.testTag("review_empty_scan_more"),
+                                ) {
+                                    Text(stringResource(id = R.string.review_action_scan_more))
+                                }
+                                TextButton(
+                                    onClick = { showDiscardConfirmDialog = true },
+                                    enabled = !uiState.export.isExporting && !uiState.isProcessing,
+                                    modifier = Modifier.testTag("review_empty_discard_session"),
+                                ) {
+                                    Text(stringResource(id = R.string.review_action_discard_session))
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            Text(
-                stringResource(id = emptyStateMessage),
-                color = PixelScannerColorTokens.reviewTextPrimary,
-            )
-        }
-    }
         }
     }
 
@@ -505,6 +538,16 @@ fun ReviewScreen(
                 }
             },
         )
+    }
+}
+
+private fun android.content.Context.openAppSettings() {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = android.net.Uri.fromParts("package", packageName, null)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    runCatching {
+        startActivity(intent)
     }
 }
 

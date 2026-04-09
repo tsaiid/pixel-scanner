@@ -2,12 +2,16 @@ package com.example.pixelscanner.feature.export.ui
 
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ExportNoPagesFailure
+import com.example.pixelscanner.core.model.ExportPermissionDeniedFailure
 import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
 import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.UiText
 
 enum class ExportFallbackAction {
     DISCARD_AND_RESCAN,
+    SCAN_MORE,
+    OPEN_SETTINGS,
 }
 
 data class ExportUiState(
@@ -29,6 +33,8 @@ data class ExportUiState(
     val fallbackAction: ExportFallbackAction?
         get() = when ((lastResult?.result as? ExportResult.Failure)?.error) {
             is ExportSourceInvalidFailure -> ExportFallbackAction.DISCARD_AND_RESCAN
+            is ExportNoPagesFailure -> ExportFallbackAction.SCAN_MORE
+            is ExportPermissionDeniedFailure -> ExportFallbackAction.OPEN_SETTINGS
             else -> null
         }
 }

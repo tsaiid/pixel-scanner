@@ -9,6 +9,8 @@ import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ExportNoPagesFailure
+import com.example.pixelscanner.core.model.ExportPermissionDeniedFailure
 import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
 import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.ExportWriteFailure
@@ -492,6 +494,58 @@ class ReviewViewModelTest {
             ExportFallbackAction.DISCARD_AND_RESCAN,
             viewModel.uiState.value.export.fallbackAction,
         )
+    }
+
+    @Test
+    fun `permission denied export failure exposes open settings fallback`() = runBlocking {
+        val exportRepository = FakeExportRepository(
+            saveUrisToPdfResult = ExportOperationResult.Failure(
+                ExportPermissionDeniedFailure,
+            ),
+        )
+        val viewModel = createViewModel(exportRepository = exportRepository)
+        val session = loadedSession(sessionId = "session_review_export_permission")
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+        val context = RuntimeEnvironment.getApplication()
+
+        viewModel.onEvent(ReviewUiEvent.SaveAll(context))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(viewModel.uiState.value.export.canRetry)
+        assertEquals(
+            ExportFallbackAction.OPEN_SETTINGS,
+            viewModel.uiState.value.export.fallbackAction,
+        )
+    }
+
+    @Test
+    fun `empty session export failure exposes scan more fallback`() = runBlocking {
+        val exportRepository = FakeExportRepository(
+            saveUrisToPdfResult = ExportOperationResult.Failure(
+                ExportNoPagesFailure,
+            ),
+        )
+        val viewModel = createViewModel(exportRepository = exportRepository)
+        val emptySession = ScanSession(
+            id = "session_review_export_empty",
+            pages = emptyList(),
+        )
+
+        viewModel.setRestoredSession(emptySession)
+        viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+        val context = RuntimeEnvironment.getApplication()
+
+        viewModel.onEvent(ReviewUiEvent.SaveAll(context))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(viewModel.uiState.value.export.canRetry)
+        assertEquals(
+            ExportFallbackAction.SCAN_MORE,
+            viewModel.uiState.value.export.fallbackAction,
+        )
+        assertTrue(viewModel.uiState.value.export.lastResult?.result is ExportResult.Failure)
     }
 
     @Test

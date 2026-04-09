@@ -39,6 +39,7 @@
     <string name="export_save_button_saving">儲存中...</string>
     <string name="export_save_button_jpeg">另存為 JPEG</string>
     <string name="export_save_button_pdf">另存為 PDF</string>
+    <string name="export_fallback_open_settings">開啟設定</string>
     <string name="export_format_jpeg">JPEG</string>
     <string name="export_format_pdf">PDF</string>
 </resources>

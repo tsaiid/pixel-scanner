@@ -1,6 +1,7 @@
 package com.example.pixelscanner.feature.review.ui
 
 import android.content.Context
+import android.provider.Settings
 import android.net.Uri
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -11,6 +12,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.example.pixelscanner.R
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportOperationResult
+import com.example.pixelscanner.core.model.ExportPermissionDeniedFailure
 import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
 import com.example.pixelscanner.core.model.PreviewImagePipelineResult
@@ -37,6 +39,7 @@ import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
 import com.example.pixelscanner.testing.FakeExportRepository
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -89,6 +92,74 @@ class ReviewScreenFallbackActionTest {
         composeRule.onNodeWithText(appContext.getString(R.string.review_rescan_confirm_message))
             .assertIsDisplayed()
         assertTrue(scannerNavigationReasons.isEmpty())
+    }
+
+    @Test
+    fun `permission denied export fallback opens app settings`() {
+        val exportRepository = FakeExportRepository(
+            saveUrisToPdfResult = ExportOperationResult.Failure(
+                ExportPermissionDeniedFailure,
+            ),
+        )
+        val viewModel = createViewModel(exportRepository)
+        val session = buildSession(pageCount = 2)
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ChangeExportFormat(com.example.pixelscanner.core.model.ExportFormat.PDF))
+
+        composeRule.setContent {
+            ReviewScreen(
+                viewModel = viewModel,
+                onExportSuccess = { _, _ -> },
+                onNavigateToScanner = { _ -> },
+                onNavigateToHome = { _ -> },
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        val appContext = RuntimeEnvironment.getApplication()
+        composeRule.onNodeWithText(appContext.getString(R.string.export_save_button_pdf)).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("review_export_fallback_settings").assertIsDisplayed().performClick()
+        composeRule.waitForIdle()
+
+        val startedIntent = org.robolectric.Shadows.shadowOf(appContext).nextStartedActivity
+        assertEquals(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, startedIntent.action)
+    }
+
+    @Test
+    fun `empty session export failure keeps scan more and discard actions visible`() {
+        val exportRepository = FakeExportRepository(
+            saveUrisToPdfResult = ExportOperationResult.Failure(
+                com.example.pixelscanner.core.model.ExportNoPagesFailure,
+            ),
+        )
+        val viewModel = createViewModel(exportRepository)
+        val emptySession = ScanSession(
+            id = "session_fallback_empty",
+            pages = emptyList(),
+        )
+
+        viewModel.setRestoredSession(emptySession)
+        viewModel.onEvent(ChangeExportFormat(com.example.pixelscanner.core.model.ExportFormat.PDF))
+
+        composeRule.setContent {
+            ReviewScreen(
+                viewModel = viewModel,
+                onExportSuccess = { _, _ -> },
+                onNavigateToScanner = { _ -> },
+                onNavigateToHome = { _ -> },
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("review_empty_scan_more")
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag("review_empty_discard_session")
+            .assertIsDisplayed()
     }
 
     private fun createViewModel(
