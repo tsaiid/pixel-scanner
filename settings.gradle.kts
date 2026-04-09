@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Pixel Scanner"
 include(":app")
+include(":benchmark")

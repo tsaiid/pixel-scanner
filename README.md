@@ -1,64 +1,84 @@
 # Pixel Scanner
 
-![Android](https://img.shields.io/badge/Android-16-green?style=flat&logo=android)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.0-purple?style=flat&logo=kotlin)
+![Android](https://img.shields.io/badge/Android-35-green?style=flat&logo=android)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.2-purple?style=flat&logo=kotlin)
 ![Compose](https://img.shields.io/badge/Jetpack-Compose-4285F4?style=flat&logo=jetpackcompose)
-![Pixel Ready](https://img.shields.io/badge/Pixel-10%20Pro%20XL-blue?style=flat&logo=google)
 
-**Pixel Scanner** 是一款專為 Google Pixel 10 Pro XL (Android 16 / Tensor G5) 量身打造的原生文件掃描應用程式。
+Pixel Scanner is an Android document scanner built with Jetpack Compose and Google ML Kit. The current codebase is organized around session-owned files, a review-first editing flow, and explicit export decisions for JPEG and PDF output.
 
-目標是復刻並超越 iOS "Evernote Scannable" 的流暢體驗，利用 Google ML Kit 的強大邊緣運算能力，實現極速啟動、自動邊緣偵測與高品質的文件數位化。
+## What It Does
 
-## ✨ 核心特色 (Features)
+- Launches the ML Kit Document Scanner in `FULL` mode.
+- Ingests scan results into app-owned session storage.
+- Restores unfinished sessions when recoverable data is available.
+- Supports review-time page thumbnails, delete/undo, scan more, discard/rescan, page reorder, and per-page enhancement toggles.
+- Exports as JPEG or PDF with progress reporting, cache reuse, and post-export open/share/continue-scanning actions.
+- Uses separate preview and export image-processing paths so review remains interactive while export favors correctness.
 
-*   **極速掃描 (Instant Capture)**: 深度整合 **Google ML Kit Document Scanner API**，提供毫秒級的自動文件偵測、透視校正 (Perspective Correction) 與自動裁切。
-*   **智慧影像增強 (Smart Enhancement)**:
-    *   內建自定義 **Simple Lightness Equalization** 演算法，有效移除文件上的陰影並平衡亮度。
-    *   提供「原圖」與「增強模式」的一鍵無縫切換預覽。
-*   **隱私優先 (Privacy First)**: 所有的影像處理與 AI 運算皆在 **裝置端 (On-device)** 完成，無需上傳雲端，確保醫療或個人敏感資料的安全。
-*   **批量處理 (Batch Mode)**: 支援連續拍攝多頁文件，並可事後自由排序或刪除。
-*   **靈活輸出 (Flexible Export)**: 支援高解析度 JPEG 儲存至系統相簿，或合併為 PDF 文件分享。
+## Current Limits
 
-## 🛠 技術架構 (Tech Stack)
+- OCR is not implemented.
+- Cloud sync is not implemented.
+- Scan history and recent scans are not implemented.
+- Batch actions such as apply-to-all and bulk selection are not in v1.
+- Background export is deferred; long exports still run through the current foreground/domain flow.
+- Large-document performance, Macrobenchmark, and Baseline Profile work are still in progress.
 
-本專案採用現代化 Android 開發規範 (MAD) 建構：
+## Architecture
 
-*   **語言**: Kotlin
-*   **UI 框架**: Jetpack Compose (Material 3 Design System)
-*   **核心引擎**: Google ML Kit Document Scanner API
-*   **非同步處理**: Kotlin Coroutines & Flow
-*   **圖片加載**: Coil (Memory-efficient image loading)
-*   **架構模式**: MVVM (Model-View-ViewModel) + Unidirectional Data Flow
-*   **儲存**: Android Scoped Storage (MediaStore API)
+The project currently uses a single `app` module with package-level separation:
 
-## 📱 開發環境 (Development Environment)
+- `app/` contains app entry points, navigation, and manual dependency wiring.
+- `feature/home`, `feature/scanner`, `feature/review`, and `feature/export` contain feature UI and ViewModel code.
+- `domain/` contains use cases and repository interfaces.
+- `core/model` contains shared domain and UI model types.
+- `core/image` contains decoding and enhancement logic.
+- `core/storage` contains the Android-backed repository implementations for MediaStore, session files, cleanup, and recovery.
+- `core/diagnostics` contains debug logging and StrictMode helpers.
+- `testing/` contains fakes used by unit tests.
 
-*   **IDE**: Android Studio Ladybug (or newer)
-*   **Language**: Kotlin 2.0+
-*   **Min SDK**: 29 (Android 10)
-*   **Target SDK**: 35/36 (Android 16)
-*   **Build System**: Gradle (Kotlin DSL)
+The runtime entry flow is:
 
-## 🚀 安裝與執行 (Build & Run)
+`MainActivity` -> `AppNavigation` -> home/scanner/review/export, with `AppContainer` providing manual constructor injection for the feature ViewModels and use cases.
 
-1.  Clone 此專案到本地：
-    ```bash
-    git clone https://github.com/tsaiid/pixel-scanner.git
-    ```
-2.  使用 Android Studio 開啟專案資料夾。
-3.  等待 Gradle Sync 完成。
-4.  連接實體 Pixel 裝置或啟動 Android Emulator (建議 API 34+)。
-5.  點擊 **Run** (Shift+F10)。
+## Requirements
 
-> **注意**: 由於使用了 ML Kit，初次執行時若使用模擬器，請確保模擬器已安裝 Google Play Services。
+- Android Studio with the current AGP / Kotlin toolchain in this repo.
+- Android 10+ device or emulator.
+- Google Play Services available on the test device or emulator for ML Kit Document Scanner.
 
-## 📅 開發路徑 (Roadmap)
+Current toolchain values are:
 
-請參考 [todo.md](./todo.md) 查看詳細的開發進度與待辦事項。目前已完成核心 MVP 功能，包含相機掃描、自定義去陰影演算法與檔案儲存。
+- `minSdk` 29
+- `compileSdk` 35
+- `targetSdk` 35
+- AGP `9.0.0`
+- Kotlin `2.2.10`
+- Compose BOM `2025.01.00`
+- Java / Kotlin JVM target `17`
 
-## 📄 授權 (License)
+## Build And Run
 
-MIT License. See [LICENSE](./LICENSE) for more details.
+From the project root:
 
----
-Designed with ❤️ by [I-Ta Tsai (蔡依達)](https://github.com/tsaiid)
+```bash
+./gradlew assembleDebug
+./gradlew testDebugUnitTest
+./gradlew lintDebug
+```
+
+To run on a connected device or emulator:
+
+```bash
+./gradlew installDebug
+```
+
+You can also open the project in Android Studio and run the `app` configuration directly.
+
+## Roadmap
+
+See [PRODUCTIZATION_TODO.md](./PRODUCTIZATION_TODO.md) for the active refactor backlog and [todo.md](./todo.md) for the older MVP-era checklist.
+
+## License
+
+MIT License. See [LICENSE](./LICENSE) for details.

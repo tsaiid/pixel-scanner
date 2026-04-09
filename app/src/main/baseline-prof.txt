@@ -1,0 +1,27 @@
+# Pixel Scanner baseline profile coverage.
+# Keep the rules focused on the journeys that matter most for v1.
+
+# Home journey
+Lcom/example/pixelscanner/MainActivity;
+Lcom/example/pixelscanner/app/AppNavigationKt;
+Lcom/example/pixelscanner/feature/home/HomeViewModel;
+Lcom/example/pixelscanner/feature/home/ui/HomeUiState;
+Lcom/example/pixelscanner/feature/home/ui/StartScreenKt;
+
+# Scanner return journey
+Lcom/example/pixelscanner/feature/scanner/ui/ScannerScreenKt;
+Lcom/example/pixelscanner/feature/review/ReviewViewModel;
+Lcom/example/pixelscanner/feature/review/ui/ReviewUiState;
+Lcom/example/pixelscanner/app/AppNavigationKt;
+
+# Review journey
+Lcom/example/pixelscanner/feature/review/ui/ReviewScreenKt;
+Lcom/example/pixelscanner/feature/review/ui/ReviewPageStatusChipKt;
+Lcom/example/pixelscanner/feature/review/ui/ReviewThumbnailStripKt;
+Lcom/example/pixelscanner/feature/review/ui/ReviewUiEffect;
+Lcom/example/pixelscanner/feature/review/ui/ReviewUiEvent;
+
+# Export journey
+Lcom/example/pixelscanner/feature/export/ui/ExportControlsKt;
+Lcom/example/pixelscanner/app/AppNavigationKt;
+Lcom/example/pixelscanner/core/storage/StorageManager;

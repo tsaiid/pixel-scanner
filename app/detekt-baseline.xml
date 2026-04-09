@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:AndroidSessionIngestionRepository.kt:AndroidSessionIngestionRepository$override suspend fun ingest( session: ScanSession, scanResult: ScanResultPayload, ): SessionIngestionResult</ID>
+    <ID>CyclomaticComplexMethod:AppNavigation.kt:@OptIn(ExperimentalComposeUiApi::class) @Composable fun AppNavigation( startInBenchmarkReviewMode: Boolean = false, startInBenchmarkIngestionMode: Boolean = false, )</ID>
+    <ID>CyclomaticComplexMethod:ExportSessionUseCase.kt:ExportSessionUseCase$suspend operator fun invoke( session: ScanSession, request: ExportRequest, context: Context, onProgress: (ExportProgress) -&gt; Unit = {}, ): ExportResult</ID>
+    <ID>CyclomaticComplexMethod:ReviewViewModel.kt:ReviewViewModel$fun onEvent(event: ReviewUiEvent)</ID>
+    <ID>CyclomaticComplexMethod:SampleAssetCatalog.kt:SampleAssetCatalog$private fun drawPageLayout( canvas: Canvas, width: Int, height: Int, style: SamplePageStyle, pageLabel: String, )</ID>
+    <ID>CyclomaticComplexMethod:StorageManager.kt:StorageManager$private fun classifyFailure( exception: Exception, sourceUri: Uri?, fileName: String, phase: String, ): ExportFailure</ID>
+    <ID>CyclomaticComplexMethod:StorageManager.kt:StorageManager$suspend fun saveUrisToPdf(sourceUris: List&lt;Uri&gt;, fileName: String): ExportOperationResult</ID>
+    <ID>FunctionNaming:AppNavigation.kt:@OptIn(ExperimentalComposeUiApi::class) @Composable fun AppNavigation( startInBenchmarkReviewMode: Boolean = false, startInBenchmarkIngestionMode: Boolean = false, )</ID>
+    <ID>FunctionNaming:ExportControls.kt:@Composable fun ExportCancelButton( onCancel: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ExportControls.kt:@Composable fun ExportFormatTabs( selectedFormat: ExportFormat, onSelectFormat: (ExportFormat) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ExportControls.kt:@Composable fun ExportSaveButton( exportState: ExportUiState, onSaveAll: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ReviewScreen.kt:@Composable internal fun ReviewWorkspace( state: ReviewWorkspaceState, pagerState: androidx.compose.foundation.pager.PagerState, onExportFormatChange: (ExportFormat) -&gt; Unit, onRetryEnhancement: (() -&gt; Unit)?, onToggleEnhancement: () -&gt; Unit, onMoveLeft: () -&gt; Unit, onMoveRight: () -&gt; Unit, onDelete: () -&gt; Unit, onScanMore: () -&gt; Unit, onDiscard: () -&gt; Unit, onPageSelected: (Int) -&gt; Unit, recompositionTrace: ReviewRecompositionTrace? = null, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ReviewScreen.kt:@Composable private fun ReviewCommandBar( state: ReviewCommandBarState, onScanMore: () -&gt; Unit, onRescan: () -&gt; Unit, onDiscard: () -&gt; Unit, onSaveAll: () -&gt; Unit, onCancelExport: () -&gt; Unit, onOpenSettings: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ReviewScreen.kt:@Composable private fun ReviewPageStatusChip( page: ReviewPageUiModel?, pageIndex: Int, onRetryEnhancement: (() -&gt; Unit)?, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ReviewScreen.kt:@Composable private fun ReviewPagerSection( pages: List&lt;ReviewPageUiModel&gt;, pagerState: androidx.compose.foundation.pager.PagerState, onPagerRecomposed: (() -&gt; Unit)?, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ReviewScreen.kt:@Composable private fun ReviewThumbnailItem( pageIndex: Int, totalPages: Int, page: ReviewThumbnailUiModel, thumbnailSize: IntSize, selected: Boolean, onClick: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:ReviewScreen.kt:@Composable private fun ReviewThumbnailStrip( thumbnails: List&lt;ReviewThumbnailUiModel&gt;, currentPage: Int, listState: androidx.compose.foundation.lazy.LazyListState, onPageSelected: (Int) -&gt; Unit, onThumbnailStripRecomposed: (() -&gt; Unit)?, )</ID>
+    <ID>FunctionNaming:ReviewScreen.kt:@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class) @Composable fun ReviewScreen( viewModel: ReviewViewModel = viewModel(), onExportSuccess: (ExportFormat, ExportPostActionTarget) -&gt; Unit, onNavigateToScanner: (ScannerNavigationReason) -&gt; Unit, onNavigateToHome: (HomeNavigationReason) -&gt; Unit, )</ID>
+    <ID>FunctionNaming:ScannerScreen.kt:@Composable fun ScannerScreen( homeUiState: HomeUiState = HomeUiState(), onScanResult: (ScanResultPayload) -&gt; Unit, onScanCancelled: () -&gt; Unit = {}, onFeedbackMessage: (UiText) -&gt; Unit = {}, onRestoreRecoverableSession: (String) -&gt; Unit = {}, onDiscardRecoverableSession: (String) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:StartScreen.kt:@Composable fun StartScreen( recoverableSession: RecoverableSessionUiState? = null, onStartScanClicked: () -&gt; Unit, onRestoreRecoverableSession: (String) -&gt; Unit = {}, onDiscardRecoverableSession: (String) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:Theme.kt:@Composable fun PixelScannerTheme( darkTheme: Boolean = isSystemInDarkTheme(), colorPolicy: PixelScannerColorPolicy = PixelScannerColorPolicy.BrandFirst, content: @Composable () -&gt; Unit )</ID>
+    <ID>LargeClass:ReviewViewModelTest.kt:ReviewViewModelTest</ID>
+    <ID>LongMethod:AndroidSessionIngestionRepository.kt:AndroidSessionIngestionRepository$override suspend fun ingest( session: ScanSession, scanResult: ScanResultPayload, ): SessionIngestionResult</ID>
+    <ID>LongMethod:AppNavigation.kt:@OptIn(ExperimentalComposeUiApi::class) @Composable fun AppNavigation( startInBenchmarkReviewMode: Boolean = false, startInBenchmarkIngestionMode: Boolean = false, )</ID>
+    <ID>LongMethod:ExportSessionUseCase.kt:ExportSessionUseCase$suspend operator fun invoke( session: ScanSession, request: ExportRequest, context: Context, onProgress: (ExportProgress) -&gt; Unit = {}, ): ExportResult</ID>
+    <ID>LongMethod:ImageEnhancer.kt:ImageEnhancer$suspend fun enhance( context: Context, request: PreviewImagePipelineRequest, ): PreviewImagePipelineResult</ID>
+    <ID>LongMethod:ReviewScreen.kt:@Composable internal fun ReviewWorkspace( state: ReviewWorkspaceState, pagerState: androidx.compose.foundation.pager.PagerState, onExportFormatChange: (ExportFormat) -&gt; Unit, onRetryEnhancement: (() -&gt; Unit)?, onToggleEnhancement: () -&gt; Unit, onMoveLeft: () -&gt; Unit, onMoveRight: () -&gt; Unit, onDelete: () -&gt; Unit, onScanMore: () -&gt; Unit, onDiscard: () -&gt; Unit, onPageSelected: (Int) -&gt; Unit, recompositionTrace: ReviewRecompositionTrace? = null, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:ReviewScreen.kt:@Composable private fun ReviewCommandBar( state: ReviewCommandBarState, onScanMore: () -&gt; Unit, onRescan: () -&gt; Unit, onDiscard: () -&gt; Unit, onSaveAll: () -&gt; Unit, onCancelExport: () -&gt; Unit, onOpenSettings: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:ReviewScreen.kt:@Composable private fun ReviewPageStatusChip( page: ReviewPageUiModel?, pageIndex: Int, onRetryEnhancement: (() -&gt; Unit)?, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:ReviewScreen.kt:@Composable private fun ReviewThumbnailItem( pageIndex: Int, totalPages: Int, page: ReviewThumbnailUiModel, thumbnailSize: IntSize, selected: Boolean, onClick: () -&gt; Unit, )</ID>
+    <ID>LongMethod:ReviewScreen.kt:@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class) @Composable fun ReviewScreen( viewModel: ReviewViewModel = viewModel(), onExportSuccess: (ExportFormat, ExportPostActionTarget) -&gt; Unit, onNavigateToScanner: (ScannerNavigationReason) -&gt; Unit, onNavigateToHome: (HomeNavigationReason) -&gt; Unit, )</ID>
+    <ID>LongMethod:ReviewScreenAccessibilityTest.kt:ReviewScreenAccessibilityTest$@Test fun `review screen exposes accessible labels and touch targets`()</ID>
+    <ID>LongMethod:ReviewViewModel.kt:ReviewViewModel$private fun saveAll(context: Context)</ID>
+    <ID>LongMethod:ReviewWorkspaceRecompositionTest.kt:ReviewWorkspaceRecompositionTest$@Test fun `thumbnail strip does not recompose when only selected page processing changes`()</ID>
+    <ID>LongMethod:SampleAssetCatalog.kt:SampleAssetCatalog$fun suite(context: Context): SampleAssetSuite</ID>
+    <ID>LongMethod:SampleAssetCatalog.kt:SampleAssetCatalog$private fun drawPageLayout( canvas: Canvas, width: Int, height: Int, style: SamplePageStyle, pageLabel: String, )</ID>
+    <ID>LongMethod:StartScreen.kt:@Composable fun StartScreen( recoverableSession: RecoverableSessionUiState? = null, onStartScanClicked: () -&gt; Unit, onRestoreRecoverableSession: (String) -&gt; Unit = {}, onDiscardRecoverableSession: (String) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:StorageManager.kt:StorageManager$suspend fun saveUrisToPdf(sourceUris: List&lt;Uri&gt;, fileName: String): ExportOperationResult</ID>
+    <ID>MagicNumber:AppNavigation.kt:6</ID>
+    <ID>MagicNumber:Color.kt:0xFF121015</ID>
+    <ID>MagicNumber:Color.kt:0xFF1A1720</ID>
+    <ID>MagicNumber:Color.kt:0xFF1E1323</ID>
+    <ID>MagicNumber:Color.kt:0xFF541765</ID>
+    <ID>MagicNumber:Color.kt:0xFF9B82FF</ID>
+    <ID>MagicNumber:Color.kt:0xFFCBB8FF</ID>
+    <ID>MagicNumber:Color.kt:0xFFF7F2FF</ID>
+    <ID>MagicNumber:Color.kt:0xFFF8F4EF</ID>
+    <ID>MagicNumber:Color.kt:0xFFFFFCF9</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xAA000000</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF111111</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF1A1A1A</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF1E1735</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF222222</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF351A1A</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF3A2B00</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF3A3A3A</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFF4A4A4A</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFFD0D0D0</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFFE0D2FF</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFFFF6B6B</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFFFFC7C7</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFFFFC94D</ID>
+    <ID>MagicNumber:DesignTokens.kt:PixelScannerColorTokens$0xFFFFE08A</ID>
+    <ID>MagicNumber:ImageEnhancer.kt:0xFF</ID>
+    <ID>MagicNumber:ImageEnhancer.kt:16</ID>
+    <ID>MagicNumber:ImageEnhancer.kt:24</ID>
+    <ID>MagicNumber:ImageEnhancer.kt:255</ID>
+    <ID>MagicNumber:ImageEnhancer.kt:8</ID>
+    <ID>MagicNumber:ImageEnhancer.kt:ImageEnhancer$90</ID>
+    <ID>MagicNumber:ImagePipelineContracts.kt:PipelineCacheKeyStrategy$16</ID>
+    <ID>MagicNumber:ScannerManager.kt:ScannerManager$100</ID>
+    <ID>MagicNumber:Theme.kt:0.5f</ID>
+    <ID>MaxLineLength:AndroidSessionIngestionRepository.kt:AndroidSessionIngestionRepository$destinationPath = SessionStoragePaths.sessionRoot(context.cacheDir, session.id).absolutePath</ID>
+    <ID>MaxLineLength:ReviewActionCopyLocaleTest.kt:ReviewActionCopyLocaleTest$assertTrue("Confirm label is too long for ${locale.toLanguageTag()}: $label", label.length &lt;= maxActionLength)</ID>
+    <ID>MaxLineLength:ReviewActionCopyLocaleTest.kt:ReviewActionCopyLocaleTest$assertTrue("Export label is too long for ${locale.toLanguageTag()}: $label", label.length &lt;= maxExportLength)</ID>
+    <ID>MaxLineLength:ReviewViewModel.kt:ReviewViewModel$ingestionResult.failures.firstOrNull { it.typedFailure != null }?.typedFailure</ID>
+    <ID>MaxLineLength:ReviewViewModelTest.kt:ReviewViewModelTest$previewCacheCleanupRepository: RecordingPreviewCacheCleanupRepository = RecordingPreviewCacheCleanupRepository()</ID>
+    <ID>MaxLineLength:ScanModels.kt:ScanSession$enhancementErrorMessage = if (processingState == ProcessingState.PROCESSING) null else page.enhancementErrorMessage</ID>
+    <ID>MaxLineLength:StorageManager.kt:StorageManager$suspend</ID>
+    <ID>PrintStackTrace:ScannerScreen.kt:error</ID>
+    <ID>ReturnCount:AndroidSessionRecoveryRepository.kt:AndroidSessionRecoveryRepository$override suspend fun loadRecoverableSession(sessionId: String): RecoverableSessionSnapshot?</ID>
+    <ID>ReturnCount:AppFlowViewModel.kt:AppFlowViewModel$private fun readPendingExportAction(): PendingExportActionState?</ID>
+    <ID>ReturnCount:ReorderPageUseCase.kt:ReorderPageUseCase$operator fun invoke( session: ScanSession, fromActivePageIndex: Int, toActivePageIndex: Int, ): ReorderPageResult?</ID>
+    <ID>ReturnCount:RestoreSessionUseCase.kt:RestoreSessionUseCase$suspend operator fun invoke(sessionId: String? = null): RestoreSessionOutcome</ID>
+    <ID>ReturnCount:ReviewViewModel.kt:ReviewViewModel$private fun retryEnhancement( pageId: String, context: Context, )</ID>
+    <ID>ReturnCount:StorageManager.kt:StorageManager$private fun copyUriToMediaStore( sourceUri: Uri, fileName: String, mimeType: String, relativePath: String, collection: Uri, ): ExportOperationResult</ID>
+    <ID>ReturnCount:ToggleEnhancementUseCase.kt:ToggleEnhancementUseCase$suspend operator fun invoke( page: ScannedPage, context: Context, ): ToggleEnhancementResult</ID>
+    <ID>TooGenericExceptionCaught:AndroidExportArtifactCacheRepository.kt:AndroidExportArtifactCacheRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ReviewViewModel.kt:ReviewViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ScannerScreen.kt:error: Exception</ID>
+    <ID>TooGenericExceptionCaught:StorageManager.kt:StorageManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ToggleEnhancementUseCase.kt:ToggleEnhancementUseCase$error: Exception</ID>
+    <ID>TooManyFunctions:ImageEnhancer.kt:com.example.pixelscanner.core.image.ImageEnhancer.kt</ID>
+    <ID>TooManyFunctions:ReviewViewModel.kt:ReviewViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:StorageManager.kt:StorageManager</ID>
+    <ID>UnusedParameter:ScanModels.kt:session: ScanSession</ID>
+  </CurrentIssues>
+</SmellBaseline>

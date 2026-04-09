@@ -1,0 +1,813 @@
+# Pixel Scanner Productization Todo
+
+本文件將 Pixel Scanner 從「MVP 可用」推進到「可持續開發、可驗證品質、可上線維運」的產品化重構清單。
+
+本版本已整合 `PRODUCTIZATION_REQS_SUPPLEMENT.md` 的補強建議，但調整為與主重構流程一致的 backlog：
+
+- 對主線有直接影響的項目，併入既有 phase。
+- 風險較高或技術選型尚未定案的項目，改列為 ADR、spike 或 benchmark gate。
+- 不另開平行流程，避免 backlog 分裂。
+
+## Status Legend
+
+- [ ] Not started
+- [~] In progress
+- [x] Done
+- [!] Blocked
+
+## Backlog Usage
+
+- 每個 phase 先完成設計與決策，再進入實作，最後補驗證。
+- 一個 issue 應對應一個最小可交付項，不要把整個 phase 當單一工作。
+- 若某項需要技術選型或產品決策，先建立 ADR 或 design note，再開始實作。
+- 若某項只在特定條件下才值得做，先定義 benchmark 或觸發條件，再決定是否投入。
+
+## Overall Goals
+
+- 建立可擴充的掃描流程架構，避免 UI、狀態、I/O 與影像處理耦合在一起。
+- 讓 scan session、影像檔案、匯出流程都由 app 自己掌控生命週期，不依賴短生命週期的外部 URI。
+- 提升高解析度掃描、多頁文件與長時間匯出的穩定性、可恢復性與效能。
+- 重構 Review / Export 體驗，使其符合文件掃描工具的產品心智模型。
+- 補齊錯誤處理、測試、監測與文件，讓專案可持續維護。
+
+## Productization Principles
+
+- Session-owned files first：掃描完成後，app 應盡快將掃描結果收編進自己的 session 目錄。
+- Strategy over hardcode：匯出路徑應由 decision tree 決定，而不是一律重建 PDF。
+- Preview and export are different workloads：預覽優先互動流暢，匯出優先正確性與完整畫質。
+- Large-document support is intentional：50-100 頁流程需要明確的背景執行、進度、清理與恢復策略。
+- Benchmark before advanced optimization：GPU、第三方 PDF 操作庫等高成本方案，必須以 benchmark 或實際瓶頸為前提。
+
+## Phase 0: Baseline And Alignment
+
+- [x] 對齊 README、spec、Gradle 設定與實際實作，修正 target SDK、功能描述與已完成項目。
+  - 驗收標準：README、`spec.md`、`todo.md`、build config 之間不再互相矛盾。
+  - [x] 比對 README 與實際功能清單，列出不一致項目。
+  - [x] 比對 `spec.md` 與目前程式碼行為，標記未落地功能。
+  - [x] 比對 `todo.md` 與目前實作，移除已失真的完成標記。
+  - [x] 對齊 `compileSdk`、`targetSdk`、README 中的環境描述。
+  - [x] 將已完成、進行中、規劃中三種功能狀態寫清楚。
+- [x] 建立產品化重構分支策略與里程碑規劃。
+  - 驗收標準：定義 milestone，例如 `architecture`, `session-lifecycle`, `performance`, `ux`, `quality`, `release-prep`。
+  - [x] 定義分支命名規則。
+  - [x] 定義 milestone 與對應輸出物。
+  - [x] 定義每個 milestone 的完成條件。
+  - [x] 建立簡易 roadmap 文件或看板欄位。
+    - 參考文件：[`docs/productization-roadmap-and-branching.md`](/Users/tsaiid/git/pixel-scanner/docs/productization-roadmap-and-branching.md)
+- [x] 釐清產品範圍與非目標。
+  - 驗收標準：明確標記第一版是否包含歷史紀錄、頁面排序、分享流程、OCR、雲端同步、批量操作。
+  - [x] 列出 v1 must-have 功能。
+  - [x] 列出 v1 should-have 功能。
+  - [x] 列出明確不做的功能。
+  - [x] 為爭議項建立決策清單，例如 OCR、同步、歷史紀錄、增量 PDF 重組。
+    - 參考文件：[`docs/product-scope-v1.md`](/Users/tsaiid/git/pixel-scanner/docs/product-scope-v1.md)
+- [!] 建立性能與穩定性基線。
+  - 驗收標準：記錄冷啟動、首次掃描、session ingestion、單頁增強、多頁 PDF 匯出的耗時與記憶體占用。
+  - [x] 定義量測場景與裝置條件。
+  - [x] 準備單頁 / 多頁 / 大圖 / 長文件測試樣本。
+  - [ ] 記錄冷啟動耗時。
+  - [ ] 記錄掃描返回 review 的耗時。
+  - [ ] 記錄掃描結果 ingest 至 session 的耗時。
+  - [ ] 記錄單頁增強耗時。
+  - [ ] 記錄多頁 PDF 匯出耗時。
+  - [ ] 記錄記憶體峰值與可能的 OOM 風險。
+  - [!] 目前阻塞：缺少可重複執行的 benchmark / instrumentation runner、實機量測裝置、以及已收斂的樣本資產執行流程。
+    - 參考文件：[`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)
+- [x] 建立產品化關鍵 ADR。
+  - 驗收標準：session ingestion、export decision tree、背景匯出策略、preview/export 雙 pipeline 有正式決策文件。
+  - [x] 撰寫 session ownership ADR。
+  - [x] 撰寫 export strategy ADR。
+  - [x] 撰寫 background export ADR。
+  - [x] 撰寫 image pipeline ADR。
+    - 參考文件：[`docs/adr-session-ownership.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-session-ownership.md)
+    - 參考文件：[`docs/adr-export-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-export-strategy.md)
+    - 參考文件：[`docs/adr-background-export.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-background-export.md)
+    - 參考文件：[`docs/adr-image-pipeline.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-image-pipeline.md)
+
+## Phase 1: Architecture Refactor
+
+- [x] 導入明確的 feature/module 分層。
+  - 建議目標：`scanner`, `review`, `export`, `core-ui`, `core-storage`, `core-image`, `core-model`。
+  - 驗收標準：UI、domain、data 職責清楚，主要流程不再集中於單一 ViewModel。
+  - 第一階段決策：先維持單一 `app` module，優先完成 package 分層與 use case / core package 抽離，再視需要拆 module。
+  - 目前已落地：`app` 負責入口與導航組裝，`feature/home`、`feature/scanner`、`feature/review` 已各自收斂畫面或流程；`feature/export` 已開始拆出 export state / controls，仍沿用 review flow orchestration。
+  - [x] 定義第一階段是否先保留單 module、只做 package 分層。
+  - [x] 設計目錄結構與命名規則。
+  - [x] 抽出 `core-model` 或等效 model package。
+  - [x] 抽出 `core-image` 或等效 image domain/data package。
+  - [x] 抽出 `core-storage` 或等效 export/storage package。
+  - [x] 將 scanner、review、export UI 各自集中到 feature 區域。
+- [x] 定義核心 domain model。
+  - 建議實體：`ScanSession`, `ScannedPage`, `PageVariant`, `ExportRequest`, `ExportResult`, `ProcessingState`, `SessionDirtyFlags`。
+  - 驗收標準：UI 層不再直接依賴裸 `Uri` 列表做主要業務判斷。
+  - [x] 設計 `ScanSession` 欄位。
+  - [x] 設計 `ScannedPage` 欄位。
+  - [x] 設計 `PageVariant` 結構，區分 `original`, `previewEnhanced`, `exportEnhanced`。
+  - [x] 設計 `ExportRequest` 與 `ExportResult`。
+  - [x] 設計頁級 `ProcessingState`。
+  - [x] 設計 `SessionDirtyFlags`，至少覆蓋 enhancement、delete、reorder、rotation、crop。
+  - [x] 定義 domain model 與 UI model 的映射方式。
+    - review 與 home flow 已改為明確 mapper helper：`ScannedPage -> ReviewPageUiModel`、`RecoverableSessionSnapshot -> RecoverableSessionUiState`。
+    - export flow 目前以 `ExportUiState` 直接包裝 `ExportFormat` / `ExportState`，不另外引入獨立 mapper。
+    - 已補 mapper 單元測試覆蓋 review 與 home 的 domain-to-UI 轉換。
+- [x] 將 `ReviewViewModel` 中的 I/O 與處理邏輯抽成 use cases。
+  - 建議 use cases：`CreateSessionFromScanResultUseCase`, `LoadScanSessionUseCase`, `ToggleEnhancementUseCase`, `DeletePageUseCase`, `RestorePageUseCase`, `ExportSessionUseCase`, `DiscardSessionUseCase`, `ResumeSessionUseCase`。
+  - 驗收標準：ViewModel 僅負責 state reduction、event handling、effect emission。
+  - [x] 盤點 `ReviewViewModel` 現有責任。
+    - 已整理成 [`docs/review-viewmodel-responsibilities.md`](/Users/tsaiid/git/pixel-scanner/docs/review-viewmodel-responsibilities.md)。
+  - [x] 抽出 session 初始化 use case。
+  - [x] 抽出增強流程 use case。
+  - [x] 抽出刪除 / 復原 use case。
+  - [x] 抽出 export use case。
+  - [x] 抽出 discard / resume / scan-more use case。
+    - discard/rescan back flow 已改由 ReviewViewModel 事件與 effect 驅動；resume boundary 目前先維持 session passthrough，scan-more 沿用現有清理後返回 scanner 的流程。
+- [x] 引入 repository 邊界。
+  - 建議 repositories：`ScanSessionRepository`, `ImageProcessingRepository`, `ExportRepository`, `TempFileRepository`, `StorageRepository`。
+  - 驗收標準：Android framework 依賴集中在 data layer。
+  - [x] 定義 repository interface。
+    - `ImageProcessingRepository`、`ExportRepository`、`TempFileRepository`、`SessionMetadataRepository`、`SessionCleanupRepository`、`SessionRecoveryRepository`、`SessionIngestionRepository` 都已導入，並由 use case 或 app container 注入使用；`TempFileRepository` contract now takes `cacheDir: File`, so `Context` stays in the Android implementation.
+  - [x] 提供 Android / file-system 實作。
+    - enhancement 與 export 以 Android repository wrapper 包住既有 `ImageEnhancer` 與 `StorageManager`；session metadata、recovery、ingestion、cleanup 也都有對應的 Android 實作。
+  - [x] 將 `ContentResolver` 相關程式集中到 data layer。
+  - [x] 將 temp file、session file、stale cleanup 集中到 repository。
+    - temp file creation 已集中到 `TempFileRepository`；session metadata 已由 `AndroidSessionMetadataRepository` 管理，stale cleanup 由 `AndroidSessionCleanupRepository` 在 `PixelScannerApp.onCreate()` 觸發。
+  - [x] 為 repository 設計測試替身。
+- [x] 建立單向資料流的 UI state 結構。
+  - 驗收標準：每個畫面有單一 `UiState` 與明確 `UiEvent` / `UiEffect`。
+  - [x] 為首頁定義 `HomeUiState`。
+  - [x] 為 review 定義 `ReviewUiState`。
+  - [x] 首頁狀態已集中成 `HomeUiState`，目前先涵蓋 scanner 自動重啟旗標。
+  - [x] review 畫面已改為單一 `uiState` 驅動畫面。
+    - 目前 `ReviewUiState` 已收斂 pages、export format、processing flag，畫面不再直接消費 `ScannedPage` domain list。
+    - review 畫面互動已透過 `ReviewUiEvent` 送入 ViewModel；刪除 undo、匯出成功、匯出失敗已透過 `ReviewUiEffect` 發送。
+    - 已事件化的互動包含 export format 切換、頁面增強、刪除與復原。
+    - save/export 入口已收斂到 ViewModel，畫面層只處理 effect 消費。
+    - 目前 effect 已覆蓋 snackbar undo、匯出成功 toast 觸發、匯出失敗訊息與返回導航；last-page delete 也已改由 ViewModel 直接發出返回 effect。
+    - pager selection 已回寫到 ViewModel，`currentPage` 會隨頁面變更與刪除後自動校正。
+    - export state 已獨立為 `ExportUiState`，目前涵蓋 export format 與 exporting flag，且已移至 `feature/export`。
+  - [x] 為 export 定義 `ExportUiState` 或等效 effect/state。
+  - [x] 定義 `ReviewUiEvent`。
+  - [x] 定義 `ReviewUiEffect`。
+  - [x] 整理 loading、error、selection、pager、batch progress 的責任邊界。
+    - selection / pager 已回到 `ReviewUiState` 與 `SavedStateHandle`；batch progress 由 `ExportUiState` / `ExportState.InProgress` 承接，而 review 的可見錯誤訊息已收斂到 state-backed `ReviewStatusMessage`，不再只靠 transient effect。
+- [x] 導入依賴注入方案。
+  - 建議可選：先用簡單 constructor injection，必要時再導入 Hilt。
+  - 驗收標準：ViewModel 與 use case 可被測試替換，不需在測試中直接建立 Android `Context`。
+  - [x] 先決定是否維持純手動 DI。
+    - Current milestone decision: keep manual constructor DI via `AppContainer` and ViewModel factories. See [`docs/di-decision-current-milestone.md`](/Users/tsaiid/git/pixel-scanner/docs/di-decision-current-milestone.md).
+  - [x] 若手動 DI，建立 app container。
+  - [x] 若 Hilt，規劃 migration 範圍。
+    - Deferred for this milestone; Hilt migration is not being executed until explicit triggers are identified.
+  - [x] 將 ViewModel 依賴改由注入提供。
+    - 目前 `AppContainer` 提供 review flow 的 use case 與 `ReviewViewModelFactory`，`ReviewViewModel` 不再自行 new use case。
+- [x] 正式導入 Navigation。
+  - 建議使用 Navigation Compose 或至少明確封裝 screen contract。
+  - 驗收標準：導航狀態可保存，返回行為一致。
+  - [x] 定義 screen route 或等效 contract。
+    - 目前已用 `AppScreen` route contract 搭配 Navigation Compose 收斂 `Home` / `Review` 切換，並補上 [`docs/navigation-graph.md`](/Users/tsaiid/git/pixel-scanner/docs/navigation-graph.md) 與 `AppNavigationContract` 明確定義 `home -> scanner -> review -> export complete`。
+  - [x] 決定 scanner return result 如何接回 app flow。
+    - scanner 完成後由 app 直接將 scan result 寫入 review ViewModel，並以 navigation route 明確切到 review。
+  - [x] 定義 home -> scanner -> review -> export complete 的導航圖。
+  - [x] 驗證返回鍵行為與 deep restore 行為。
+    - Verified by `app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt` covering rescan/discard back effects, session cleanup, and review state process-death restoration.
+    - Verified by `app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt` covering process-death restoration of the navigation flags that gate restore prompt and auto-start behavior.
+    - Existing process-death coverage in `app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt` already covers pending export action restore.
+- [x] 將流程狀態從 composable `remember` 遷移到可保存狀態。
+  - 驗收標準：旋轉螢幕與 process recreation 時不會意外丟失流程狀態。
+  - [x] 盤點目前依賴 `remember` 的流程狀態。
+    - 已完成 `app/src/main/java/com/example/pixelscanner/**` 全量 audit：`StartScreen` 的 intro animation 已是 `rememberSaveable`，`ReviewScreen` 的 dialog flags 也已是 `rememberSaveable`，其餘 `remember` 僅為螢幕生命週期內的 helper / snackbar / pager state，未發現新的流程關鍵保存缺口。
+  - [x] 將必要狀態移至 ViewModel / SavedStateHandle。
+    - 流程關鍵 state 目前都已在 `HomeViewModel`、`ReviewViewModel`、`AppFlowViewModel` 的 `SavedStateHandle` 中處理，且既有 restore tests 已覆蓋 configuration change 與 process-death style recreation。
+  - [x] 驗證 configuration change。
+    - 相關測試：`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`
+  - [x] 驗證 process death restore 策略。
+    - 相關測試：`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`
+
+## Phase 2: Scan Session And Data Lifecycle
+
+- [x] 擴充掃描結果模型，保留 ML Kit 回傳的 JPEG pages 與原始 PDF URI。
+  - 驗收標準：後續匯出時可根據是否修改過內容決定是否重用原始 PDF。
+  - [x] 研究 ML Kit result 中需要持久化的欄位。
+  - [x] 擴充 session model 接住 page URIs 與 pdf URI。
+  - [x] 定義 `session dirty` 的判斷規則。
+  - [x] 驗證未修改 session 可直接重用 PDF。
+- [x] 導入掃描結果 eager ingestion。
+  - 驗收標準：掃描完成後，review 與後續處理都以 app 內部 session 檔案為主，不直接依賴外部短生命週期 URI。
+  - [x] 定義 ingestion 的觸發點與執行緒模型。
+    - 目前由 `ReviewViewModel.setScanResult()` 在建立 session 後立刻觸發背景 eager ingestion，並透過 use case 內的 `Dispatchers.IO` 邊界執行。
+  - [x] 將 page JPEG 拷貝到 `cacheDir/sessions/{sessionId}/original/`。
+  - [x] 若有原始 PDF，拷貝到 session 目錄並記錄 metadata。
+  - [x] 建立 source URI 到 session file 的映射資訊。
+  - [x] 定義 ingestion 失敗時的 fallback 與錯誤回報。
+- [x] 建立 scan session 暫存目錄與 metadata。
+  - 驗收標準：單次掃描的原圖、增強圖、排序資訊、刪除狀態、匯出狀態都有可追蹤 metadata。
+  - [x] 定義 session id 生成規則。
+  - [x] 定義 session metadata schema。
+  - [x] 建立 session 目錄命名規則。
+  - [x] 決定 metadata 存放格式，例如 JSON 或 Room。
+    - 目前採 JSON，並寫入 `cacheDir/sessions/{sessionId}/metadata.json`。
+  - [x] 實作 metadata 讀寫。
+    - 已能將 `ScanSessionMetadata` 寫入與讀回 session 目錄。
+- [x] 定義 session 清理策略。
+  - 驗收標準：離開 review、匯出完成、App 重啟後能安全清理舊快取，不殘留大量暫存檔。
+  - [x] 定義 preview cache 何時清理。
+    - preview cache 會在 session 被 discard 或 last-page delete 時清理；app launch 的 stale session cleanup 也會刪除整個 session root。
+  - [x] 定義 export temp files 何時清理。
+    - app launch 時會清理 session export 目錄下遺留的 `.tmp` 檔案，不影響成功輸出的成品檔。
+  - [x] 定義失敗 / 中斷 session 的保留時間。
+    - 目前採 7 天保留，之後由 app launch 的 stale session cleanup 一併清理整個 session root。
+  - [x] 定義 stale session cleanup 規則，例如時效或 LRU。
+    - 目前採 `metadata.json` 的建立時間做 7 天 TTL，清掉整個 session 目錄。
+  - [x] 實作 app launch 時的 stale session cleanup。
+    - `PixelScannerApp.onCreate()` 會在背景執行清理。
+- [x] 加入 session recovery 策略。
+  - 驗收標準：掃描完成後若 app 被系統回收，重新進入時可提示恢復或捨棄未完成 session。
+  - [x] 定義可恢復 session 的最小資訊。
+    - 目前以 `ScanSessionMetadata` JSON 作為 recoverable session 摘要。
+  - [x] 定義恢復提示 UI。
+    - 目前 home/app flow 會顯示 restore / discard prompt，由使用者明確決定是否復原 recoverable session。
+  - [x] 實作 restore session flow。
+    - 目前 home/app flow 會在 prompt 允許後復原 latest recoverable session；若檔案不完整，會以可用檔案恢復並提示缺檔。
+  - [x] 驗證部分檔案遺失時的 fallback。
+    - restore flow 會以可用檔案恢復並提示缺檔；若可用資產不足以重建 session，則回傳 unavailable。
+- [x] 明確區分 `Rescan`、`Scan More`、`Discard Session` 三種動作。
+  - 驗收標準：使用者操作語意與實際行為一致，不再用模糊返回行為代替。
+  - [x] 定義三種動作的產品語意。
+    - `Rescan` 會捨棄目前 review session 並回到 scanner flow。
+    - `Discard Session` 會捨棄目前 review session 並回到 home/start screen，不會自動重啟 scanner。
+    - `Scan More` 會保留目前頁面，並把下一次掃描結果 append 回同一個 session。
+  - [x] 定義各自是否保留當前頁面。
+  - [x] 定義按鈕文案與確認對話框。
+    - review 畫面已提供 `Scan More` / `Rescan` / `Discard Session`，其中 destructive actions 會跳出 confirm dialog。
+  - [x] 驗證返回鍵是否對應其中一種動作。
+    - system back 已對應 `Discard Session` 的確認流程，而非 `Rescan`。
+
+## Phase 3: Image Processing Pipeline
+
+- [x] 將影像增強拆成 preview pipeline 與 export pipeline。
+  - 驗收標準：預覽切換速度以互動流暢為優先，匯出時才處理 full-resolution。
+  - [x] 定義 preview pipeline 輸入 / 輸出。
+    - 目前以 `PreviewImagePipelineRequest` / `PreviewImagePipelineResult` 作為 preview contract。
+  - [x] 定義 export pipeline 輸入 / 輸出。
+    - 目前以 `ExportImagePipelineRequest` / `ExportImagePipelineResult` 作為 export contract。
+  - [x] 定義兩條 pipeline 的 cache key。
+    - 目前以 `PipelineCacheKeyStrategy` 統一定義 preview 與 export 的 cache key。
+  - [x] 實作 preview pipeline。
+    - 目前 preview 會先查 session-owned cache，命中時直接重用既有預覽檔，未命中才重新運算與寫入。
+  - [x] 實作 export pipeline。
+    - 目前 export 會先查 session-owned artifact cache，命中時直接重用既有輸出素材，未命中才建立新素材並寫回 cache。
+- [x] 導入安全 decode 策略。
+  - 包含：bounds decode、`inSampleSize`、色彩格式選擇、尺寸上限保護。
+  - 驗收標準：處理大圖與異常圖片時不因一次性 full decode 容易 OOM。
+  - [x] 建立 decode helper。
+  - [x] 加入 bounds decode。
+  - [x] 加入 `inSampleSize` 計算。
+  - [x] 決定預覽與匯出各自的 bitmap config。
+    - 預覽目前使用 `Bitmap.Config.RGB_565`，匯出維持既有輸出路徑。
+  - [x] 評估預覽是否使用 `Bitmap.Config.HARDWARE` 或其他低拷貝策略。
+    - 現階段不採用 `Bitmap.Config.HARDWARE`；預覽 pipeline 需要 CPU pixel access 與重新寫回 cache，維持 software bitmap 才能避免額外 copy 與轉換成本。
+  - [x] 為異常尺寸建立保護條件。
+    - 預覽 decode 會先驗證 bounds，並以最大尺寸上限避免一次 full decode。
+- [x] 修正背景估計演算法的極端尺寸邊界。
+  - 驗收標準：小圖、長圖、極端比例圖片不會因縮放到 0 尺寸而 crash。
+  - [x] 加入最小縮放尺寸保護。
+    - background size 計算會保證寬高至少為 1，且不會超過原始尺寸。
+  - [x] 驗證超長圖與超寬圖。
+  - [x] 驗證小尺寸輸入圖片。
+- [~] 重新設計像素處理的記憶體策略。
+  - 建議方向：tile-based、row-based 或分段 buffer 處理。
+  - 驗收標準：12MP 圖片處理過程的瞬時記憶體峰值顯著下降。
+  - [x] 比較 tile-based 與 row-based 方案。
+  - [x] 選定實作方案並記錄設計理由。
+    - 已採 row-based segmented processing，說明見 [`docs/image-enhancer-memory-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/image-enhancer-memory-strategy.md)。
+  - [x] 實作分段處理。
+  - [x] 加入記憶體量測點。
+    - preview enhancement 目前會以 `ImageEnhancerMem` debug logs 記錄 stage snapshots，涵蓋 `start`、`decode-complete`、`background-build-complete`、`row-processing-complete` 與 `final-write-complete`；12MP 峰值驗證仍需後續 benchmark 補證，因此 parent item 保持 in progress。
+- [x] 建立增強結果快取索引。
+  - 驗收標準：同頁面重複切換不重新運算，可命中快取。
+  - [x] 定義快取 key。
+    - 目前沿用 `PreviewImagePipelineRequest.cacheKey`，策略本身未變。
+  - [x] 定義快取 metadata。
+    - preview cache 以 per-session `preview-index.json` 記錄 `cacheKey -> fileName` 與存取 metadata。
+  - [x] 實作快取查詢。
+    - `AndroidPreviewImageCacheRepository.getCachedPreview()` 先讀 index，再驗證實體檔案是否有效。
+  - [x] 實作快取失效與清理。
+    - query/store 會 opportunistically prune 壞掉或 orphan 的 preview files，避免 index 與檔案內容脫節。
+- [x] 為每頁增強建立獨立處理狀態。
+  - 驗收標準：單頁處理不會鎖住整個 review 畫面。
+  - [x] 在 page model 加入 processing state。
+  - [x] UI 只鎖當前處理頁或對應控制項。
+  - [x] 驗證多頁快速切換時狀態一致。
+- [x] 為影像處理加入可取消性。
+  - 驗收標準：離開畫面、切換 session 或重複操作時可中止過時工作。
+  - [x] 為每頁處理任務建立 job 管理。
+  - [x] 離開畫面時取消過時任務。
+  - [x] 重複點擊時取消前一個同頁任務。
+  - [x] 驗證取消後狀態回復。
+- [x] 評估進階硬體加速方案。
+  - 驗收標準：只有在 CPU 路徑無法達標時，才進入更高成本的技術路線。
+  - [x] 定義目前 CPU 路徑的可接受性能門檻。
+  - [x] 評估 `ColorMatrix` 是否能覆蓋部分簡化增強情境。
+  - [x] 若 benchmark 未達標，再開 spike 評估 GPU / NDK / 其他方案。
+  - [x] 記錄不採用過時或高維護成本方案的理由。
+    - 參考文件：[`docs/advanced-hardware-acceleration-evaluation.md`](/Users/tsaiid/git/pixel-scanner/docs/advanced-hardware-acceleration-evaluation.md)
+- [!] 建立影像處理 benchmark。
+  - 驗收標準：至少有基準測試覆蓋 1 頁、10 頁與不同解析度樣本。
+  - [x] 定義 benchmark 樣本集。
+  - [ ] 新增 1 頁處理 benchmark。
+  - [ ] 新增多頁處理 benchmark。
+  - [ ] 輸出 baseline 報表。
+  - [!] 目前阻塞：缺少 benchmark module / instrumentation runner、實機量測裝置、以及可重複執行的 sample provisioning 流程；可參考 [`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)。
+
+## Phase 4: Export Pipeline
+
+- [x] 重構 export 為明確的 request/result 流程。
+  - 驗收標準：UI 可知道 export 是否成功、失敗、取消或部分成功。
+  - [x] 定義 export state machine。
+    - `ExportUiState` 現在以 `ExportState` 表示 `Idle` / `InProgress` / `Finished`.
+  - [x] 定義 success / partial / failure / cancelled result model。
+    - `ExportResult` 已覆蓋 `Success` / `PartialSuccess` / `Failure` / `Cancelled`.
+  - [x] 調整 UI 消費 export result 的方式。
+    - `ReviewViewModel` 現在會把每種結果轉成對應 effect，並在 state 中保留最後一次 export 結果。
+- [x] 建立 export decision tree。
+  - 驗收標準：匯出路徑可根據 session 狀態選擇 reuse original PDF、rebuild PDF 或輸出 JPEG，而不是一律重建。
+  - [x] 定義 `reuse original PDF` 的條件。
+  - [x] 定義 `rebuild from reordered pages` 的條件。
+  - [x] 定義 `rebuild from enhanced pages` 的條件。
+    - 目前由 `ExportRequest.resolveDecision(session)` 明確以 `hasEnhancedPages` 分支決定。
+  - [x] 將 decision tree 寫入 `ExportRequest` 或等效策略物件。
+  - [x] 驗證刪頁、排序、增強、旋轉後會走對應分支。
+    - 目前以 `ExportRequestDecisionTest` 覆蓋 clean / enhanced / deleted / reordered / rotated / image 分支。
+  - [x] 若 session 未改動且 ML Kit 已提供 PDF，優先重用原始 PDF。
+  - 驗收標準：避免不必要的 PDF 重建與解碼成本，保留原 PDF 可能包含的文字層或其他 metadata。
+  - [x] 定義 destination write 流程。
+  - [x] 實作 fast-track copy path。
+  - [x] 驗證結果檔可正常開啟與分享。
+    - 匯出成功後會提示使用者開啟或分享輸出檔，並以 `ACTION_VIEW` / `ACTION_SEND`（多檔時為 `ACTION_SEND_MULTIPLE`）走實際 intent 路徑。
+- [x] 評估刪頁 / 排序場景的增量 PDF 重組方案。
+  - 驗收標準：先完成可研究、可比較、可決策，不預設採用特定庫。
+  - [x] 列出可行方案，例如重建 PDF、增量操作 PDF、延後到 v2。
+  - [x] 評估第三方庫的體積、效能、授權與維護成本。
+  - [x] 若不採用增量重組，記錄以重建 PDF 為 v1 決策的理由。
+    - 參考文件：[`docs/incremental-pdf-reassembly-evaluation.md`](/Users/tsaiid/git/pixel-scanner/docs/incremental-pdf-reassembly-evaluation.md)
+- [x] 若需重建 PDF，加入輸出尺寸策略。
+  - 建議支援：原始尺寸、A4、Letter、壓縮等級。
+  - 驗收標準：輸出檔案大小、品質與效能可控。
+  - [x] 決定 v1 要暴露給使用者還是先固定策略。
+  - [x] 定義 page scaling 規則。
+  - [x] 加入 JPEG 壓縮品質設定。
+  - [x] 測試檔案大小與畫質 tradeoff。
+    - 參考文件：[`docs/pdf-output-sizing-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/pdf-output-sizing-strategy.md)
+- [x] 將 JPEG 與 PDF 匯出都改為可回報逐步進度。
+  - 驗收標準：多頁匯出時 UI 可顯示進度而非只有全域 loading。
+  - [x] 設計 progress model。
+    - `ExportProgress` 已區分 overall 與 page-level progress，並接入 `ExportState.InProgress`。
+  - [x] 匯出頁級進度回報。
+    - image export 會在每頁完成後回報 page progress 與 overall progress。
+  - [x] UI 呈現 overall progress。
+    - export 按鈕會顯示目前進度數字，而不是只有通用 loading 文案。
+  - [x] 失敗時保留已完成頁面的處理資訊。
+- [!] 為大型匯出建立背景執行策略。
+  - 驗收標準：長時間 PDF 匯出在 app 進入背景時仍能穩定執行，且不把短任務複雜化。
+  - [x] 定義何種條件下切換到 `WorkManager`。
+  - [ ] 定義 worker 與前台通知的責任邊界。
+  - [ ] 實作大型匯出走 background worker。
+  - [ ] 驗證取消、重試、app 重啟後狀態恢復。
+  - [!] 目前阻塞：ADR 已明確決定先不導入 `WorkManager`，而現有程式仍維持前景 export flow，尚未具備背景 worker 或前台通知實作。
+    - 參考文件：[`docs/adr-background-export.md`](/Users/tsaiid/git/pixel-scanner/docs/adr-background-export.md)
+- [x] 補齊錯誤分類與前置檢查。
+  - 類型：讀取失敗、decode 失敗、寫入失敗、儲存空間不足、權限或 `ContentResolver` 異常、來源檔失效。
+  - 驗收標準：不同錯誤能映射成可理解的使用者訊息，且可區分可重試與不可重試。
+  - [x] 定義 domain error 類型。
+    - 已以 `ExportFailure` sealed hierarchy 定義 read / decode / write / space / permission / source invalid / unknown 等失敗。
+  - [x] 定義使用者訊息映射表。
+    - `ExportFailure.userMessage` 已集中對應各失敗類型的預設訊息。
+  - [x] 定義可重試與不可重試錯誤。
+    - `ExportFailure.retryability` 已區分 `RETRYABLE` 與 `NON_RETRYABLE`。
+  - [x] 在掃描前與匯出前加入磁碟空間檢查。
+    - eager ingestion 與 export path 會先估算需求空間，再以 shared storage / cacheDir 做 preflight，若不足則回傳 `ExportInsufficientSpaceFailure`。
+  - [x] 為未完成匯出殘檔建立清理策略。
+    - export failure path 會刪除已建立的 destination row，且 preflight 會避免在空間不足時留下半成品。
+- [x] 建立匯出後動作。
+  - 建議支援：開啟檔案、分享、回到首頁、繼續掃描。
+  - 驗收標準：匯出成功後有明確 next step，而不只是 toast。
+  - [x] 設計 export success sheet 或 dialog。
+    - 匯出成功後會顯示 post-export dialog，讓使用者選擇 open 或 share。
+  - [x] 加入 open/share action。
+    - 匯出成功後提供 open / share post-action dialog。
+  - [x] 加入 continue scanning action。
+    - 匯出成功對話框現在可直接回到 scanner flow，並沿用現有 scan-more append 行為。
+  - [x] 驗證取消與返回後狀態。
+    - dialog dismiss / back 只會清掉 post-export action，不會變更目前 review session 狀態。
+- [x] 驗證 Documents / Pictures 路徑策略與 MediaStore 行為。
+  - 驗收標準：實機上可預期地出現在正確位置，命名規則一致。
+  - [x] 驗證 JPEG 寫入 `Pictures/PixelScanner`。
+    - `StorageManager.saveUriToGallery()` 以 `RELATIVE_PATH` 指向 `Pictures/PixelScanner`。
+  - [x] 驗證 PDF 寫入 `Documents/PixelScanner` 或選定位置。
+    - `StorageManager.copyPdfToDocuments()` 以 `RELATIVE_PATH` 指向 `Documents/PixelScanner`。
+  - [x] 驗證檔名重複時行為。
+    - 匯出前會先查詢既有檔名，若同名則自動加上遞增序號避免覆蓋。
+  - [x] 驗證 Android 版本差異。
+    - Android Q+ 走 `RELATIVE_PATH` / `IS_PENDING` 的 MediaStore 寫入路徑，pre-Q 則走 legacy MediaStore insert；相同檔名仍會先做查詢避免覆蓋。
+  - [x] 明確記錄哪些情況需要 `MediaScannerConnection`，哪些情況不需要。
+    - 目前採用 MediaStore insert/update 的寫入路徑，不需要另外呼叫 `MediaScannerConnection`。
+
+## Phase 5: Review Experience Redesign
+
+- [x] 重設 review screen 資訊架構。
+  - 建議區塊：top app bar、主預覽、縮圖列、頁面工具列、底部 primary action。
+  - 驗收標準：多頁操作時可快速理解目前頁面與下一步動作。
+  - [x] 畫 review screen wireframe。
+  - [x] 定義資訊優先順序。
+  - [x] 定義單頁與多頁時的版型差異。
+  - [x] 定義 loading、error、empty 的版型。
+- [x] 加入縮圖帶與頁面快速切換。
+  - 驗收標準：10 頁以上文件仍可有效管理，不需只靠左右滑動。
+  - [x] 決定縮圖帶是水平列還是底部 filmstrip。
+  - [x] 實作縮圖點選切頁。
+  - [x] 顯示目前頁選中狀態。
+  - [x] 驗證大量頁數捲動效能。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt)
+- [x] 加入頁面排序能力。
+  - 驗收標準：可拖曳排序或透過明確操作重新排列頁序。
+  - [x] 選擇拖曳方案。
+    - v1 方案：以 selected page 的左右移動控制實作 bounded reorder，不引入自由拖曳手勢。
+  - [x] 實作頁序更新 state。
+  - [x] 排序後同步更新匯出順序。
+  - [x] 驗證排序後 undo / export 行為。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ReorderPageUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ReorderPageUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
+- [x] 讓刪除、復原與頁數更新更穩定。
+  - 驗收標準：刪除最後一頁時不會立刻誤觸發重掃流程，undo 行為可靠。
+  - [x] 重設刪除最後一頁的行為。
+  - [x] 決定空 session 時顯示空狀態或離開流程。
+  - [x] 改善 snackbar undo 與 pager 同步問題。
+- [x] 重新命名與拆分掃描相關按鈕文案。
+  - 驗收標準：`Scan More`、`Discard & Rescan`、`Save as JPEG`、`Save as PDF` 等語意明確。
+  - [x] 建立文案表。
+    - review action strings 已集中在 `strings.xml`。
+  - [x] 決定 destructive action 是否需要二次確認。
+    - `Rescan` 與 `Discard Session` 已使用 confirm dialog。
+  - [x] 驗證英文與中文文案長度。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewActionCopyLocaleTest.kt)
+- [x] 加入頁級 enhancement toggle 與狀態提示。
+  - 驗收標準：使用者知道當前頁是原圖或增強圖，處理中有明確 feedback。
+  - [x] 加入頁級狀態標示。
+  - [x] 加入 enhancement 前後的明確 label。
+  - [x] 加入處理中 spinner 或 inline progress。
+  - [x] 加入失敗提示與重試。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
+- [x] 規劃批量操作 UX。
+  - 驗收標準：大文件流程可用，但不在基礎狀態機不穩定時提早上線複雜互動。
+  - [x] 將 `Apply to All` 定義為 should-have 或 milestone gated 功能。
+  - [x] 若要支援全部增強，先定義背景佇列與全域進度模型。
+  - [x] 評估是否加入 grid view 以支援大頁數快速跳轉與批量刪除。
+  - [x] 以前置條件方式記錄依賴：頁級 processing state、非阻塞 queue、排序 state 穩定。
+    - 參考文件：[`docs/phase5-batch-ops-ux-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/phase5-batch-ops-ux-plan.md)
+- [x] 設計空狀態與錯誤狀態。
+  - 驗收標準：無頁面、頁面讀取失敗、處理失敗、匯出失敗時都有合理 UI。
+  - [x] 定義無頁面狀態。
+  - [x] 定義單頁讀取失敗狀態。
+  - [x] 定義整體匯出失敗狀態。
+  - [x] 定義部分頁失敗狀態。
+    - 參考文件：[`docs/review-empty-error-state-design.md`](/Users/tsaiid/git/pixel-scanner/docs/review-empty-error-state-design.md)
+- [x] 補齊 accessibility。
+  - 驗收標準：content description、可聚焦順序、色彩對比與觸控目標符合基本標準。
+  - [x] 為所有 icon button 加上語意。
+  - [x] 驗證主要觸控目標至少達建議尺寸。
+  - [x] 驗證文字與背景對比。
+  - [x] 驗證 TalkBack 流程。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewAccessibilityContrastTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewAccessibilityContrastTest.kt)
+
+## Phase 6: Start Flow And Product Identity
+
+- [x] 重構首頁，從單一 landing screen 升級為產品入口。
+  - 可選內容：最近掃描、上次未完成 session、快速開始、匯出說明。
+  - 驗收標準：首頁除了按鈕外，也能承接回訪情境。
+  - [x] 定義首頁的主要任務。
+  - [x] 決定是否顯示 recent scans。
+  - [x] 決定是否顯示 resume session。
+  - [x] 重畫首頁 wireframe。
+    - 參考文件：[`docs/home-product-entry-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/home-product-entry-plan.md)
+- [x] 統一品牌色、字體、圖示與 Material 3 token。
+  - 驗收標準：首頁與 review 頁視覺語言一致，不再混用品牌紫與 dynamic color 導致割裂。
+  - [x] 選定品牌主色與輔色。
+  - [x] 選定字體策略。
+  - [x] 定義 icon style。
+  - [x] 將 token 映射到 Material 3 theme。
+    - 參考文件：[`docs/product-identity-and-theme-plan.md`](/Users/tsaiid/git/pixel-scanner/docs/product-identity-and-theme-plan.md)
+- [x] 決定 dynamic color 策略。
+  - 驗收標準：明確定義哪些畫面跟隨系統色，哪些畫面使用品牌色。
+  - [x] 列出所有畫面與對應色彩策略。
+    - 目前 Home、Scanner、Review、Export complete 全部使用品牌色；不使用 Android dynamic color。
+  - [x] 記錄決策理由。
+    - 參考文件：[`docs/dynamic-color-policy.md`](/Users/tsaiid/git/pixel-scanner/docs/dynamic-color-policy.md)
+  - [x] 驗證深淺色模式一致性。
+- [x] 建立 design tokens。
+  - 類型：color, spacing, radius, elevation, typography, motion。
+  - 驗收標準：畫面不再直接硬編碼大量顏色與尺寸。
+  - [x] 建立 color tokens。
+  - [x] 建立 spacing tokens。
+  - [x] 建立 radius tokens。
+  - [x] 建立 typography tokens。
+  - [x] 建立 motion tokens。
+  - [x] 將 home / review / export surface 的主要常數改為共享 token。
+    - 參考文件：[`docs/design-tokens.md`](/Users/tsaiid/git/pixel-scanner/docs/design-tokens.md)
+- [x] 修正系統列與 edge-to-edge 行為。
+  - 驗收標準：狀態列與導覽列在深淺色模式下都可讀、沉浸且一致。
+  - [x] 修正 status bar icon appearance 邏輯。
+  - [x] 導入 edge-to-edge。
+  - [x] 驗證首頁與 review 頁的 inset 行為。
+    - Scanner resume/loading flow now uses the same safe-drawing inset policy as the other entry surfaces.
+- [x] 將所有硬編碼文案移入 string resources。
+  - 驗收標準：所有使用者可見文案都集中管理，為在地化做好準備。
+  - [x] 盤點所有 hardcoded strings。
+  - [x] 移入 `strings.xml`。
+  - [x] 按功能分類資源 key。
+  - [x] 檢查 content description 與錯誤訊息也已資源化。
+
+## Phase 7: State, Errors, And User Feedback
+
+- [x] 建立統一的 loading / error / success feedback pattern。
+  - 驗收標準：不再依賴 scattered toast，改用 snackbar、banner、dialog 或 inline status。
+  - [x] 定義全域 feedback pattern 規範。
+  - [x] 定義哪些情境用 snackbar。
+  - [x] 定義哪些情境用 dialog。
+  - [x] 定義哪些情境用 inline status。
+- [x] 導入 effect channel。
+  - 驗收標準：一次性事件如 toast、navigation、share sheet 不混在 persistent state 裡。
+  - [x] 定義 effect 類型。
+  - [x] 在 ViewModel 導入 effect emission。
+  - [x] UI 改為消費 effect channel。
+- [x] 為所有長任務提供取消與重試入口。
+  - 驗收標準：增強與匯出失敗後可明確重試，不需離開整個流程。
+  - [x] 設計 enhancement retry。
+  - [x] 設計 export retry。
+  - [x] 設計 export cancel。
+  - [x] 驗證取消後 state 一致性。
+- [x] 為不可恢復錯誤設計 fallback。
+  - 驗收標準：例如圖片檔失效時可提示重新掃描，而非沉默失敗。
+  - [x] 列出不可恢復錯誤清單。
+    - 參考文件：[`docs/nonrecoverable-error-fallbacks.md`](/Users/tsaiid/git/pixel-scanner/docs/nonrecoverable-error-fallbacks.md)
+  - [x] 定義各錯誤的 fallback CTA。
+    - review export 已針對 `ExportSourceInvalidFailure` 提供 `Discard & Rescan`、`ExportPermissionDeniedFailure` 提供 `Open Settings`、`ExportNoPagesFailure` 提供空狀態 `Scan More` / `Discard Session` actions。
+  - [x] 驗證 fallback 是否會造成資料遺失誤解。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt)
+
+## Phase 8: Performance And Quality
+
+- [x] 加入 Macrobenchmark。
+  - 指標：冷啟動、首頁到掃描、review 切頁、增強切換、session ingestion、PDF 匯出。
+  - 驗收標準：建立可持續追蹤的 benchmark 模組與基線結果。
+  - [x] 建立 benchmark module。
+  - [x] 新增冷啟動 benchmark。
+  - [x] 新增 review 切頁 benchmark。
+  - [x] 新增 enhancement toggle benchmark。
+  - [x] 新增 session ingestion benchmark。
+  - [x] 新增 export benchmark。
+- [!] 增加 Baseline Profile。
+  - 驗收標準：降低實機冷啟動與主要互動卡頓。
+  - [x] 建立 baseline profile 規則。
+  - [x] 覆蓋首頁、掃描返回、review、export。
+  - [!] 驗證 profile 成效。
+    - 目前阻塞：這個 workspace 沒有可用的 `adb` 指令，也沒有確認可用的實機或 emulator，因此無法執行 connected device 的 profile 成效驗證。
+    - 參考文件：[`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)
+- [x] 對 Compose 畫面做 recomposition 檢查。
+  - 驗收標準：大圖切換、processing state 更新不造成不必要重組。
+  - [x] 找出 review screen 高頻重組來源。
+    - 參考文件：[`docs/review-recomposition-hotspots.md`](/Users/tsaiid/git/pixel-scanner/docs/review-recomposition-hotspots.md)
+  - [x] 調整 state 結構降低整頁重組。
+  - [x] 驗證 pager 與縮圖列分離後的重組數。
+- [x] 檢查 Coil 載入策略。
+  - 驗收標準：預覽頁使用合適的大小、快取與 placeholder，不浪費解碼成本。
+  - [x] 定義主預覽尺寸需求。
+    - 參考文件：[`docs/coil-load-strategy.md`](/Users/tsaiid/git/pixel-scanner/docs/coil-load-strategy.md)
+  - [x] 定義縮圖尺寸需求。
+  - [x] 為不同用途設定不同 request。
+  - [x] 驗證 memory cache / disk cache 行為。
+- [~] 對大型文件流程做壓力測試。
+  - 驗收標準：50-100 頁 session 仍可接受，不出現明顯 ANR 或 OOM。
+  - [x] 建立 50 頁測試場景。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
+  - [x] 建立 100 頁測試場景。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
+  - [x] 記錄滑動、排序、匯出的表現。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
+  - [!] 記錄失敗模式。
+    - 目前阻塞：synthetic Robolectric 壓測已能覆蓋 scroll / reorder / export 行為，但缺少實機或 emulator 可以觀察 ANR、GC thrash 與 peak memory，因此無法把 device-level failure modes 寫成正式 baseline。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
+- [x] 補上 StrictMode 與 debug 檢查策略。
+  - 驗收標準：開發期可早期發現主執行緒 I/O、資源洩漏等問題。
+  - [x] 在 debug build 開啟 StrictMode。
+  - [x] 加入主執行緒 I/O 檢查。
+  - [x] 加入 leaked closable / file handle 檢查。
+
+## Phase 9: Testing Strategy
+
+- [x] 建立 ViewModel 單元測試。
+  - 驗收標準：覆蓋 scan session state transition、delete/undo、export success/failure。
+  - [x] 建立 ViewModel test base。
+  - [x] 測試 session 初始化。
+  - [x] 測試 delete / undo。
+  - [x] 測試 enhancement state transition。
+  - [x] 測試 export state transition。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt)
+- [x] 建立 use case 單元測試。
+  - 驗收標準：增強流程、快取命中、匯出策略分支都可測試。
+  - [x] 測試 ingestion use case。
+    - 目前 `CreateSessionFromScanResultUseCaseTest` 已覆蓋掃描結果到 session 的建立與穩定 page mapping。
+  - [x] 測試 enhancement 命中快取。
+  - [x] 測試 enhancement miss cache。
+  - [x] 測試 export reuse original PDF。
+  - [x] 測試 export rebuild PDF。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/CreateSessionFromScanResultUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/CreateSessionFromScanResultUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ToggleEnhancementUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ToggleEnhancementUseCaseTest.kt)
+  - [x] 測試 background export 分流條件。
+- [x] 建立 repository 層測試。
+  - 驗收標準：MediaStore、temp file、session metadata、PDF rebuild 等流程有 fake 或 instrumentation 覆蓋。
+  - [x] 建立 fake repositories。
+    - 目前已有 `FakeExportRepository` 供 ViewModel / use case 測試使用。
+  - [x] 建立 temp file repository 測試。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/core/storage/AndroidTempFileRepositoryTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/core/storage/AndroidTempFileRepositoryTest.kt)
+  - [x] 建立 session metadata 測試。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/core/storage/AndroidSessionMetadataRepositoryTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/core/storage/AndroidSessionMetadataRepositoryTest.kt)
+  - [x] 建立 MediaStore instrumentation 測試。
+  - [x] 建立 PDF export instrumentation 測試。
+- [x] 建立 Compose UI tests。
+  - 驗收標準：首頁、review 頁、刪除復原、格式切換、loading/error 狀態可驗證。
+  - [x] 測試首頁主要 CTA。
+  - [x] 測試 review 頁主預覽與縮圖列。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt)
+  - [x] 測試刪除與 undo。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenDeleteUndoTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenDeleteUndoTest.kt)
+  - [x] 測試 export format 切換。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenExportFormatTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenExportFormatTest.kt)
+  - [x] 測試 error / loading UI。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt)
+- [x] 加入整合測試樣本資產。
+  - 驗收標準：包含單頁、多頁、低光、陰影、旋轉、超大圖檔、長文件等案例。
+  - [x] 蒐集單頁樣本。
+  - [x] 蒐集多頁樣本。
+  - [x] 蒐集極端陰影樣本。
+  - [x] 蒐集旋轉與傾斜樣本。
+  - [x] 蒐集高解析度大圖樣本。
+  - [x] 蒐集 50+ 頁樣本。
+    - 這批樣本以 deterministic generated fixtures 實作，供 integration tests 直接引用；說明見 [`docs/integration-sample-assets.md`](/Users/tsaiid/git/pixel-scanner/docs/integration-sample-assets.md)。
+- [x] 建立手動 QA checklist。
+  - 驗收標準：每次 release 前可一致性驗證核心流程。
+  - [x] 建立首頁 QA。
+  - [x] 建立掃描流程 QA。
+  - [x] 建立 review 編輯 QA。
+  - [x] 建立 export QA。
+  - [x] 建立效能與記憶體 QA。
+
+## Phase 10: Build, Tooling, And Delivery
+
+- [x] 修正與升級 Android / Kotlin / Compose 版本策略。
+  - 驗收標準：依實際可用版本對齊 AGP、Kotlin、Compose BOM 與 target SDK。
+  - [x] 盤點目前版本組合。
+  - [x] 查核相容矩陣。
+  - [x] 升級至選定版本組合。
+  - [x] 更新文件中的版本描述。
+- [x] 檢查是否需要恢復 `org.jetbrains.kotlin.android` plugin 聲明或調整現有 plugin 配置。
+  - 驗收標準：build 設定一致、可被新成員快速理解。
+  - [x] 釐清目前 plugin 配置依賴。
+  - [x] 決定保留或恢復 Kotlin Android plugin。
+  - [x] 將選擇寫入 build note。
+    - 決策：在 AGP 9.0.0 下維持 `org.jetbrains.kotlin.plugin.compose` 即可；`org.jetbrains.kotlin.android` 不再套用，對應 alias 也已移除。
+- [x] 將 Java / Kotlin target 升到較合理版本。
+  - 驗收標準：與當前 Android toolchain 一致，避免停留在 1.8 慣性設定。
+  - [x] 決定 JVM target。
+  - [x] 更新 compile options / kotlin options。
+  - [x] 驗證相依套件相容性。
+    - 已將 app 與 benchmark module 的 bytecode target 對齊到 Java / Kotlin JVM 17，並驗證 `assembleDebug` 與 `testDebugUnitTest` 可正常執行。
+- [x] 補齊 release build 與 shrinker 策略。
+  - 驗收標準：release 版可混淆與縮減，且功能正常。
+  - [x] 開啟 release minify。
+  - [x] 補齊必要 keep rules。
+  - [x] 驗證 ML Kit、Coil、Compose 在 release 正常。
+    - 已透過 `./gradlew :app:assembleRelease` 驗證 release build、R8 minify 與 resource shrinking 可正常完成。
+- [x] 建立 CI。
+  - 至少包含：lint、unit tests、assemble debug、必要時 instrumentation smoke test。
+  - 驗收標準：每次 PR 都能自動驗證基本品質。
+  - [x] 建立 CI workflow。
+  - [x] 加入 assemble debug。
+  - [x] 加入單元測試。
+  - [x] 加入 lint。
+    - `lintDebug` currently passes with `app/lint-baseline.xml` filtering pre-existing lint debt.
+  - [ ] 視可行性加入 smoke test。
+    - 目前 GitHub Actions workflow 只先覆蓋 host-side validation；instrumentation smoke test 仍需要 emulator / device strategy，暫不列入本 slice。
+- [x] 補上 static analysis。
+  - 建議可選：ktlint、detekt、dependency analysis。
+  - 驗收標準：風格與常見錯誤有自動檢查。
+  - [x] 選定 static analysis 工具。
+    - Current repo decision: use `detekt` as the Kotlin static-analysis lane, with a baseline to keep legacy findings from blocking the rollout.
+  - [x] 建立規則檔。
+    - Shared config: [`config/detekt/detekt.yml`](/Users/tsaiid/git/pixel-scanner/config/detekt/detekt.yml)
+  - [x] 將檢查接入 CI。
+    - GitHub Actions now runs `:app:detekt` and `:benchmark:detekt` alongside the debug build and tests.
+
+## Phase 11: Observability And Diagnostics
+
+- [x] 建立 debug logging policy。
+  - 驗收標準：開發期有足夠資訊，release 不暴露敏感內容。
+  - [x] 定義 log tag 規則。
+  - [x] 定義哪些事件要記錄。
+  - [x] 定義 release build log 降級策略。
+- [x] 設計非侵入式錯誤統計策略。
+  - 驗收標準：在不違反隱私前提下，能知道匯出或處理失敗率。
+  - [x] 定義匿名事件模型。
+  - [x] 定義不收集的敏感資料。
+  - [x] 決定是否只做本地 debug 統計或接入遙測。
+- [x] 為性能關鍵路徑加入 timing logs。
+  - 驗收標準：可追蹤掃描返回、session ingestion、預覽處理、匯出耗時。
+  - [x] 為 scanner return 加 timing。
+  - [x] 為 ingestion 加 timing。
+  - [x] 為 enhancement 加 timing。
+  - [x] 為 export 加 timing。
+  - [x] 將 timing 結果格式化便於比較。
+
+## Phase 12: Documentation And Handoff
+
+- [x] 重寫 README，使其反映實際功能、限制與開發方式。
+  - 驗收標準：新加入開發者能依 README 成功建置、理解架構與限制。
+  - [x] 重寫功能概述。
+  - [x] 補上目前限制。
+  - [x] 補上建置需求。
+  - [x] 補上架構簡圖或說明。
+- [x] 撰寫 architecture decision records。
+  - 主題：ML Kit 掃描限制、session 模型、preview/export 雙 pipeline、PDF 策略、背景匯出策略。
+  - 驗收標準：關鍵決策有留痕，不依賴口頭傳承。
+  - [x] 撰寫 ML Kit session limitation ADR。
+  - [x] 撰寫 scan session model ADR。
+  - [x] 撰寫 image pipeline ADR。
+  - [x] 撰寫 export strategy ADR。
+  - [x] 撰寫 background export ADR。
+- [x] 建立 contributor guide。
+  - 驗收標準：明確說明 module 邊界、命名慣例、測試要求、UI 規範。
+  - [x] 定義 package / module 邊界。
+  - [x] 定義命名慣例。
+  - [x] 定義 PR 要求。
+  - [x] 定義測試最低要求。
+- [x] 維護 release checklist。
+  - 驗收標準：每次上線前知道該檢查哪些項目。
+  - [x] 列出 release build 檢查項。
+  - [x] 列出 QA 檢查項。
+  - [x] 列出文件更新檢查項。
+    - 參考文件：[`docs/release-checklist.md`](/Users/tsaiid/git/pixel-scanner/docs/release-checklist.md)
+
+## Suggested Execution Order
+
+- [x] Milestone 1: 架構邊界與 session ownership
+  - [x] 完成 Phase 1 中 model、use case、repository 邊界。
+  - [x] 完成 Phase 2 中 eager ingestion、session metadata、cleanup/recovery 設計。
+- [x] Milestone 2: image/export pipeline 重構
+  - [x] 完成 Phase 3 中 preview/export 雙 pipeline與安全 decode。
+  - [x] 完成 Phase 4 中 export decision tree 與 result model。
+- [x] Milestone 3: review UX 重設
+  - [x] 完成 Phase 5 review 新版畫面。
+  - [x] 完成 Phase 6 主題與 design token 收斂。
+- [~] Milestone 4: 長文件穩定性與品質線
+  - [ ] 完成大型匯出背景化策略。
+  - [ ] 完成 Phase 8、9、10 的最低可用品質線。
+- [x] Milestone 5: 文件、診斷、發版準備
+  - [x] 完成 Phase 11、12 與 release checklist。
+
+## Immediate Next Slice
+
+- [x] 定義 `ScanSession`、`ScannedPage`、`ExportRequest`、`ExportResult`、`SessionDirtyFlags` 資料模型。
+- [x] 擴充 scanner result，保留原始 PDF URI 並設計 session ingestion。
+- [x] 將 `ReviewViewModel` 的 enhance/export 邏輯抽成 use case。
+- [x] 定義 export decision tree，先完成 `reuse original PDF` 與 `rebuild PDF` 兩大分支。
+- [x] 設計 review 畫面新資訊架構草案。
+- [x] 建立效能基線量測方式與測試樣本。
+  - 參考文件：[`docs/performance-baseline-measurement-and-samples.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-measurement-and-samples.md)
+
+## Sprint-Ready Candidate Tasks
+
+- [x] 建立 domain model 初稿並補對應 mapper。
+- [x] 建立 `CreateSessionFromScanResultUseCase`，先做 eager ingestion 最小版。
+  - 目前掃描結果會先建立 session，接著由背景 eager ingestion use case 接手入口邊界。
+- [x] 將現有 `ReviewViewModel` 拆出 `ToggleEnhancementUseCase`。
+- [x] 將現有 `saveAll` 拆出 `ExportSessionUseCase`。
+- [x] 擴充 scanner result，保留原始 PDF URI。
+- [x] 為 export 建立 success / failure result model。
+- [x] 定義 `session dirty` 規則。
+- [x] 設計 review 新版 wireframe 與互動流程。
+- [x] 將所有 review / start 畫面硬編碼文案移入 `strings.xml`。
+  - 受影響檔案：`app/src/main/java/com/example/pixelscanner/feature/review/ui/ReviewScreen.kt`, `app/src/main/java/com/example/pixelscanner/feature/home/ui/StartScreen.kt`, `app/src/main/res/values/strings.xml`
+- [x] 為增強流程加入頁級 processing state。
+  - 追溯：對應 Phase 3 已完成的「為每頁增強建立獨立處理狀態」與「在 page model 加入 processing state」。
+- [x] 建立單頁與多頁效能基線測試樣本。
+  - 參考文件：[`docs/performance-baseline-measurement-and-samples.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-measurement-and-samples.md)
+- [x] 建立第一批 ViewModel 與 use case 單元測試骨架。
+  - 相關測試：`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`, `app/src/test/java/com/example/pixelscanner/domain/CreateSessionFromScanResultUseCaseTest.kt`

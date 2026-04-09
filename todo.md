@@ -3,7 +3,7 @@
 ## Phase 1: 基礎架構與 ML Kit 整合 (MVP)
 - [x] **Project Setup**
     - [x] 建立新 Android Studio 專案 (Kotlin DSL)。
-    - [x] 設定 `minSdk 29` (建議), `targetSdk 35/36`。
+    - [x] 設定 `minSdk 29`，並與目前 build config 對齊 `compileSdk 35` / `targetSdk 35`。
     - [x] 加入 dependencies: Jetpack Compose, ML Kit Document Scanner, Coil (圖片加載)。
     - [x] 設定 `AndroidManifest.xml` 權限 (Camera, Internet - ML Kit 下載模型用)。
 
