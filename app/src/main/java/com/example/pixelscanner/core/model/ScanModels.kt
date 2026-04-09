@@ -249,6 +249,17 @@ sealed interface ExportDecision {
     data object ExportJpegs : ExportDecision
 }
 
+sealed interface ExportExecutionRoute {
+    data object Foreground : ExportExecutionRoute
+    data object Background : ExportExecutionRoute
+}
+
+fun ExportRequest.resolveExecutionRoute(session: ScanSession): ExportExecutionRoute {
+    // Background export is deferred by ADR, so current exports stay on the
+    // foreground path while preserving an explicit routing boundary.
+    return ExportExecutionRoute.Foreground
+}
+
 fun ExportRequest.resolveDecision(session: ScanSession): ExportDecision {
     return resolveDecision(
         dirtyFlags = session.dirtyFlags,

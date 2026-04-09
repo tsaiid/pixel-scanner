@@ -3,6 +3,7 @@ package com.example.pixelscanner.domain
 import android.content.Context
 import android.net.Uri
 import com.example.pixelscanner.core.model.ExportFormat
+import com.example.pixelscanner.core.model.ExportExecutionRoute
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.core.model.ExportRequest
@@ -13,6 +14,7 @@ import com.example.pixelscanner.core.model.asString
 import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.core.model.ScanSession
 import com.example.pixelscanner.core.model.SessionDirtyFlags
+import com.example.pixelscanner.core.model.resolveExecutionRoute
 import com.example.pixelscanner.testing.ExportImageRequest
 import com.example.pixelscanner.testing.ExportPdfBuildRequest
 import com.example.pixelscanner.testing.ExportPdfRequest
@@ -27,6 +29,38 @@ import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class ExportSessionUseCaseTest {
+
+    @Test
+    fun `keeps export in the foreground while background export is deferred`() {
+        val session = ScanSession(
+            id = "session_background_routing",
+            pages = listOf(
+                ScannedPage(
+                    id = "session_background_routing_page_0",
+                    originalSourceUri = Uri.parse("content://scanner/page-0.jpg"),
+                ),
+            ),
+            originalPdfUri = Uri.parse("content://scanner/original-session.pdf"),
+            dirtyFlags = SessionDirtyFlags(
+                hasEnhancedPages = true,
+                hasDeletedPages = true,
+                hasReorderedPages = true,
+            ),
+        )
+
+        assertEquals(
+            ExportExecutionRoute.Foreground,
+            ExportRequest(sessionId = session.id, format = ExportFormat.PDF).resolveExecutionRoute(
+                session = session,
+            ),
+        )
+        assertEquals(
+            ExportExecutionRoute.Foreground,
+            ExportRequest(sessionId = session.id, format = ExportFormat.IMAGE).resolveExecutionRoute(
+                session = session,
+            ),
+        )
+    }
 
     @Test
     fun `reuses original pdf and skips rebuilding when session is clean`() {

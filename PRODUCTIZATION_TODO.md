@@ -608,7 +608,7 @@
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt)
-- [~] 建立 use case 單元測試。
+- [x] 建立 use case 單元測試。
   - 驗收標準：增強流程、快取命中、匯出策略分支都可測試。
   - [x] 測試 ingestion use case。
     - 目前 `CreateSessionFromScanResultUseCaseTest` 已覆蓋掃描結果到 session 的建立與穩定 page mapping。
@@ -620,7 +620,7 @@
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ToggleEnhancementUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ToggleEnhancementUseCaseTest.kt)
-  - [ ] 測試 background export 分流條件。
+  - [x] 測試 background export 分流條件。
 - [~] 建立 repository 層測試。
   - 驗收標準：MediaStore、temp file、session metadata、PDF rebuild 等流程有 fake 或 instrumentation 覆蓋。
   - [x] 建立 fake repositories。
