@@ -690,11 +690,12 @@
   - [x] 更新 compile options / kotlin options。
   - [x] 驗證相依套件相容性。
     - 已將 app 與 benchmark module 的 bytecode target 對齊到 Java / Kotlin JVM 17，並驗證 `assembleDebug` 與 `testDebugUnitTest` 可正常執行。
-- [ ] 補齊 release build 與 shrinker 策略。
+- [x] 補齊 release build 與 shrinker 策略。
   - 驗收標準：release 版可混淆與縮減，且功能正常。
-  - [ ] 開啟 release minify。
-  - [ ] 補齊必要 keep rules。
-  - [ ] 驗證 ML Kit、Coil、Compose 在 release 正常。
+  - [x] 開啟 release minify。
+  - [x] 補齊必要 keep rules。
+  - [x] 驗證 ML Kit、Coil、Compose 在 release 正常。
+    - 已透過 `./gradlew :app:assembleRelease` 驗證 release build、R8 minify 與 resource shrinking 可正常完成。
 - [x] 建立 CI。
   - 至少包含：lint、unit tests、assemble debug、必要時 instrumentation smoke test。
   - 驗收標準：每次 PR 都能自動驗證基本品質。

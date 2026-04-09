@@ -12,7 +12,7 @@ This checklist is for the current Pixel Scanner release-prep state. It assumes t
   - `versionCode` and `versionName` are updated.
   - Signing config is present for the intended release channel.
   - `release` minify/shrinker status matches the current release decision.
-- If release minify is still disabled, record that explicitly as a release decision before shipping.
+  - Current repo decision: release R8 minify and resource shrinking are enabled, with baseline rules in `app/proguard-rules.pro`.
 
 ## QA Checks
 
