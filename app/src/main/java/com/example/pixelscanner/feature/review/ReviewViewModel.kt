@@ -64,6 +64,8 @@ class ReviewViewModel(
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
     private val enhancementJobs = mutableMapOf<String, Job>()
+    private var exportJob: Job? = null
+    private var exportCancellationRequested = false
 
     private val _uiState = MutableStateFlow(
         ReviewUiState(
@@ -94,6 +96,7 @@ class ReviewViewModel(
                 context = event.context,
             )
             is ReviewUiEvent.RetryExport -> retryExport(event.context)
+            ReviewUiEvent.CancelExport -> cancelExport()
             is ReviewUiEvent.DeletePage -> deletePage(event.pageIndex)
             is ReviewUiEvent.RestorePage -> restorePage(event.pageId)
             is ReviewUiEvent.MovePageLeft -> movePage(-1)
@@ -312,7 +315,9 @@ class ReviewViewModel(
     }
 
     private fun saveAll(context: Context) {
-        viewModelScope.launch {
+        exportJob?.cancel()
+        exportCancellationRequested = false
+        exportJob = viewModelScope.launch {
             val session = _scanSession.value ?: return@launch
             var exportResult: ExportResult? = null
             val request = ExportRequest(
@@ -379,7 +384,16 @@ class ReviewViewModel(
                         setStatusMessage(uiTextResource(R.string.review_status_export_cancelled))
                     }
                 }
+            } catch (e: CancellationException) {
+                if (exportCancellationRequested) {
+                    exportResult = ExportResult.Cancelled
+                    setStatusMessage(uiTextResource(R.string.review_status_export_cancelled))
+                } else {
+                    throw e
+                }
             } finally {
+                exportCancellationRequested = false
+                exportJob = null
                 updateUiState { currentState ->
                     currentState.copy(
                         export = currentState.export.copy(
@@ -393,8 +407,14 @@ class ReviewViewModel(
 
     private fun retryExport(context: Context) {
         val lastResult = _uiState.value.export.lastResult?.result
-        if (lastResult !is ExportResult.Failure) return
+        if (lastResult !is ExportResult.Failure || !lastResult.error.isRetryable) return
         saveAll(context)
+    }
+
+    private fun cancelExport() {
+        if (!_uiState.value.export.isExporting) return
+        exportCancellationRequested = true
+        exportJob?.cancel()
     }
 
     private fun applySessionUpdate(
@@ -420,6 +440,9 @@ class ReviewViewModel(
 
     private fun clearSessionState() {
         cancelEnhancementJobs()
+        exportJob?.cancel()
+        exportJob = null
+        exportCancellationRequested = false
         _scanSession.value = null
         savedStateHandle[KEY_CURRENT_PAGE] = 0
         savedStateHandle[KEY_EXPORT_FORMAT] = ExportFormat.IMAGE.name
@@ -435,6 +458,9 @@ class ReviewViewModel(
 
     override fun onCleared() {
         cancelEnhancementJobs()
+        exportJob?.cancel()
+        exportJob = null
+        exportCancellationRequested = false
         super.onCleared()
     }
 

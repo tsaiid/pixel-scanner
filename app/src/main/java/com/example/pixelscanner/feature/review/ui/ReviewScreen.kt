@@ -69,6 +69,7 @@ import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
+import com.example.pixelscanner.feature.export.ui.ExportCancelButton
 import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.core.model.asString
@@ -79,6 +80,7 @@ import com.example.pixelscanner.ui.theme.PixelScannerSpacingTokens
 import com.example.pixelscanner.ui.theme.PixelScannerWindowInsetsTokens
 import com.example.pixelscanner.ui.theme.rememberPixelScannerTypographyTokens
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ChangeExportFormat
+import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.CancelExport
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.DeletePage
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.PageChanged
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.MovePageLeft
@@ -209,15 +211,25 @@ fun ReviewScreen(
                 }
 
                 if (uiState.hasPages) {
-                    ExportSaveButton(
-                        exportState = uiState.export,
-                        onSaveAll = {
-                            viewModel.onEvent(
-                                if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
-                            )
-                        },
+                    Row(
                         modifier = Modifier.align(Alignment.CenterEnd),
-                    )
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        ExportSaveButton(
+                            exportState = uiState.export,
+                            onSaveAll = {
+                                viewModel.onEvent(
+                                    if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
+                                )
+                            },
+                        )
+                        if (uiState.export.isExporting) {
+                            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+                            ExportCancelButton(
+                                onCancel = { viewModel.onEvent(CancelExport) },
+                            )
+                        }
+                    }
                 }
             }
 

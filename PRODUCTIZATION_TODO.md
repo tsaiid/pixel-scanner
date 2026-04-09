@@ -542,12 +542,12 @@
   - [x] 定義 effect 類型。
   - [x] 在 ViewModel 導入 effect emission。
   - [x] UI 改為消費 effect channel。
-- [~] 為所有長任務提供取消與重試入口。
+- [x] 為所有長任務提供取消與重試入口。
   - 驗收標準：增強與匯出失敗後可明確重試，不需離開整個流程。
   - [x] 設計 enhancement retry。
   - [x] 設計 export retry。
-  - [ ] 設計 export cancel。
-  - [ ] 驗證取消後 state 一致性。
+  - [x] 設計 export cancel。
+  - [x] 驗證取消後 state 一致性。
 - [ ] 為不可恢復錯誤設計 fallback。
   - 驗收標準：例如圖片檔失效時可提示重新掃描，而非沉默失敗。
   - [ ] 列出不可恢復錯誤清單。

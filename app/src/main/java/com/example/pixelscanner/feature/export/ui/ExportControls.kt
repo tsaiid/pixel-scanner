@@ -6,6 +6,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +51,23 @@ fun ExportSaveButton(
                 else ->
                     stringResource(id = R.string.export_save_button_pdf)
             },
+            style = typography.label,
+        )
+    }
+}
+
+@Composable
+fun ExportCancelButton(
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val typography = rememberPixelScannerTypographyTokens()
+    TextButton(
+        onClick = onCancel,
+        modifier = modifier,
+    ) {
+        Text(
+            text = stringResource(id = R.string.export_cancel_action),
             style = typography.label,
         )
     }

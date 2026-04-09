@@ -9,6 +9,7 @@ import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportImagePipelineRequest
 import com.example.pixelscanner.core.model.ExportOperationResult
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
 import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.ExportWriteFailure
 import com.example.pixelscanner.core.model.PreviewImagePipelineRequest
@@ -413,6 +414,78 @@ class ReviewViewModelTest {
     }
 
     @Test
+    fun `explicit export cancel stops in-flight export and leaves state consistent`() = runBlocking {
+        val exportRepository = HangingPdfExportRepository()
+        val viewModel = createViewModel(exportRepository = exportRepository)
+        val session = loadedSession(sessionId = "session_review_export_cancel")
+        val firstEffect = CompletableDeferred<ReviewUiEffect>()
+        val effectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.effects.collect { effect ->
+                if (!firstEffect.isCompleted) {
+                    firstEffect.complete(effect)
+                }
+            }
+        }
+
+        try {
+            viewModel.setRestoredSession(session)
+            viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+            val context = RuntimeEnvironment.getApplication()
+
+            viewModel.onEvent(ReviewUiEvent.SaveAll(context))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertTrue(exportRepository.exportStarted.await(1, TimeUnit.SECONDS))
+            assertTrue(viewModel.uiState.value.export.isExporting)
+
+            viewModel.onEvent(ReviewUiEvent.CancelExport)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertTrue(exportRepository.exportCancelled.await(1, TimeUnit.SECONDS))
+            assertEquals(
+                ReviewUiEffect.ShowStatusMessage(uiTextResource(R.string.review_status_export_cancelled)),
+                withTimeout(1_000) { firstEffect.await() },
+            )
+            assertFalse(viewModel.uiState.value.export.isExporting)
+            assertTrue(viewModel.uiState.value.export.lastResult?.result == ExportResult.Cancelled)
+        } finally {
+            effectJob.cancel()
+        }
+    }
+
+    @Test
+    fun `non-retryable export failure does not expose retry or rerun export`() = runBlocking {
+        val exportRepository = SequencedPdfExportRepository(
+            results = ArrayDeque(
+                listOf(
+                    ExportOperationResult.Failure(
+                        ExportSourceInvalidFailure(details = "Source missing"),
+                    ),
+                ),
+            ),
+        )
+        val viewModel = createViewModel(exportRepository = exportRepository)
+        val session = loadedSession(sessionId = "session_review_export_non_retryable")
+
+        viewModel.setRestoredSession(session)
+        viewModel.onEvent(ReviewUiEvent.ChangeExportFormat(ExportFormat.PDF))
+        val context = RuntimeEnvironment.getApplication()
+
+        viewModel.onEvent(ReviewUiEvent.SaveAll(context))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(viewModel.uiState.value.export.canRetry)
+        assertTrue(viewModel.uiState.value.export.lastResult?.result is ExportResult.Failure)
+        assertEquals(1, exportRepository.savedPdfRequests.size)
+
+        viewModel.onEvent(ReviewUiEvent.RetryExport(context))
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(1, exportRepository.savedPdfRequests.size)
+        assertFalse(viewModel.uiState.value.export.canRetry)
+    }
+
+    @Test
     fun `restores saveable state across configuration change style recreation`() {
         val savedStateHandle = SavedStateHandle()
         savedStateHandle[KEY_CURRENT_PAGE] = 1
@@ -724,6 +797,40 @@ class ReviewViewModelTest {
         ): ExportOperationResult {
             savedPdfRequests += ExportPdfBuildRequest(sourceUris, fileName)
             return results.removeFirst()
+        }
+    }
+
+    private class HangingPdfExportRepository : ExportRepository {
+        val exportStarted = CountDownLatch(1)
+        val exportCancelled = CountDownLatch(1)
+
+        override suspend fun copyPdfToDocuments(
+            context: Context,
+            sourceUri: Uri,
+            fileName: String,
+        ): ExportOperationResult {
+            throw AssertionError("Not used in this test")
+        }
+
+        override suspend fun saveUriToGallery(
+            context: Context,
+            sourceUri: Uri,
+            fileName: String,
+        ): ExportOperationResult {
+            throw AssertionError("Not used in this test")
+        }
+
+        override suspend fun saveUrisToPdf(
+            context: Context,
+            sourceUris: List<Uri>,
+            fileName: String,
+        ): ExportOperationResult {
+            exportStarted.countDown()
+            try {
+                awaitCancellation()
+            } finally {
+                exportCancelled.countDown()
+            }
         }
     }
 

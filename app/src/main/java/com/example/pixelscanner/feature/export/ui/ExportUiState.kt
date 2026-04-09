@@ -19,5 +19,5 @@ data class ExportUiState(
         get() = state as? ExportState.Finished
 
     val canRetry: Boolean
-        get() = (lastResult?.result as? ExportResult.Failure) != null
+        get() = (lastResult?.result as? ExportResult.Failure)?.error?.isRetryable == true
 }

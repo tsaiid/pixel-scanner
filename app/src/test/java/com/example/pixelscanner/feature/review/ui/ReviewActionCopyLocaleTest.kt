@@ -50,6 +50,7 @@ class ReviewActionCopyLocaleTest {
             context.getString(R.string.export_save_button_pdf),
             context.getString(R.string.export_retry_button_jpeg),
             context.getString(R.string.export_retry_button_pdf),
+            context.getString(R.string.export_cancel_action),
         )
 
         reviewActionLabels.forEach { label ->
