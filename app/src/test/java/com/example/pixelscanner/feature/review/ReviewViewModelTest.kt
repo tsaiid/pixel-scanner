@@ -745,6 +745,14 @@ class ReviewViewModelTest {
         savedStateHandle: SavedStateHandle = SavedStateHandle(),
         previewCacheCleanupRepository: RecordingPreviewCacheCleanupRepository = RecordingPreviewCacheCleanupRepository(),
         exportRepository: com.example.pixelscanner.domain.ExportRepository = FakeExportRepository(),
+        sessionIngestionRepository: SessionIngestionRepository = object : SessionIngestionRepository {
+            override suspend fun ingest(
+                session: ScanSession,
+                scanResult: ScanResultPayload,
+            ): SessionIngestionResult {
+                return SessionIngestionResult(status = SessionIngestionStatus.SUCCESS)
+            }
+        },
         imageProcessingRepository: ImageProcessingRepository = object : ImageProcessingRepository {
             override suspend fun enhance(
                 context: Context,
@@ -757,14 +765,7 @@ class ReviewViewModelTest {
         return ReviewViewModel(
             createSessionFromScanResultUseCase = CreateSessionFromScanResultUseCase(),
             eagerSessionIngestionUseCase = EagerSessionIngestionUseCase(
-                sessionIngestionRepository = object : SessionIngestionRepository {
-                    override suspend fun ingest(
-                        session: ScanSession,
-                        scanResult: ScanResultPayload,
-                    ): SessionIngestionResult {
-                        return SessionIngestionResult(status = SessionIngestionStatus.SUCCESS)
-                    }
-                },
+                sessionIngestionRepository = sessionIngestionRepository,
             ),
             toggleEnhancementUseCase = ToggleEnhancementUseCase(
                 imageProcessingRepository,

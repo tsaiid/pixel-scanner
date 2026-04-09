@@ -66,6 +66,7 @@ class ReviewViewModel(
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
     val scanSession: StateFlow<ScanSession?> = _scanSession.asStateFlow()
     private val enhancementJobs = mutableMapOf<String, Job>()
+    private var ingestionJob: Job? = null
     private var exportJob: Job? = null
     private var exportCancellationRequested = false
 
@@ -148,7 +149,8 @@ class ReviewViewModel(
         scanResult: ScanResultPayload,
     ) {
         // Kick ingestion off after the session exists so review can render immediately.
-        viewModelScope.launch {
+        ingestionJob?.cancel()
+        ingestionJob = viewModelScope.launch {
             val startedAtMs = SystemClock.elapsedRealtime()
             val ingestionResult = runCatching {
                 eagerSessionIngestionUseCase(session, scanResult)
@@ -217,11 +219,29 @@ class ReviewViewModel(
 
         val job = viewModelScope.launch {
             try {
-                val result = toggleEnhancementUseCase(page, context)
+                val pageToEnhance = awaitPreferredEnhancementSource(page.id, page)
+                val result = try {
+                    toggleEnhancementUseCase(pageToEnhance, context)
+                } catch (error: Exception) {
+                    val retriedPage = retryableEnhancementSource(page.id, pageToEnhance)
+                    if (retriedPage == null) {
+                        throw error
+                    }
+                    DebugLog.event(
+                        name = "preview_enhancement_retry_after_ingestion",
+                        "pageId" to page.id,
+                    )
+                    toggleEnhancementUseCase(retriedPage, context)
+                }
                 val currentSession = _scanSession.value ?: return@launch
                 val updatedPages = currentSession.pages.map { existingPage ->
                     if (existingPage.id == result.updatedPage.id) {
-                        result.updatedPage.copy(processingState = ProcessingState.IDLE)
+                        existingPage.copy(
+                            enhancedUri = result.updatedPage.enhancedUri,
+                            activeVariant = result.updatedPage.activeVariant,
+                            processingState = ProcessingState.IDLE,
+                            enhancementErrorMessage = result.updatedPage.enhancementErrorMessage,
+                        )
                     } else {
                         existingPage
                     }
@@ -251,6 +271,33 @@ class ReviewViewModel(
             }
         }
         enhancementJobs[page.id] = job
+    }
+
+    private suspend fun awaitPreferredEnhancementSource(
+        pageId: String,
+        fallbackPage: ScannedPage,
+    ): ScannedPage {
+        val shouldAwaitIngestion = fallbackPage.originalSourceUri.scheme != "file" && ingestionJob?.isActive == true
+        if (shouldAwaitIngestion) {
+            ingestionJob?.join()
+        }
+        return _scanSession.value
+            ?.pages
+            ?.firstOrNull { it.id == pageId }
+            ?: fallbackPage
+    }
+
+    private fun retryableEnhancementSource(
+        pageId: String,
+        attemptedPage: ScannedPage,
+    ): ScannedPage? {
+        val latestPage = _scanSession.value
+            ?.pages
+            ?.firstOrNull { it.id == pageId }
+            ?: return null
+        return latestPage.takeIf { refreshed ->
+            refreshed.originalSourceUri != attemptedPage.originalSourceUri
+        }
     }
 
     private fun retryEnhancement(

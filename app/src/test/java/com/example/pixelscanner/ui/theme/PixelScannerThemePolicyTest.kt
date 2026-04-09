@@ -47,7 +47,7 @@ class PixelScannerThemePolicyTest {
 
         assertEquals(BrandPlum.toArgb(), lightScheme.primary.toArgb())
         assertEquals(BrandWarmLightBackground.toArgb(), lightScheme.background.toArgb())
-        assertEquals(BrandPlum.toArgb(), darkScheme.primary.toArgb())
+        assertEquals(BrandLavender.toArgb(), darkScheme.primary.toArgb())
         assertEquals(BrandNightBackground.toArgb(), darkScheme.background.toArgb())
     }
 }

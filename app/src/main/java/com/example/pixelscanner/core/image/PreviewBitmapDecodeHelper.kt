@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import java.io.File
 
 class PreviewBitmapDecodeHelper(
     private val maxDimension: Int = DEFAULT_MAX_PREVIEW_DIMENSION,
@@ -31,9 +32,15 @@ class PreviewBitmapDecodeHelper(
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = true
         }
-        context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-            BitmapFactory.decodeStream(inputStream, null, options)
-        } ?: throw IllegalArgumentException("Could not open bitmap bounds from URI: $sourceUri")
+        val decoded = when (sourceUri.scheme) {
+            "file" -> BitmapFactory.decodeFile(requireFilePath(sourceUri), options)
+            else -> context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream, null, options)
+            }
+        }
+        if (decoded == null && options.outWidth <= 0 && options.outHeight <= 0) {
+            throw IllegalArgumentException("Could not open bitmap bounds from URI: $sourceUri")
+        }
 
         if (options.outWidth <= 0 || options.outHeight <= 0) {
             throw IllegalArgumentException("Invalid bitmap bounds for URI: $sourceUri")
@@ -46,8 +53,17 @@ class PreviewBitmapDecodeHelper(
         sourceUri: Uri,
         options: BitmapFactory.Options,
     ): Bitmap? {
-        return context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-            BitmapFactory.decodeStream(inputStream, null, options)
+        return when (sourceUri.scheme) {
+            "file" -> BitmapFactory.decodeFile(requireFilePath(sourceUri), options)
+            else -> context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream, null, options)
+            }
+        }
+    }
+
+    private fun requireFilePath(sourceUri: Uri): String {
+        return requireNotNull(sourceUri.path) {
+            "Missing file path for $sourceUri"
         }
     }
 

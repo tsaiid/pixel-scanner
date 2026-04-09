@@ -60,6 +60,24 @@ class ImageEnhancerTest {
     }
 
     @Test
+    fun scalePreviewBackgroundRow_expandsSmallBackgroundAcrossOutputWidth() {
+        val scaledRow = IntArray(4)
+
+        scalePreviewBackgroundRow(
+            sourceRowPixels = intArrayOf(
+                rgb(10, 10, 10),
+                rgb(20, 20, 20),
+            ),
+            outputRowPixels = scaledRow,
+        )
+
+        assertEquals(rgb(10, 10, 10), scaledRow[0])
+        assertEquals(rgb(10, 10, 10), scaledRow[1])
+        assertEquals(rgb(20, 20, 20), scaledRow[2])
+        assertEquals(rgb(20, 20, 20), scaledRow[3])
+    }
+
+    @Test
     fun formatPreviewEnhancementMemoryReport_includesStageAndDeltaInformation() {
         val baseline = PreviewEnhancementMemorySnapshot(
             usedHeapBytes = 1 * MIB,

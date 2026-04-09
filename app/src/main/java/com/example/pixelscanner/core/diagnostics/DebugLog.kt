@@ -22,6 +22,7 @@ object DebugLog {
         vararg fields: Pair<String, Any?>,
     ) {
         event(name, *fields, "error" to throwable.javaClass.simpleName)
+        Log.e(TAG, buildMessage(name, fields), throwable)
     }
 
     inline fun <T> timed(

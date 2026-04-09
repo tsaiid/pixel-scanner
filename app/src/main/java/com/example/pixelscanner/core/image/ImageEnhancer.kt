@@ -145,31 +145,42 @@ class ImageEnhancer {
             backgroundHeight,
             true
         )
-        val backgroundBitmap = Bitmap.createScaledBitmap(
-            backgroundSmall,
-            originalBitmap.width,
-            originalBitmap.height,
-            true
-        )
-        backgroundSmall.recycle()
         maybeLogPreviewEnhancementMemory(
             stage = "background-build-complete",
             baseline = baselineMemorySnapshot,
-            detail = "background=${backgroundBitmap.width}x${backgroundBitmap.height}",
+            detail = "background=${backgroundSmall.width}x${backgroundSmall.height}",
         )
 
         val width = originalBitmap.width
         val height = originalBitmap.height
-        val outputBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val outputBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
 
         val originalRowPixels = IntArray(width)
         val backgroundRowPixels = IntArray(width)
         val outputRowPixels = IntArray(width)
+        val smallBackgroundRowPixels = IntArray(backgroundWidth)
+        var sampledBackgroundRowIndex = -1
 
         try {
             for (rowIndex in 0 until height) {
                 originalBitmap.getPixels(originalRowPixels, 0, width, 0, rowIndex, width, 1)
-                backgroundBitmap.getPixels(backgroundRowPixels, 0, width, 0, rowIndex, width, 1)
+                val backgroundRowIndex = rowIndex * backgroundHeight / height
+                if (backgroundRowIndex != sampledBackgroundRowIndex) {
+                    backgroundSmall.getPixels(
+                        smallBackgroundRowPixels,
+                        0,
+                        backgroundWidth,
+                        0,
+                        backgroundRowIndex,
+                        backgroundWidth,
+                        1,
+                    )
+                    sampledBackgroundRowIndex = backgroundRowIndex
+                }
+                scalePreviewBackgroundRow(
+                    sourceRowPixels = smallBackgroundRowPixels,
+                    outputRowPixels = backgroundRowPixels,
+                )
                 applyPreviewEnhancementToRow(
                     originalRowPixels = originalRowPixels,
                     backgroundRowPixels = backgroundRowPixels,
@@ -185,7 +196,9 @@ class ImageEnhancer {
 
             val file = previewCacheRepository.createPreviewFile(context, request)
             FileOutputStream(file).use { outputStream ->
-                outputBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+                check(outputBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)) {
+                    "Failed to compress enhanced preview bitmap"
+                }
             }
             maybeLogPreviewEnhancementMemory(
                 stage = "final-write-complete",
@@ -199,7 +212,7 @@ class ImageEnhancer {
             )
         } finally {
             originalBitmap.recycle()
-            backgroundBitmap.recycle()
+            backgroundSmall.recycle()
             outputBitmap.recycle()
         }
     }
@@ -213,6 +226,21 @@ class ImageEnhancer {
             originalHeight = originalBitmap.height,
             scaleFactor = scaleFactor,
         )
+    }
+}
+
+internal fun scalePreviewBackgroundRow(
+    sourceRowPixels: IntArray,
+    outputRowPixels: IntArray,
+) {
+    require(sourceRowPixels.isNotEmpty()) { "Source row must not be empty" }
+    require(outputRowPixels.isNotEmpty()) { "Output row must not be empty" }
+
+    val sourceWidth = sourceRowPixels.size
+    val outputWidth = outputRowPixels.size
+    for (index in 0 until outputWidth) {
+        val sourceIndex = (index * sourceWidth / outputWidth).coerceIn(0, sourceWidth - 1)
+        outputRowPixels[index] = sourceRowPixels[sourceIndex]
     }
 }
 

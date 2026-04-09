@@ -73,8 +73,8 @@ internal fun shouldUseDynamicColor(
 
 internal fun brandColorScheme(darkTheme: Boolean) = when (darkTheme) {
     true -> darkColorScheme(
-        primary = BrandPlum,
-        secondary = BrandLavender,
+        primary = BrandLavender,
+        secondary = BrandSoftLavender,
         tertiary = BrandSoftLavender,
         background = BrandNightBackground,
         surface = BrandNightSurface,
