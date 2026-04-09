@@ -1,0 +1,8 @@
+# Pixel Scanner baseline profile scaffold.
+# Expand with the remaining hot journeys in later slices.
+Lcom/example/pixelscanner/MainActivity;
+Lcom/example/pixelscanner/app/AppNavigationKt;
+Lcom/example/pixelscanner/feature/home/ui/StartScreenKt;
+Lcom/example/pixelscanner/feature/scanner/ui/ScannerScreenKt;
+Lcom/example/pixelscanner/feature/review/ui/ReviewScreenKt;
+Lcom/example/pixelscanner/feature/export/ui/ExportControlsKt;

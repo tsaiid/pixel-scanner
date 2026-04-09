@@ -82,6 +82,7 @@ dependencies {
     
     // Coil
     implementation(libs.coil.compose)
+    implementation(libs.androidx.profileinstaller)
 
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.16")
