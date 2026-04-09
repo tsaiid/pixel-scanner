@@ -608,28 +608,37 @@
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ReviewViewModelTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/home/HomeViewModelTest.kt)
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/app/AppFlowViewModelTest.kt)
-- [ ] 建立 use case 單元測試。
+- [~] 建立 use case 單元測試。
   - 驗收標準：增強流程、快取命中、匯出策略分支都可測試。
-  - [ ] 測試 ingestion use case。
+  - [x] 測試 ingestion use case。
+    - 目前 `CreateSessionFromScanResultUseCaseTest` 已覆蓋掃描結果到 session 的建立與穩定 page mapping。
   - [ ] 測試 enhancement 命中快取。
   - [ ] 測試 enhancement miss cache。
-  - [ ] 測試 export reuse original PDF。
-  - [ ] 測試 export rebuild PDF。
+  - [x] 測試 export reuse original PDF。
+  - [x] 測試 export rebuild PDF。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/CreateSessionFromScanResultUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/CreateSessionFromScanResultUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportSessionUseCaseTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/domain/ExportRequestDecisionTest.kt)
   - [ ] 測試 background export 分流條件。
-- [ ] 建立 repository 層測試。
+- [~] 建立 repository 層測試。
   - 驗收標準：MediaStore、temp file、session metadata、PDF rebuild 等流程有 fake 或 instrumentation 覆蓋。
-  - [ ] 建立 fake repositories。
-  - [ ] 建立 temp file repository 測試。
+  - [x] 建立 fake repositories。
+    - 目前已有 `FakeExportRepository` 供 ViewModel / use case 測試使用。
+  - [x] 建立 temp file repository 測試。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/core/storage/AndroidTempFileRepositoryTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/core/storage/AndroidTempFileRepositoryTest.kt)
   - [ ] 建立 session metadata 測試。
   - [ ] 建立 MediaStore instrumentation 測試。
   - [ ] 建立 PDF export instrumentation 測試。
-- [ ] 建立 Compose UI tests。
+- [~] 建立 Compose UI tests。
   - 驗收標準：首頁、review 頁、刪除復原、格式切換、loading/error 狀態可驗證。
   - [ ] 測試首頁主要 CTA。
-  - [ ] 測試 review 頁主預覽與縮圖列。
+  - [x] 測試 review 頁主預覽與縮圖列。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenAccessibilityTest.kt)
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewThumbnailStripLargePageCountTest.kt)
   - [ ] 測試刪除與 undo。
   - [ ] 測試 export format 切換。
-  - [ ] 測試 error / loading UI。
+  - [x] 測試 error / loading UI。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt)
 - [ ] 加入整合測試樣本資產。
   - 驗收標準：包含單頁、多頁、低光、陰影、旋轉、超大圖檔、長文件等案例。
   - [ ] 蒐集單頁樣本。
