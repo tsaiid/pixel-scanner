@@ -228,6 +228,7 @@ fun ReviewScreen(
                                     if (uiState.export.canRetry) RetryExport(context) else SaveAll(context),
                                 )
                             },
+                            modifier = Modifier.testTag("review_save_button"),
                         )
                         if (uiState.export.isExporting) {
                             Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))

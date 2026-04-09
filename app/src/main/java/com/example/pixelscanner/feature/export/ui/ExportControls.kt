@@ -10,6 +10,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.example.pixelscanner.R
@@ -94,11 +95,13 @@ fun ExportFormatTabs(
         Tab(
             selected = selectedFormat == ExportFormat.IMAGE,
             onClick = { onSelectFormat(ExportFormat.IMAGE) },
+            modifier = Modifier.testTag("review_export_format_jpeg"),
             text = { Text(stringResource(id = R.string.export_format_jpeg), style = typography.label) },
         )
         Tab(
             selected = selectedFormat == ExportFormat.PDF,
             onClick = { onSelectFormat(ExportFormat.PDF) },
+            modifier = Modifier.testTag("review_export_format_pdf"),
             text = { Text(stringResource(id = R.string.export_format_pdf), style = typography.label) },
         )
     }

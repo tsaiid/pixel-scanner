@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
@@ -24,7 +25,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -53,6 +57,7 @@ import com.example.pixelscanner.feature.scanner.ui.ScannerScreen
 import kotlinx.coroutines.launch
 import java.util.ArrayList
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AppNavigation(
     startInBenchmarkReviewMode: Boolean = false,
@@ -134,14 +139,19 @@ fun AppNavigation(
         homeViewModel.setRecoverableSession(recoverableSession)
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            NavHost(
-                navController = navController,
-                startDestination = startDestination,
-            ) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics { testTagsAsResourceId = true },
+    ) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                NavHost(
+                    navController = navController,
+                    startDestination = startDestination,
+                ) {
                 composable(AppNavigationContract.homeRoute) {
                     ScannerScreen(
                         homeUiState = homeUiState,
@@ -247,47 +257,53 @@ fun AppNavigation(
                     )
                 }
             }
+            }
         }
-    }
 
-    appFlowUiState.pendingExportAction?.let { action ->
-        AlertDialog(
-            onDismissRequest = { appFlowViewModel.clearPendingExportAction() },
-            title = { Text(text = context.getString(R.string.export_post_action_title)) },
-            text = {
-                Column {
-                    Text(text = context.getString(R.string.export_post_action_message))
+        appFlowUiState.pendingExportAction?.let { action ->
+            AlertDialog(
+                onDismissRequest = { appFlowViewModel.clearPendingExportAction() },
+                title = {
+                    Text(
+                        text = context.getString(R.string.export_post_action_title),
+                        modifier = Modifier.testTag("export_post_action_title"),
+                    )
+                },
+                text = {
+                    Column {
+                        Text(text = context.getString(R.string.export_post_action_message))
+                        TextButton(
+                            onClick = {
+                                appFlowViewModel.clearPendingExportAction()
+                                reviewViewModel.onEvent(RequestScanMore)
+                            }
+                        ) {
+                            Text(text = context.getString(R.string.export_post_action_continue))
+                        }
+                    }
+                },
+                confirmButton = {
                     TextButton(
                         onClick = {
+                            context.openExportTarget(action.toTarget(), showSnackbarMessage)
                             appFlowViewModel.clearPendingExportAction()
-                            reviewViewModel.onEvent(RequestScanMore)
                         }
                     ) {
-                        Text(text = context.getString(R.string.export_post_action_continue))
+                        Text(text = context.getString(R.string.export_post_action_open))
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        context.openExportTarget(action.toTarget(), showSnackbarMessage)
-                        appFlowViewModel.clearPendingExportAction()
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            context.shareExportTarget(action.toTarget(), showSnackbarMessage)
+                            appFlowViewModel.clearPendingExportAction()
+                        }
+                    ) {
+                        Text(text = context.getString(R.string.export_post_action_share))
                     }
-                ) {
-                    Text(text = context.getString(R.string.export_post_action_open))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        context.shareExportTarget(action.toTarget(), showSnackbarMessage)
-                        appFlowViewModel.clearPendingExportAction()
-                    }
-                ) {
-                    Text(text = context.getString(R.string.export_post_action_share))
-                }
-            },
-        )
+                },
+            )
+        }
     }
 }
 
