@@ -639,7 +639,8 @@
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/home/ui/StartScreenTest.kt)
   - [x] 測試刪除與 undo。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenDeleteUndoTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenDeleteUndoTest.kt)
-  - [ ] 測試 export format 切換。
+  - [x] 測試 export format 切換。
+    - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenExportFormatTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenExportFormatTest.kt)
   - [x] 測試 error / loading UI。
     - 參考測試：[`app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt`](/Users/tsaiid/git/pixel-scanner/app/src/test/java/com/example/pixelscanner/feature/review/ui/ReviewScreenFallbackActionTest.kt)
 - [ ] 加入整合測試樣本資產。
