@@ -575,7 +575,7 @@
   - [!] 驗證 profile 成效。
     - 目前阻塞：這個 workspace 沒有可用的 `adb` 指令，也沒有確認可用的實機或 emulator，因此無法執行 connected device 的 profile 成效驗證。
     - 參考文件：[`docs/performance-baseline-blocker.md`](/Users/tsaiid/git/pixel-scanner/docs/performance-baseline-blocker.md)
-- [ ] 對 Compose 畫面做 recomposition 檢查。
+- [x] 對 Compose 畫面做 recomposition 檢查。
   - 驗收標準：大圖切換、processing state 更新不造成不必要重組。
   - [x] 找出 review screen 高頻重組來源。
     - 參考文件：[`docs/review-recomposition-hotspots.md`](/Users/tsaiid/git/pixel-scanner/docs/review-recomposition-hotspots.md)
@@ -588,12 +588,17 @@
   - [x] 定義縮圖尺寸需求。
   - [x] 為不同用途設定不同 request。
   - [x] 驗證 memory cache / disk cache 行為。
-- [ ] 對大型文件流程做壓力測試。
+- [~] 對大型文件流程做壓力測試。
   - 驗收標準：50-100 頁 session 仍可接受，不出現明顯 ANR 或 OOM。
-  - [ ] 建立 50 頁測試場景。
-  - [ ] 建立 100 頁測試場景。
-  - [ ] 記錄滑動、排序、匯出的表現。
-  - [ ] 記錄失敗模式。
+  - [x] 建立 50 頁測試場景。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
+  - [x] 建立 100 頁測試場景。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
+  - [x] 記錄滑動、排序、匯出的表現。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
+  - [!] 記錄失敗模式。
+    - 目前阻塞：synthetic Robolectric 壓測已能覆蓋 scroll / reorder / export 行為，但缺少實機或 emulator 可以觀察 ANR、GC thrash 與 peak memory，因此無法把 device-level failure modes 寫成正式 baseline。
+    - 參考文件：[`docs/large-document-stress-matrix.md`](/Users/tsaiid/git/pixel-scanner/docs/large-document-stress-matrix.md)
 - [x] 補上 StrictMode 與 debug 檢查策略。
   - 驗收標準：開發期可早期發現主執行緒 I/O、資源洩漏等問題。
   - [x] 在 debug build 開啟 StrictMode。
