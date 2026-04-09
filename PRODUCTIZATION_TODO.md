@@ -751,15 +751,15 @@
 
 ## Suggested Execution Order
 
-- [ ] Milestone 1: 架構邊界與 session ownership
-  - [ ] 完成 Phase 1 中 model、use case、repository 邊界。
-  - [ ] 完成 Phase 2 中 eager ingestion、session metadata、cleanup/recovery 設計。
-- [ ] Milestone 2: image/export pipeline 重構
-  - [ ] 完成 Phase 3 中 preview/export 雙 pipeline與安全 decode。
-  - [ ] 完成 Phase 4 中 export decision tree 與 result model。
-- [ ] Milestone 3: review UX 重設
-  - [ ] 完成 Phase 5 review 新版畫面。
-  - [ ] 完成 Phase 6 主題與 design token 收斂。
+- [x] Milestone 1: 架構邊界與 session ownership
+  - [x] 完成 Phase 1 中 model、use case、repository 邊界。
+  - [x] 完成 Phase 2 中 eager ingestion、session metadata、cleanup/recovery 設計。
+- [x] Milestone 2: image/export pipeline 重構
+  - [x] 完成 Phase 3 中 preview/export 雙 pipeline與安全 decode。
+  - [x] 完成 Phase 4 中 export decision tree 與 result model。
+- [x] Milestone 3: review UX 重設
+  - [x] 完成 Phase 5 review 新版畫面。
+  - [x] 完成 Phase 6 主題與 design token 收斂。
 - [ ] Milestone 4: 長文件穩定性與品質線
   - [ ] 完成大型匯出背景化策略。
   - [ ] 完成 Phase 8、9、10 的最低可用品質線。
