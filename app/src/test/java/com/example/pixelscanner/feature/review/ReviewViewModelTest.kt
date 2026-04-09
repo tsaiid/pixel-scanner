@@ -41,6 +41,7 @@ import com.example.pixelscanner.feature.review.ui.HomeNavigationReason
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent
 import com.example.pixelscanner.feature.review.ui.ReviewUiEffect
 import com.example.pixelscanner.feature.review.ui.ScannerNavigationReason
+import com.example.pixelscanner.feature.export.ui.ExportFallbackAction
 import com.example.pixelscanner.testing.FakeExportRepository
 import com.example.pixelscanner.testing.ExportImageRequest
 import com.example.pixelscanner.testing.ExportPdfBuildRequest
@@ -476,6 +477,10 @@ class ReviewViewModelTest {
 
         assertFalse(viewModel.uiState.value.export.canRetry)
         assertTrue(viewModel.uiState.value.export.lastResult?.result is ExportResult.Failure)
+        assertEquals(
+            ExportFallbackAction.DISCARD_AND_RESCAN,
+            viewModel.uiState.value.export.fallbackAction,
+        )
         assertEquals(1, exportRepository.savedPdfRequests.size)
 
         viewModel.onEvent(ReviewUiEvent.RetryExport(context))
@@ -483,6 +488,10 @@ class ReviewViewModelTest {
 
         assertEquals(1, exportRepository.savedPdfRequests.size)
         assertFalse(viewModel.uiState.value.export.canRetry)
+        assertEquals(
+            ExportFallbackAction.DISCARD_AND_RESCAN,
+            viewModel.uiState.value.export.fallbackAction,
+        )
     }
 
     @Test

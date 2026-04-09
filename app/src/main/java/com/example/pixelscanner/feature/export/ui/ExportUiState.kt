@@ -2,8 +2,13 @@ package com.example.pixelscanner.feature.export.ui
 
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportResult
+import com.example.pixelscanner.core.model.ExportSourceInvalidFailure
 import com.example.pixelscanner.core.model.ExportState
 import com.example.pixelscanner.core.model.UiText
+
+enum class ExportFallbackAction {
+    DISCARD_AND_RESCAN,
+}
 
 data class ExportUiState(
     val format: ExportFormat = ExportFormat.IMAGE,
@@ -20,4 +25,10 @@ data class ExportUiState(
 
     val canRetry: Boolean
         get() = (lastResult?.result as? ExportResult.Failure)?.error?.isRetryable == true
+
+    val fallbackAction: ExportFallbackAction?
+        get() = when ((lastResult?.result as? ExportResult.Failure)?.error) {
+            is ExportSourceInvalidFailure -> ExportFallbackAction.DISCARD_AND_RESCAN
+            else -> null
+        }
 }

@@ -70,6 +70,7 @@ import com.example.pixelscanner.core.model.ProcessingState
 import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.feature.export.ui.ExportFormatTabs
 import com.example.pixelscanner.feature.export.ui.ExportCancelButton
+import com.example.pixelscanner.feature.export.ui.ExportFallbackAction
 import com.example.pixelscanner.feature.export.ui.ExportSaveButton
 import com.example.pixelscanner.feature.review.ReviewViewModel
 import com.example.pixelscanner.core.model.asString
@@ -228,6 +229,13 @@ fun ReviewScreen(
                             ExportCancelButton(
                                 onCancel = { viewModel.onEvent(CancelExport) },
                             )
+                        } else if (uiState.export.fallbackAction == ExportFallbackAction.DISCARD_AND_RESCAN) {
+                            Spacer(modifier = Modifier.width(PixelScannerSpacingTokens.sm))
+                            TextButton(
+                                onClick = { showRescanConfirmDialog = true },
+                            ) {
+                                Text(stringResource(id = R.string.review_action_rescan))
+                            }
                         }
                     }
                 }
