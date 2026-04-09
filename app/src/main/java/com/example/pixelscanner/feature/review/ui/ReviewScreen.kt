@@ -63,6 +63,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -98,7 +100,7 @@ import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.SaveAll
 import com.example.pixelscanner.feature.review.ui.ReviewUiEvent.ToggleEnhancement
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ReviewScreen(
     viewModel: ReviewViewModel = viewModel(),
@@ -173,6 +175,7 @@ fun ReviewScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(PixelScannerColorTokens.reviewSurface)
+                .semantics { testTagsAsResourceId = true }
         ) {
             // 1. Navigation Row (Rescan & Save All)
             Box(

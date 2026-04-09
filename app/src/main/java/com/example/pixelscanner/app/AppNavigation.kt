@@ -3,6 +3,7 @@ package com.example.pixelscanner.app
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.SystemClock
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +36,8 @@ import com.example.pixelscanner.core.diagnostics.DebugLog
 import com.example.pixelscanner.core.model.ExportFormat
 import com.example.pixelscanner.core.model.ExportPostActionTarget
 import com.example.pixelscanner.core.model.ScanResultPayload
+import com.example.pixelscanner.core.model.ScanSession
+import com.example.pixelscanner.core.model.ScannedPage
 import com.example.pixelscanner.core.model.UiText
 import com.example.pixelscanner.core.model.asString
 import com.example.pixelscanner.core.model.uiTextResource
@@ -51,7 +54,9 @@ import kotlinx.coroutines.launch
 import java.util.ArrayList
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    startInBenchmarkReviewMode: Boolean = false,
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -75,6 +80,18 @@ fun AppNavigation() {
     val appFlowUiState by appFlowViewModel.uiState.collectAsState()
     val homeUiState by homeViewModel.uiState.collectAsState()
     val reviewUiState by reviewViewModel.uiState.collectAsState()
+    val benchmarkReviewSession = remember(startInBenchmarkReviewMode) {
+        if (startInBenchmarkReviewMode) {
+            createBenchmarkReviewSession(context)
+        } else {
+            null
+        }
+    }
+    val startDestination = if (startInBenchmarkReviewMode) {
+        AppNavigationContract.reviewRoute
+    } else {
+        AppNavigationContract.homeRoute
+    }
     val showSnackbarMessage: (UiText) -> Unit = { message ->
         coroutineScope.launch {
             snackbarHostState.showSnackbar(message.asString(context))
@@ -115,7 +132,7 @@ fun AppNavigation() {
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             NavHost(
                 navController = navController,
-                startDestination = AppNavigationContract.homeRoute,
+                startDestination = startDestination,
             ) {
                 composable(AppNavigationContract.homeRoute) {
                     ScannerScreen(
@@ -175,6 +192,11 @@ fun AppNavigation() {
                 }
 
                 composable(AppNavigationContract.reviewRoute) {
+                    if (benchmarkReviewSession != null && !reviewUiState.hasSession) {
+                        LaunchedEffect(benchmarkReviewSession.id) {
+                            reviewViewModel.setRestoredSession(benchmarkReviewSession)
+                        }
+                    }
                     ReviewScreen(
                         viewModel = reviewViewModel,
                         onExportSuccess = { format, target ->
@@ -254,6 +276,21 @@ fun AppNavigation() {
             },
         )
     }
+}
+
+private fun createBenchmarkReviewSession(context: Context): ScanSession {
+    val pageUri = Uri.parse(
+        "android.resource://${context.packageName}/${R.mipmap.ic_launcher_foreground}",
+    )
+    return ScanSession(
+        id = "benchmark_review_session",
+        pages = List(6) { index ->
+            ScannedPage(
+                id = "benchmark_review_page_$index",
+                originalSourceUri = pageUri,
+            )
+        },
+    )
 }
 
 private fun NavHostController.navigateResettingToHome(route: String) {

@@ -15,6 +15,10 @@ import com.example.pixelscanner.ui.theme.PixelScannerTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val startInBenchmarkReviewMode = intent.getBooleanExtra(
+            EXTRA_START_IN_BENCHMARK_REVIEW_MODE,
+            false,
+        )
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             PixelScannerTheme(colorPolicy = PixelScannerColorPolicy.BrandFirst) {
@@ -22,9 +26,16 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation()
+                    AppNavigation(
+                        startInBenchmarkReviewMode = startInBenchmarkReviewMode,
+                    )
                 }
             }
         }
+    }
+
+    companion object {
+        const val EXTRA_START_IN_BENCHMARK_REVIEW_MODE =
+            "com.example.pixelscanner.extra.START_IN_BENCHMARK_REVIEW_MODE"
     }
 }

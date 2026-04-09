@@ -564,7 +564,7 @@
   - 驗收標準：建立可持續追蹤的 benchmark 模組與基線結果。
   - [x] 建立 benchmark module。
   - [x] 新增冷啟動 benchmark。
-  - [ ] 新增 review 切頁 benchmark。
+  - [x] 新增 review 切頁 benchmark。
   - [ ] 新增 enhancement toggle benchmark。
   - [ ] 新增 session ingestion benchmark。
   - [ ] 新增 export benchmark。
