@@ -253,7 +253,10 @@ class ExportSessionUseCase(
 
                     successfulUris.size == results.size -> {
                         exportOutcome = "success"
-                        ExportResult.Success(successfulUris.firstOrNull())
+                        ExportResult.Success(
+                            outputUri = successfulUris.firstOrNull(),
+                            outputUris = successfulUris,
+                        )
                     }
 
                     else -> {

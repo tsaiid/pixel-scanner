@@ -22,6 +22,9 @@ class AndroidSessionRecoveryRepository(
 
     override suspend fun loadRecoverableSession(sessionId: String): RecoverableSessionSnapshot? {
         val metadata = sessionMetadataRepository.read(sessionId) ?: return null
+        if (metadata.pages.isNotEmpty() && metadata.pages.all { it.isDeleted } && !metadata.hasOriginalPdf) {
+            return null
+        }
         val originalPagesDir = SessionStoragePaths.originalPagesDir(context.cacheDir, sessionId)
         val expectedPageFiles = (1..metadata.pageCount).map { pageIndex ->
             File(originalPagesDir, "page_$pageIndex.jpg")

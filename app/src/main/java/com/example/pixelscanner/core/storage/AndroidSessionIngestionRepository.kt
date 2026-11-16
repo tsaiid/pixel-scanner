@@ -116,23 +116,27 @@ class AndroidSessionIngestionRepository(
             else -> SessionIngestionStatus.PARTIAL_SUCCESS
         }
 
-        val metadata = session.toMetadata(
-            createdAtEpochMillis = System.currentTimeMillis(),
-            hasOriginalPdf = originalPdfMapping != null,
+        val ingestionResult = SessionIngestionResult(
+            status = status,
+            pageMappings = pageMappings,
+            originalPdfMapping = originalPdfMapping,
+            failures = failures,
         )
+
+        val ingestedSession = session.withIngestedAssets(ingestionResult)
         runCatching {
+            val existingMetadata = sessionMetadataRepository.read(session.id)
+            val metadata = ingestedSession.toMetadata(
+                createdAtEpochMillis = existingMetadata?.createdAtEpochMillis ?: System.currentTimeMillis(),
+                hasOriginalPdf = originalPdfMapping != null || existingMetadata?.hasOriginalPdf == true,
+            )
             sessionMetadataRepository.write(metadata)
             sessionMetadataRepository.read(session.id)
         }.onFailure { error ->
             DebugLog.error("session_metadata_warning", error)
         }
 
-        return SessionIngestionResult(
-            status = status,
-            pageMappings = pageMappings,
-            originalPdfMapping = originalPdfMapping,
-            failures = failures,
-        )
+        return ingestionResult
     }
 
     private fun copyUriToFile(sourceUri: Uri, destinationFile: File) {

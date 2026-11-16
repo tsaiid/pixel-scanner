@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod", "TooManyFunctions")
+
 package com.example.pixelscanner.feature.review.ui
 
 import android.content.Intent
@@ -75,8 +77,13 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -352,6 +359,7 @@ internal data class ReviewWorkspaceState(
 internal data class ReviewThumbnailUiModel(
     val id: String,
     val displayUri: android.net.Uri,
+    val isEnhanced: Boolean = false,
 )
 
 @Immutable
@@ -464,6 +472,7 @@ internal fun ReviewWorkspace(
                 ReviewThumbnailUiModel(
                     id = page.id,
                     displayUri = page.displayUri,
+                    isEnhanced = page.isEnhanced,
                 )
             }
         }
@@ -737,29 +746,40 @@ private fun ReviewWorkspaceHeader(
     onRetryEnhancement: (() -> Unit)?,
     typography: com.example.pixelscanner.ui.theme.PixelScannerTypographyTokens,
 ) {
-    Text(
-        text = stringResource(id = R.string.review_screen_title),
-        color = PixelScannerColorTokens.reviewTextPrimary,
-        style = typography.title,
-        modifier = Modifier.semantics { heading() },
-    )
-    Text(
-        text = stringResource(
-            id = R.string.review_screen_page_counter,
-            state.currentPage + 1,
-            state.pages.size,
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = PixelScannerSpacingTokens.lg,
+                vertical = PixelScannerSpacingTokens.xs,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            PixelScannerSpacingTokens.sm,
+            Alignment.CenterHorizontally,
         ),
-        color = PixelScannerColorTokens.reviewTextSecondary,
-        style = typography.body,
-        modifier = Modifier.padding(top = PixelScannerSpacingTokens.xxs),
-    )
-
-    ReviewPageStatusChip(
-        page = state.selectedPage,
-        pageIndex = state.currentPage,
-        onRetryEnhancement = onRetryEnhancement,
-        modifier = Modifier.padding(top = PixelScannerSpacingTokens.reviewThumbnailSpacing),
-    )
+    ) {
+        Text(
+            text = stringResource(id = R.string.review_screen_title),
+            color = PixelScannerColorTokens.reviewTextPrimary,
+            style = typography.title,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            text = stringResource(
+                id = R.string.review_screen_page_counter,
+                state.currentPage + 1,
+                state.pages.size,
+            ),
+            color = PixelScannerColorTokens.reviewTextSecondary,
+            style = typography.body,
+        )
+        ReviewPageStatusChip(
+            page = state.selectedPage,
+            pageIndex = state.currentPage,
+            onRetryEnhancement = onRetryEnhancement,
+        )
+    }
 }
 
 @Composable
@@ -1164,6 +1184,8 @@ private fun ReviewPagerPage(
     if (pageIndex >= pages.size) return
 
     val page = pages[pageIndex]
+    var zoomScale by remember(page.id, page.displayUri) { mutableStateOf(1f) }
+    var panOffset by remember(page.id, page.displayUri) { mutableStateOf(Offset.Zero) }
     val previewRequest = remember(page.displayUri, previewViewportSize) {
         val viewportSize = previewViewportSize.takeIf { it.width > 0 && it.height > 0 }
         if (viewportSize != null) {
@@ -1176,7 +1198,22 @@ private fun ReviewPagerPage(
             null
         }
     }
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(PixelScannerShapeTokens.thumbnail)
+            .reviewPageZoomGesture(
+                key1 = page.id,
+                key2 = page.displayUri,
+                zoomScale = zoomScale,
+                panOffset = panOffset,
+                onTransform = { newScale, newOffset ->
+                    zoomScale = newScale
+                    panOffset = newOffset
+                },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
         if (previewRequest != null) {
             AsyncImage(
                 model = previewRequest,
@@ -1185,7 +1222,14 @@ private fun ReviewPagerPage(
                     id = R.string.review_scanned_page_content_description,
                     pageIndex + 1,
                 ),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = zoomScale
+                        scaleY = zoomScale
+                        translationX = panOffset.x
+                        translationY = panOffset.y
+                    },
                 contentScale = ContentScale.Fit,
             )
         }
@@ -1198,6 +1242,55 @@ private fun ReviewPagerPage(
         }
     }
 }
+
+private fun Modifier.reviewPageZoomGesture(
+    key1: Any?,
+    key2: Any?,
+    zoomScale: Float,
+    panOffset: Offset,
+    onTransform: (Float, Offset) -> Unit,
+): Modifier {
+    val tapModifier = pointerInput(key1, key2, zoomScale) {
+        detectTapGestures(
+            onDoubleTap = {
+                val targetScale = if (zoomScale > ZOOM_ACTIVE_THRESHOLD) {
+                     DEFAULT_ZOOM_SCALE
+                } else {
+                    DOUBLE_TAP_ZOOM_SCALE
+                }
+                onTransform(targetScale, Offset.Zero)
+            },
+        )
+    }
+    return if (zoomScale > ZOOM_ACTIVE_THRESHOLD) {
+        tapModifier.pointerInput(key1, key2, zoomScale, panOffset) {
+            detectTransformGestures { _, pan, zoom, _ ->
+                val newScale = (zoomScale * zoom).coerceIn(DEFAULT_ZOOM_SCALE, MAX_ZOOM_SCALE)
+                if (newScale <= ZOOM_ACTIVE_THRESHOLD) {
+                    onTransform(DEFAULT_ZOOM_SCALE, Offset.Zero)
+                } else {
+                    val maxX = (size.width * (newScale - DEFAULT_ZOOM_SCALE)) / PAN_BOUNDS_DIVISOR
+                    val maxY = (size.height * (newScale - DEFAULT_ZOOM_SCALE)) / PAN_BOUNDS_DIVISOR
+                    onTransform(
+                        newScale,
+                        Offset(
+                            x = (panOffset.x + pan.x).coerceIn(-maxX, maxX),
+                            y = (panOffset.y + pan.y).coerceIn(-maxY, maxY),
+                        ),
+                    )
+                }
+            }
+        }
+    } else {
+        tapModifier
+    }
+}
+
+private const val DEFAULT_ZOOM_SCALE = 1f
+private const val ZOOM_ACTIVE_THRESHOLD = 1.05f
+private const val DOUBLE_TAP_ZOOM_SCALE = 2.5f
+private const val MAX_ZOOM_SCALE = 4f
+private const val PAN_BOUNDS_DIVISOR = 2f
 
 @Composable
 private fun ReviewThumbnailStrip(
@@ -1409,6 +1502,24 @@ private fun ReviewThumbnailItem(
                 color = PixelScannerColorTokens.reviewTextPrimary,
                 style = typography.labelSmall,
             )
+        }
+        if (page.isEnhanced) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(PixelScannerSpacingTokens.reviewThumbnailBadgeInset)
+                    .size(PixelScannerSpacingTokens.reviewThumbnailBadgeSize)
+                    .clip(PixelScannerShapeTokens.pill)
+                    .background(PixelScannerColorTokens.reviewEnhancedContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = PixelScannerColorTokens.brandAccent,
+                    modifier = Modifier.size(PixelScannerSpacingTokens.reviewPageStatusChipIndicatorSize),
+                )
+            }
         }
     }
 }

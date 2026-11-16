@@ -2,9 +2,12 @@ package com.example.pixelscanner.domain
 
 import com.example.pixelscanner.core.model.ScanSession
 
-class DiscardSessionUseCase {
+class DiscardSessionUseCase(
+    private val sessionRecoveryRepository: SessionRecoveryRepository? = null,
+) {
 
-    operator fun invoke(session: ScanSession): DiscardSessionResult {
+    suspend operator fun invoke(session: ScanSession): DiscardSessionResult {
+        sessionRecoveryRepository?.discardRecoverableSession(session.id)
         return DiscardSessionResult(discardedSessionId = session.id)
     }
 }

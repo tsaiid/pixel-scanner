@@ -54,7 +54,7 @@ class AppContainer(
     val eagerSessionIngestionUseCase = EagerSessionIngestionUseCase(sessionIngestionRepository)
     val toggleEnhancementUseCase = ToggleEnhancementUseCase(imageProcessingRepository)
     val deletePageUseCase = DeletePageUseCase()
-    val discardSessionUseCase = DiscardSessionUseCase()
+    val discardSessionUseCase = DiscardSessionUseCase(sessionRecoveryRepository)
     val resumeSessionUseCase = ResumeSessionUseCase()
     val scanMoreUseCase = ScanMoreUseCase()
     val reorderPageUseCase = ReorderPageUseCase()
@@ -80,6 +80,7 @@ class AppContainer(
             scanMoreUseCase = scanMoreUseCase,
             restorePageUseCase = restorePageUseCase,
             exportSessionUseCase = exportSessionUseCase,
+            sessionMetadataRepository = sessionMetadataRepository,
             owner = owner,
         )
     }

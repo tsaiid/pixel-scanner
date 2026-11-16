@@ -107,6 +107,30 @@ class ImageEnhancerTest {
         )
     }
 
+    @Test
+    fun interpolatePreviewBackgroundRowBilinear_smoothlyInterpolatesBetweenPixels() {
+        val smallBackground = intArrayOf(
+            rgb(0, 0, 0),
+            rgb(100, 100, 100),
+            rgb(100, 100, 100),
+            rgb(200, 200, 200),
+        )
+        val outputRow = IntArray(3)
+
+        interpolatePreviewBackgroundRowBilinear(
+            smallBackgroundPixels = smallBackground,
+            backgroundWidth = 2,
+            backgroundHeight = 2,
+            rowIndex = 1,
+            outputHeight = 3,
+            outputRowPixels = outputRow,
+        )
+
+        assertEquals(rgb(50, 50, 50), outputRow[0])
+        assertEquals(rgb(100, 100, 100), outputRow[1])
+        assertEquals(rgb(150, 150, 150), outputRow[2])
+    }
+
     private fun rgb(red: Int, green: Int, blue: Int): Int {
         return (0xFF shl 24) or
             ((red and 0xFF) shl 16) or

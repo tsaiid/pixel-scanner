@@ -58,4 +58,10 @@
 - [x] **Bug Fixes & Tests**
     - [x] 修正 `ReviewPagerSection` 在刪除與復原頁面時 `pagerKey` 發生 `IndexOutOfBoundsException` 的問題。
     - [x] 調整 `ReviewActionCopyLocaleTest` 繁體中文匯出按鈕檢查，對齊精簡「存檔」文案並驗證所有單元測試通過。
+    - [x] 修正放棄（Discard）與重掃（Rescan）時 `DiscardSessionUseCase` 未實際刪除 `sessions/{sessionId}` 目錄與 `session.json` 的問題，並在放棄前取消進行中的 `ingestionJob`。
+    - [x] 擴充 `ScanSessionMetadata` 與 `AndroidSessionMetadataRepository` 持久化每頁狀態（排序、刪頁、增強圖檔），並在 `ReviewViewModel` 狀態變更時同步更新 `session.json`、於 `RestoreSessionUseCase` 完整還原。
+    - [x] 修正多張圖片（JPEG）匯出成功時 `ExportResult.Success` 僅保留第一張 URI 導致分享動作無法分享全部圖片的問題。
+- [x] **Performance & UX Enhancements**
+    - [x] 優化 `ImageEnhancer` 背景估計與像素處理：改用 2D 雙線性插值（`interpolatePreviewBackgroundRowBilinear`）消除方塊偽影，並以 64 列批次區塊讀寫大幅降低 JNI 呼叫開銷。
+    - [x] 優化 `ReviewScreen` 體驗：新增預覽頁面雙擊/雙指縮放平移手勢（`reviewPageZoomGesture`）、精簡直向標題列釋放預覽空間，以及於縮圖顯示影像增強狀態標記。
 

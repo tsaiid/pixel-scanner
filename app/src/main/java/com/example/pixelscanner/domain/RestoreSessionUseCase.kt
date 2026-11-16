@@ -31,18 +31,12 @@ class RestoreSessionUseCase(
             sessionRecoveryRepository.loadRecoverableSession(sessionId)
         } ?: return RestoreSessionOutcome.Unavailable
 
-        val pages = snapshot.pageFiles.mapIndexed { index, file ->
-            ScannedPage(
-                id = "${snapshot.metadata.sessionId}_page_$index",
-                originalSourceUri = Uri.fromFile(file),
-            )
-        }
-
+        val pages = restorePages(snapshot)
         val originalPdfUri = snapshot.originalPdfFile
             ?.takeIf(File::exists)
             ?.let(Uri::fromFile)
 
-        if (pages.isEmpty() && originalPdfUri == null) {
+        if (pages.none { !it.isDeleted } && originalPdfUri == null) {
             return RestoreSessionOutcome.Unavailable
         }
 
@@ -67,5 +61,39 @@ class RestoreSessionUseCase(
                 missingAssets = missingAssets,
             ),
         )
+    }
+
+    private fun restorePages(snapshot: RecoverableSessionSnapshot): List<ScannedPage> {
+        val filesByName = snapshot.pageFiles.associateBy(File::getName)
+        val persistedPages = snapshot.metadata.pages
+        return if (persistedPages.isEmpty()) {
+            snapshot.pageFiles.mapIndexed { index, file ->
+                ScannedPage(
+                    id = "${snapshot.metadata.sessionId}_page_$index",
+                    originalSourceUri = Uri.fromFile(file),
+                )
+            }
+        } else {
+            persistedPages.mapNotNull { pageMeta ->
+                val originalFile = filesByName[pageMeta.originalFileName] ?: return@mapNotNull null
+                val enhancedUri = pageMeta.enhancedUriString
+                    ?.let(Uri::parse)
+                    ?.takeIf { uri ->
+                        uri.scheme != "file" || uri.path?.let { File(it).exists() } == true
+                    }
+                val activeVariant = if (enhancedUri != null) {
+                    pageMeta.activeVariant
+                } else {
+                    com.example.pixelscanner.core.model.PageVariant.ORIGINAL
+                }
+                ScannedPage(
+                    id = pageMeta.id,
+                    originalSourceUri = Uri.fromFile(originalFile),
+                    enhancedUri = enhancedUri,
+                    activeVariant = activeVariant,
+                    isDeleted = pageMeta.isDeleted,
+                )
+            }
+        }
     }
 }

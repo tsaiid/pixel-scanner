@@ -9,12 +9,21 @@ data class ScanResultPayload(
     val pdfUri: Uri? = null,
 )
 
+data class ScanPageMetadata(
+    val id: String,
+    val originalFileName: String,
+    val enhancedUriString: String? = null,
+    val activeVariant: PageVariant = PageVariant.ORIGINAL,
+    val isDeleted: Boolean = false,
+)
+
 data class ScanSessionMetadata(
     val sessionId: String,
     val createdAtEpochMillis: Long,
     val pageCount: Int,
     val hasOriginalPdf: Boolean,
     val dirtyFlags: SessionDirtyFlags,
+    val pages: List<ScanPageMetadata> = emptyList(),
 )
 
 enum class ProcessingState {
@@ -111,12 +120,25 @@ data class ScanSession(
         createdAtEpochMillis: Long,
         hasOriginalPdf: Boolean = originalPdfUri != null,
     ): ScanSessionMetadata {
+        val pageMetadata = pages.mapIndexed { index, page ->
+            val fileName = page.originalSourceUri.lastPathSegment
+                ?.takeIf { page.originalSourceUri.scheme == "file" && it.isNotBlank() }
+                ?: "page_${index + 1}.jpg"
+            ScanPageMetadata(
+                id = page.id,
+                originalFileName = fileName,
+                enhancedUriString = page.enhancedUri?.toString(),
+                activeVariant = page.activeVariant,
+                isDeleted = page.isDeleted,
+            )
+        }
         return ScanSessionMetadata(
             sessionId = id,
             createdAtEpochMillis = createdAtEpochMillis,
             pageCount = pages.size,
             hasOriginalPdf = hasOriginalPdf,
             dirtyFlags = dirtyFlags,
+            pages = pageMetadata,
         )
     }
 
@@ -282,7 +304,10 @@ fun ExportRequest.resolveDecision(
 }
 
 sealed interface ExportResult {
-    data class Success(val outputUri: Uri?) : ExportResult
+    data class Success(
+        val outputUri: Uri?,
+        val outputUris: List<Uri> = listOfNotNull(outputUri),
+    ) : ExportResult
     data class CompletedExportPage(
         val pageId: String,
         val outputUri: Uri,

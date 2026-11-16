@@ -188,25 +188,12 @@ class ExportSessionUseCaseTest {
         val originalSession = ScanSession(
             id = "session_reordered_export",
             pages = listOf(
-                ScannedPage(
-                    id = "page-a",
-                    originalSourceUri = Uri.parse("content://scanner/page-a.jpg"),
-                ),
-                ScannedPage(
-                    id = "page-b",
-                    originalSourceUri = Uri.parse("content://scanner/page-b.jpg"),
-                ),
-                ScannedPage(
-                    id = "page-c",
-                    originalSourceUri = Uri.parse("content://scanner/page-c.jpg"),
-                ),
+                ScannedPage("page-a", Uri.parse("content://scanner/page-a.jpg")),
+                ScannedPage("page-b", Uri.parse("content://scanner/page-b.jpg")),
+                ScannedPage("page-c", Uri.parse("content://scanner/page-c.jpg")),
             ),
         )
-        val reorderedSession = ReorderPageUseCase().invoke(
-            session = originalSession,
-            fromActivePageIndex = 1,
-            toActivePageIndex = 0,
-        )!!.updatedSession
+        val reorderedSession = ReorderPageUseCase().invoke(originalSession, 1, 0)!!.updatedSession
 
         val result = runBlocking {
             useCase(
@@ -217,6 +204,12 @@ class ExportSessionUseCaseTest {
         }
 
         assertTrue(result is ExportResult.Success)
+        val expectedUris = listOf(
+            Uri.parse("file:///documents/page-b.jpg"),
+            Uri.parse("file:///documents/page-a.jpg"),
+            Uri.parse("file:///documents/page-c.jpg"),
+        )
+        assertEquals(expectedUris, (result as ExportResult.Success).outputUris)
         assertEquals(
             listOf(
                 Uri.parse("content://scanner/page-b.jpg"),

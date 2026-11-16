@@ -19,7 +19,7 @@ fun ExportFormat.mimeType(): String {
 
 fun ExportResult.toPostActionTarget(format: ExportFormat): ExportPostActionTarget? {
     val outputUris = when (this) {
-        is ExportResult.Success -> listOfNotNull(outputUri)
+        is ExportResult.Success -> outputUris.ifEmpty { listOfNotNull(outputUri) }
         is ExportResult.PartialSuccess -> outputUris
         is ExportResult.Failure -> emptyList()
         ExportResult.Cancelled -> emptyList()

@@ -30,6 +30,7 @@ import com.example.pixelscanner.domain.ReorderPageUseCase
 import com.example.pixelscanner.domain.ResumeSessionUseCase
 import com.example.pixelscanner.domain.RestorePageUseCase
 import com.example.pixelscanner.domain.ScanMoreUseCase
+import com.example.pixelscanner.domain.SessionMetadataRepository
 import com.example.pixelscanner.domain.ToggleEnhancementUseCase
 import com.example.pixelscanner.feature.export.ui.ExportUiState
 import com.example.pixelscanner.feature.review.ui.ReviewPageUiMapper
@@ -61,6 +62,7 @@ class ReviewViewModel(
     private val resumeSessionUseCase: ResumeSessionUseCase,
     private val scanMoreUseCase: ScanMoreUseCase,
     private val savedStateHandle: SavedStateHandle,
+    private val sessionMetadataRepository: SessionMetadataRepository? = null,
 ) : ViewModel() {
 
     private val _scanSession = MutableStateFlow<ScanSession?>(null)
@@ -220,13 +222,11 @@ class ReviewViewModel(
         val job = viewModelScope.launch {
             try {
                 val pageToEnhance = awaitPreferredEnhancementSource(page.id, page)
-                val result = try {
+                val result = runCatching {
                     toggleEnhancementUseCase(pageToEnhance, context)
-                } catch (error: Exception) {
+                }.getOrElse { error ->
                     val retriedPage = retryableEnhancementSource(page.id, pageToEnhance)
-                    if (retriedPage == null) {
-                        throw error
-                    }
+                        ?: throw error
                     DebugLog.event(
                         name = "preview_enhancement_retry_after_ingestion",
                         "pageId" to page.id,
@@ -362,6 +362,8 @@ class ReviewViewModel(
 
     private fun discardAndReturnToScanner() {
         val session = _scanSession.value ?: return
+        ingestionJob?.cancel()
+        ingestionJob = null
         viewModelScope.launch {
             discardSessionUseCase(session)
             previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
@@ -374,6 +376,8 @@ class ReviewViewModel(
 
     private fun discardAndReturnToHome() {
         val session = _scanSession.value ?: return
+        ingestionJob?.cancel()
+        ingestionJob = null
         viewModelScope.launch {
             discardSessionUseCase(session)
             previewCacheCleanupRepository.cleanSessionPreviewCache(session.id)
@@ -513,6 +517,7 @@ class ReviewViewModel(
         preferredPageId: String? = null,
     ) {
         _scanSession.value = session
+        persistSessionMetadataIfIngested(session)
         updateUiState { currentState ->
             val activePages = session.activePages().map(ReviewPageUiMapper::map)
             val lastIndex = (activePages.size - 1).coerceAtLeast(0)
@@ -529,8 +534,31 @@ class ReviewViewModel(
         }
     }
 
+    private fun persistSessionMetadataIfIngested(session: ScanSession) {
+        val repository = sessionMetadataRepository ?: return
+        if (session.pages.none { it.originalSourceUri.scheme == "file" } &&
+            session.originalPdfUri?.scheme != "file"
+        ) {
+            return
+        }
+        viewModelScope.launch {
+            runCatching {
+                val existing = repository.read(session.id)
+                val metadata = session.toMetadata(
+                    createdAtEpochMillis = existing?.createdAtEpochMillis ?: System.currentTimeMillis(),
+                    hasOriginalPdf = session.originalPdfUri != null || existing?.hasOriginalPdf == true,
+                )
+                repository.write(metadata)
+            }.onFailure { error ->
+                DebugLog.error("session_metadata_sync_failed", error)
+            }
+        }
+    }
+
     private fun clearSessionState() {
         cancelEnhancementJobs()
+        ingestionJob?.cancel()
+        ingestionJob = null
         exportJob?.cancel()
         exportJob = null
         exportCancellationRequested = false
@@ -549,6 +577,8 @@ class ReviewViewModel(
 
     override fun onCleared() {
         cancelEnhancementJobs()
+        ingestionJob?.cancel()
+        ingestionJob = null
         exportJob?.cancel()
         exportJob = null
         exportCancellationRequested = false
@@ -587,6 +617,7 @@ class ReviewViewModelFactory(
     private val previewCacheCleanupRepository: PreviewCacheCleanupRepository,
     private val resumeSessionUseCase: ResumeSessionUseCase,
     private val scanMoreUseCase: ScanMoreUseCase,
+    private val sessionMetadataRepository: SessionMetadataRepository? = null,
     owner: androidx.savedstate.SavedStateRegistryOwner,
 ) : androidx.lifecycle.AbstractSavedStateViewModelFactory(owner, null) {
     @Suppress("UNCHECKED_CAST")
@@ -611,6 +642,7 @@ class ReviewViewModelFactory(
             resumeSessionUseCase = resumeSessionUseCase,
             scanMoreUseCase = scanMoreUseCase,
             savedStateHandle = handle,
+            sessionMetadataRepository = sessionMetadataRepository,
         ) as T
     }
 }
