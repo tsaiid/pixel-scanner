@@ -1121,7 +1121,9 @@ private fun ReviewPagerSection(
         modifier = modifier.onSizeChanged { previewViewportSize = it },
     ) {
         val pagerModifier = Modifier.fillMaxSize()
-        val pagerKey: (Int) -> Any = { pageIndex -> pages[pageIndex].id }
+        val pagerKey: (Int) -> Any = { pageIndex ->
+            pages.getOrNull(pageIndex)?.id ?: pageIndex
+        }
         if (isVertical) {
             VerticalPager(
                 state = pagerState,

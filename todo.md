@@ -50,3 +50,11 @@
     - [x] Implement `ImageProcessor` class (Simple Lightness Equalization).
     - [x] Implement Lightness Equalization algorithm (Background Estimation & Division).
     - [x] Connect "Enhanced Mode" toggle in Review Screen.
+
+## Phase 7: 維護與穩定性修正
+- [x] **Build & Tooling**
+    - [x] 升級 AGP 至 `9.5.1` 與 Gradle Wrapper 至 `9.6.0`（含 Daemon JVM Toolchain 與 Foojay Resolver 設定）。
+- [x] **Bug Fixes & Tests**
+    - [x] 修正 `ReviewPagerSection` 在刪除與復原頁面時 `pagerKey` 發生 `IndexOutOfBoundsException` 的問題。
+    - [x] 調整 `ReviewActionCopyLocaleTest` 繁體中文匯出按鈕檢查，對齊精簡「存檔」文案並驗證所有單元測試通過。
+

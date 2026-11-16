@@ -20,12 +20,14 @@ class ReviewActionCopyLocaleTest {
             locale = Locale.ENGLISH,
             maxActionLength = 16,
             maxExportLength = 12,
+            requireDistinctSaveFormatLabels = true,
         )
 
         assertLocaleLabels(
             locale = Locale("zh", "TW"),
             maxActionLength = 9,
             maxExportLength = 8,
+            requireDistinctSaveFormatLabels = false,
         )
     }
 
@@ -33,6 +35,7 @@ class ReviewActionCopyLocaleTest {
         locale: Locale,
         maxActionLength: Int,
         maxExportLength: Int,
+        requireDistinctSaveFormatLabels: Boolean,
     ) {
         val context = localizedContext(locale)
 
@@ -45,13 +48,16 @@ class ReviewActionCopyLocaleTest {
             context.getString(R.string.review_rescan_confirm_action),
             context.getString(R.string.review_discard_confirm_action),
         )
-        val exportLabels = listOf(
+        val exportSaveLabels = listOf(
             context.getString(R.string.export_save_button_jpeg),
             context.getString(R.string.export_save_button_pdf),
+        )
+        val exportRetryLabels = listOf(
             context.getString(R.string.export_retry_button_jpeg),
             context.getString(R.string.export_retry_button_pdf),
-            context.getString(R.string.export_cancel_action),
         )
+        val exportCancelLabel = context.getString(R.string.export_cancel_action)
+        val exportLabels = exportSaveLabels + exportRetryLabels + exportCancelLabel
 
         reviewActionLabels.forEach { label ->
             assertTrue("Label is too long for ${locale.toLanguageTag()}: $label", label.length <= maxActionLength)
@@ -65,7 +71,13 @@ class ReviewActionCopyLocaleTest {
 
         assertEquals(reviewActionLabels.size, reviewActionLabels.toSet().size)
         assertEquals(confirmActionLabels.size, confirmActionLabels.toSet().size)
-        assertEquals(exportLabels.size, exportLabels.toSet().size)
+        if (requireDistinctSaveFormatLabels) {
+            assertEquals(exportSaveLabels.size, exportSaveLabels.toSet().size)
+        }
+        assertEquals(exportRetryLabels.size, exportRetryLabels.toSet().size)
+        assertTrue(exportSaveLabels.intersect(exportRetryLabels.toSet()).isEmpty())
+        assertTrue(exportCancelLabel !in exportSaveLabels)
+        assertTrue(exportCancelLabel !in exportRetryLabels)
         assertTrue(reviewActionLabels.intersect(exportLabels.toSet()).isEmpty())
         assertTrue(confirmActionLabels.intersect(exportLabels.toSet()).isEmpty())
     }
